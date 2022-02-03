@@ -1,0 +1,15 @@
+---
+title: "PIFI Neurogenomics"
+output: 
+  html_document:
+    toc: FALSE
+---
+
+
+# Neurogenomics of cooperative behavior in the wire-tailed manakin
+
+This website contains supplements to the paper-based supplementary material. It includes the markdown documents of the code I used to do the analyses, and the full stuff can be accessed on the github repository.
+
+
+
+

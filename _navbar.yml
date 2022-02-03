@@ -1,0 +1,15 @@
+name: "PIFI neurogenomics"
+title: "PIFI neurogenomics"
+type: inverse
+left:
+  - text: "Analysis"
+    menu:
+       - text: "Candidate Genes"
+         href: ./candidate_gene_analysis.html
+       - text: "Test"
+         href: ./test.html
+  - text: "Contact"
+    href: ./contact.html
+right:
+  - icon: fa-github fa-lg
+    href: https://github.com/periperipatus/PIFI_brain_transcriptome
