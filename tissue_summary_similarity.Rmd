@@ -1,0 +1,1352 @@
+---
+title: "Volcano Plots and Overlap Analyses"
+subtitle: "For manuscript: Neurogenomic landscape of male cooperative behavior in a wild bird "
+date: Last Knit "`r Sys.Date()`"
+author: "Peri Bolton"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, fig.align="center", comment=FALSE)
+```
+
+This code is summarizing the results from the DESeq2 within tissues experiment, and calculating genes that have similar expression patterns across tissue types. The document is broken up by interest variable, as the data read in for the volcano plots forms a scaffold for the rest.
+
+```{r libraries and presets}
+library(stringr)
+library(RColorBrewer)
+library(pheatmap)
+library(ggplot2)
+library(ggpubr)
+library(DESeq2)
+library(ggrepel)
+library(pvclust)
+library(grid)
+library(gridExtra)
+library(RRHO2)
+library(reshape2)
+library(viridis)
+library(gridExtra)
+library(clusterProfiler)
+library(rrvgo)
+library(kableExtra)
+
+
+peri_theme <- theme(panel.background = element_rect(fill="white"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+    axis.title.x = element_text(size = 16), axis.text.x = element_text(size = 14, 
+        colour = "black"), axis.title.y = element_text(size = 16), 
+    axis.text.y = element_text(size = 14, colour = "black"), 
+    legend.text = element_text(size = 14), legend.title = element_text(size = 16), 
+    axis.line.y = element_line(colour = "black"), axis.line.x = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5, size=22),
+    plot.subtitle = element_text(hjust = 0.5, size=18, color="grey40"))  + theme(legend.key=element_blank())
+dodge=position_dodge(0.8)
+```
+
+```{r, read in data}
+
+go_terms<- read.csv("../GO_annotations/pfil_GO_key_raw.csv")
+go_terms<- plyr::rename(go_terms, replace=c("GeneID"="gene"))
+go2gene_bp<- go_terms[which(go_terms$Aspect=="P"),c("GO_ID", "gene")]
+go2gene_mf<- go_terms[which(go_terms$Aspect=="F"),c("GO_ID", "gene")]
+go_obo<- read.csv("../GO_annotations/ontology_obo_out.csv")
+go_obo<- plyr::rename(go_obo, replace=c("id"="GO_ID"))
+go2name_bp<- go_obo[which(go_obo$namespace=="biological_process"),c("GO_ID", "name")]
+go2name_mf<- go_obo[which(go_obo$namespace=="molecular_function"),c("GO_ID", "name")]
+
+### more presets:
+
+candidates<- c("AR", "SRD5A2", "CYP19A1", "ESR1", "ESR2", "PGR","GNRH1", "PRL","PRLR","VIP", "VIPR1", "VIPR2","OXT", "OXTR", "AVP", "AVPR1A", "AVPR1B","AVPR2")
+
+tissue_order<- c("GON","PIT","VMH","AH","PVN","POM","ICO","GCT","TNA","AI","LS", "BSTm")
+tissue_cols<- list(GON=c("#2A9D8F","#69CCBE","#A1E5D9"),PIT=c("#2A9D8F","#69CCBE","#A1E5D9"),VMH=c("#E76F51", "#EF8E7B","#F4ABA2"),AH=c("#E76F51", "#EF8E7B","#F4ABA2"),PVN=c("#E76F51", "#EF8E7B","#F4ABA2"), POM=c("#E76F51", "#EF8E7B","#F4ABA2"), ICO=c("#E76F51", "#EF8E7B","#F4ABA2"),GCT=c("#E76F51", "#EF8E7B","#F4ABA2"), TNA=c("#E76F51", "#EF8E7B","#F4ABA2"), AI=c("#E9C46A","#EFD497","#F7E3BA"), LS=c("#F4A261","#F4B184","#F4C6A6"), BSTm=c("#F4A261","#F4B184","#F4C6A6"))
+
+#this palette is for the pairwise heatmaps.
+tissue_colors<- c(GON="#2A9D8F", PIT="#2A9D8F", VMH="#E76F51",AH="#E76F51",PVN="#E76F51",POM="#E76F51", ICO="#E76F51", GCT="#E76F51", TNA="#E76F51",AI="#E9C46A", LS="#F4A261", BSTm="#F4A261")
+status_cols<- c("#86AD44","#E54849","#414042")
+topgenes<- 1:6
+
+key<- read.csv("../data_filtered/data_key_Parsed_ReplicatesRemoved.csv")
+               
+behav<- read.csv("../data_unfiltered/PIPFIL_T_and_behav_data.csv")
+rownames(key)<- key$X
+
+key$Color_ID<- sub("/","", key$Color_ID)
+key<- plyr::rename(key, replace=c("Color_ID"="colorID"))
+behav$status<- plyr::revalue(behav$status, c("floa"="floater", "terr"="territorial"))
+key_behav<- merge(key, behav, by="colorID")
+key_behav<- key_behav[!is.na(key_behav$last_behav),]
+
+
+#create a data.frame with all of the observations. 
+not_in_behav<- key[!key$X %in% key_behav$X,]
+cols_not_key<- colnames(key_behav)[!colnames(key_behav) %in% colnames(key)]
+cols_not_key_df<- data.frame(matrix(NA, nrow = nrow(not_in_behav), ncol = length(cols_not_key)))
+colnames(cols_not_key_df)<- cols_not_key
+not_in_behav<- cbind(not_in_behav, cols_not_key_df)
+
+key_behav<- rbind(key_behav, not_in_behav)
+
+rownames(key_behav)<- key_behav$X
+key_behav<- subset(key_behav, select=c("sampleID", "Year", "Tissue", "Batch", "Status", "Class", "final_corrected_T", "mean_T", "effort.all_study", "degree.all_study", "strength.all_study"))
+#key_behav$Class<- word(key_behav$Class,1)
+
+key_behav$Tissue<- factor(key_behav$Tissue, levels=c("GON","PIT","VMH","AH","PVN","POM","ICO","GCT","AI","TNA","LS", "BSTm"))
+key_behav<- key_behav[order(rownames(key_behav)),]
+key_behav$Class<- plyr::revalue(key_behav$Class, replace=c("SCB floater"="Predefinitive floater", "DCB floater "="Definitive floater", "DCB territorial"="Territorial"))
+key_behav$Class<- factor(key_behav$Class, levels=c("Predefinitive floater", "Definitive floater", "Territorial"))
+
+#read the raw count data
+data<- read.csv("../data_filtered/data_RawCounts_all_ReplicatesRemoved_antisense_V2.csv")
+
+rownames(data)<- data$X
+data$X<- NULL
+
+keep<- c("candidates","tissue_order", "tissue_cols","tissue_colors", "topgenes", "go_terms","peri_theme", "go2gene_bp","go2gene_mf", "go_obo","go2name_bp", "go2name_mf","keep", "key_behav", "data", "dodge","status_cols")
+```
+
+
+
+
+# Social Status
+
+## Volcano Plots
+
+We do not show the volcano plots here, but they are in the supplementary material Section 3. 
+
+```{r status volcano plots,  fig.height= 20, fig.width=15, echo=TRUE}
+rm(list= ls()[!(ls() %in% keep)])
+setwd("../DE_results/")
+files<- list.files(pattern="results_[a-zA-Z]+_Status.csv", ignore.case=TRUE)
+status_results<- lapply(files, read.csv)
+names(status_results)<- word(files, 2, sep="_")
+
+output<- list()
+plots<- list()
+directionalp<- list()
+pos_neg<- list()
+
+for(i in tissue_order){
+  tissue<- status_results[[i]]
+  tissue<- tissue[!is.na(tissue$pvalue),]
+  
+  ## counts of positive and negative genes
+  pos_out<- tissue
+  pos_out$neg_sig<- ifelse(pos_out$padj<0.1 & pos_out$log2FoldChange<0,1,0)
+  pos_out$neg_marg<- ifelse(pos_out$pvalue<0.05 & pos_out$padj>0.1 & pos_out$log2FoldChange<0,1,0)
+  pos_out$pos_sig<- ifelse(pos_out$padj<0.1 & pos_out$log2FoldChange>0,1,0)
+  pos_out$pos_marg<- ifelse(pos_out$pvalue<0.05 & pos_out$padj>0.1 & pos_out$log2FoldChange>0,1,0)
+
+  pos_neg[[i]]<- data.frame(tissue=i, res=c(-sum(pos_out$neg_sig, na.rm=TRUE), -sum(pos_out$neg_marg, na.rm=TRUE), sum(pos_out$pos_sig, na.rm=TRUE), sum(pos_out$pos_marg, na.rm=TRUE)), type=c("negative significant", "negative marginal", "positive significant","positive marginal"))
+  
+  ##plots
+  tissue$gene<- plyr::revalue(tissue$gene, c("LOC113993669"="CYP19A1","LOC113983511"="OXT", "LOC113983498"="AVP", "LOC113982601"="AVPR2"))
+  
+  tissue$sig<- ifelse(tissue$padj<0.1,"Q<0.1",ifelse(tissue$pvalue<0.05,"P<0.05","NS"))
+  
+  tissue<- tissue[order(tissue$padj),]
+  rownames(tissue)<- 1:nrow(tissue)
+  
+  
+tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
+tissue$is_interesting<- tissue$interesting_genes==""
+
+plots[[i]]<- ggplot(tissue, aes(x=log2FoldChange, y=-log10(padj), color=sig)) + geom_point(size=4) + geom_hline(yintercept=-log10(0.1), linetype="dashed", color = "grey70", size=1) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + geom_point(data=tissue[tissue$interesting_genes!="",], aes(fill=sig), pch=21,color="grey40", show.legend=FALSE, size=5) + scale_color_manual(values=tissue_cols[[i]]) + scale_fill_manual(values=tissue_cols[[i]][2:3]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + scale_x_continuous(limits=c(-4,4), breaks=c(-4,-3,-2,-1,0,1,2,3,4)) + scale_y_continuous(limits=c(0,5))
+
+
+tissue$X<- NULL
+tissue$pvalue<- ifelse(is.na(tissue$padj), NA, as.numeric(tissue$pvalue))
+sub<- subset(tissue, select=c("gene","log2FoldChange","pvalue"))
+tissue<- subset(tissue, select=c("gene","pvalue"))
+colnames(tissue)[colnames(tissue)=="pvalue"] <- i
+output[[i]]<- tissue
+
+sub$logP<- -log(sub$pvalue, 10)
+sub$logP<- ifelse(sub$log2FoldChange<0, -(sub$logP), sub$logP)
+sub<- subset(sub, select=c("gene", "logP"))
+colnames(sub)[colnames(sub)=="logP"] <- i
+directionalp[[i]]<- sub
+}
+
+g<- ggarrange(plotlist=plots,ncol=3, nrow=4, common.legend = TRUE)
+g<- annotate_figure(g, top=textGrob("Volcano plots by Status per tissue",gp=gpar(fontsize=22)), bottom=textGrob("LogFoldChange",gp=gpar(fontsize=20)), left=textGrob("-log10(p-adjusted)",gp=gpar(fontsize=20), rot = 90))
+g
+ggexport(g, filename = "figure_volcanoes_status.png", width = 1500,height = 1500, pointsize=32)
+setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/analysis")
+```
+
+```{r Status summary plot for Figure}
+pos_neg_out<- do.call("rbind", pos_neg)
+pos_neg_out$type<- factor(pos_neg_out$type, levels=c("negative significant", "negative marginal","positive significant","positive marginal"))
+pos_neg_out$tissue<- factor(pos_neg_out$tissue, levels=tissue_order)
+pos_neg_out$abs_val<- ifelse(grepl("significant",pos_neg_out$type), abs(pos_neg_out$res), "")
+pos_cols<- c("#0D8CFF", "#AED9FF","#FF3300","#FFBBAA")
+
+ggplot(pos_neg_out, aes(x=tissue, y=res, fill=type)) + geom_bar(stat="identity") + peri_theme + scale_y_continuous(expand=c(0,0), limits=c(-1200, 1200)) + labs(title="Status", x="", y="") + scale_fill_manual(values=pos_cols) + geom_hline(yintercept=0)+ theme(legend.position = "none") + geom_text(aes(label=abs_val),vjust=pos_neg_out$res < 0)+ theme(plot.margin = unit(c(1,1,0,0), "lines"))
+```
+
+
+## Pairwise Tissue Similarities
+
+Pulling out the p-value data.
+
+```{r status tissue similarity, echo=TRUE}
+
+temp<- merge(output[[1]],output[[2]],by="gene", all=TRUE)
+temp<- merge(temp, output[[3]], by="gene", all=TRUE)
+temp<- merge(temp, output[[4]], by="gene", all=TRUE)
+temp<- merge(temp, output[[5]], by="gene", all=TRUE)
+temp<- merge(temp, output[[6]], by="gene", all=TRUE)
+temp<- merge(temp, output[[7]], by="gene", all=TRUE)
+temp<- merge(temp, output[[8]], by="gene", all=TRUE)
+temp<- merge(temp, output[[9]], by="gene", all=TRUE)
+temp<- merge(temp, output[[10]], by="gene", all=TRUE)
+temp<- merge(temp, output[[11]], by="gene", all=TRUE)
+pvalue_data<- merge(temp, output[[12]], by="gene", all=TRUE)
+rownames(pvalue_data)<- pvalue_data$gene
+
+pvalue_data$gene<- NULL
+
+```
+
+
+and the directional log-transformed p-values: 
+
+```{r status tissue similarity2, echo=TRUE}
+temp<- merge(directionalp[[1]],directionalp[[2]],by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[3]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[4]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[5]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[6]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[7]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[8]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[9]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[10]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[11]], by="gene", all=TRUE)
+logpvalue_data<- merge(temp, directionalp[[12]], by="gene", all=TRUE)
+rownames(logpvalue_data)<- logpvalue_data$gene
+
+logpvalue_data$gene<- NULL
+
+
+pvalue_cor<- cor(logpvalue_data, use= "pairwise.complete.obs", method="pearson")
+
+
+ps<-colorRampPalette(brewer.pal(n = 7, name =
+  "Purples"))(100)
+
+color=colorRampPalette(brewer.pal(n = 7, name =
+  "YlOrRd"))(100)
+
+exp<- data.frame(row.names=colnames(logpvalue_data),mean_logP=apply(-log10(pvalue_data),2, mean,na.rm=TRUE)) #using the raw p-value data here because taking the average of directional p-values would be silly.
+exp$tissue<- tissue_order
+ann_cols<- list(tissue=tissue_colors, mean_logP=ps[1:52]) #Max mean_log pvalue is 0.52
+
+
+
+pheatmap(pvalue_cor, color=color, annotation_row=exp, border_color = NA, display_numbers = signif(pvalue_cor,2), annotation_colors = ann_cols, clustering_distance_cols = "correlation", clustering_distance_rows = "correlation", clustering_method="complete")
+
+result <- pvclust(pvalue_cor, method.dist="cor", method.hclust="complete", nboot=1000, parallel=TRUE)
+
+plot(result)
+pvrect(result, alpha=0.90)
+```
+
+## RRHO2
+This approach uses package 'RRHO2' and compares rank ordered gene lists against each-other and uses a hypergeometric test to compare the similarity of gene names in shorter segments along the length gene list. 
+
+```{r RRHO2, eval=FALSE, echo=TRUE}
+RRHO_objects<- list()
+
+comparisons<- combn(tissue_order, 2)
+RRHO_objects<- list()
+for(i in 1:ncol(comparisons)){
+  comparison<- comparisons[,i]
+  p1_name<- comparison[1]
+  p2_name<- comparison[2]
+  p1<- data.frame(gene=row.names(logpvalue_data), logP_1=logpvalue_data[,p1_name])
+  p2<- data.frame(gene=row.names(logpvalue_data), logP_2=logpvalue_data[,p2_name])
+  comb<- merge(p1,p2)
+  comb<- comb[complete.cases(comb),]
+  p11<- comb[, c("gene","logP_1")]
+  p11<- p11[order(p11$logP_1, decreasing=TRUE),]
+  p22<- comb[,c("gene","logP_2")]
+  p22<- p22[order(p22$logP_2, decreasing=TRUE),]
+  p1_p2<- paste(p1_name,p2_name, sep="_")
+  RRHO_objects[[p1_p2]]<- RRHO2_initialize(p11, p22, labels = c(p1_name, p2_name), log10.ind=TRUE, boundary=0.01)
+  #jpeg(filename=paste0("RRHO2_status",p1_p2,".jpg"))
+  #RRHO2_heatmap(RRHO_objects[[p1_p2]])
+  #dev.off()
+}
+save(RRHO_objects,file="../DE_results/RRHO2/RRHO2_Status.RData")
+
+```
+
+
+```{r, echo=TRUE}
+
+load("../DE_results/RRHO2/RRHO2_Status.RData")
+
+
+
+maxp<- vector(mode="numeric")
+for(i in names(RRHO_objects)){
+  sub<- RRHO_objects[[i]]$hypermat
+  maxp[i]<- max(sub, na.rm=TRUE)
+}
+maxp<- max(maxp)
+
+plots_scaled<- list() # for the plots on the same scale
+plots<- list()
+for(i in names(RRHO_objects)){
+  sub<- RRHO_objects[[i]]$hypermat
+  sub<- melt(sub, na.rm=TRUE)
+  x<- word(i,1,1,sep="_")
+  y<- word(i,2,2,sep="_")
+  plots_scaled[[i]]<- ggplot(data=sub, aes(Var1, Var2, fill=value)) + geom_tile() + peri_theme + scale_y_continuous(expand=c(0,0)) + scale_x_continuous(expand=c(0,0)) + scale_fill_viridis(limits=c(0,maxp)) + theme(axis.text.x=element_blank(),axis.text.y=element_blank(), axis.ticks=element_blank(), legend.position="none") + labs(x=x, y=y)
+  plots[[i]]<- ggplot(data=sub, aes(Var1, Var2, fill=value)) + geom_tile() + scale_y_continuous(expand=c(0,0)) + scale_x_continuous(expand=c(0,0)) + scale_fill_viridis() + theme(axis.text.x=element_blank(),axis.text.y=element_blank(), axis.ticks=element_blank()) + labs(x=x, y=y)
+}
+
+
+m <- matrix(NA, 11, 11)
+m[lower.tri(m, diag = T)] <- 1:66
+
+## This plot is just to farm the legend. 
+p<- ggplot(data=sub, aes(Var1, Var2, fill=value)) + geom_tile() + peri_theme + scale_y_continuous(expand=c(0,0)) + scale_x_continuous(expand=c(0,0)) + scale_fill_viridis(limits=c(0,maxp)) + theme(axis.text.x=element_blank(),axis.text.y=element_blank(), axis.ticks=element_blank()) + labs(x=x, y=y)
+leg<- get_legend(p)
+
+m1<- m
+m1[1,11]<- 67
+plots_scaled[["legend"]]<- leg
+
+g<-arrangeGrob(grobs= plots_scaled, layout_matrix = m1)
+
+ggsave(file="../DE_results/RRHO2/figure_RRHO_status_scaled.pdf", g, units="in", width=20, height=20)
+
+
+g<-grid.arrange(grobs= plots, layout_matrix = m)
+ggsave(file="../DE_results/RRHO2/figure_RRHO_status_unscaled.pdf", g, units="in", width=25, height=10)
+```
+
+To view pdf versions of the p-value scaled (featured here), and raw unscaled data please visit the main branch of the github repository under "DE_results/RRHO2".
+## Overall brain patterns
+
+Here I am taking just the brain tissues and taking the median p-value of each gene in the rank-ordered gene list. This will give an idea for similar gene expression patterns across the entire brain.
+
+```{r Status brain, echo=TRUE}
+
+brain<- logpvalue_data[,-c(1:2)]
+
+brain$p_combo<- apply(brain,1, median)
+brain<- brain[complete.cases(brain),]
+brain$gene<- rownames(brain)
+brain_go<- merge(brain, go_terms, by="gene", all.x=TRUE)
+brain_go<- brain_go[order(brain_go$p_combo, decreasing=TRUE),]
+write.csv(brain,"../DE_results/results_brain_status.csv", row.names=FALSE)
+geneList<- brain_go$p_combo
+names(geneList)<- brain_go$gene
+
+#subsets<- brain[brain$p_combo>=1.3,]
+
+y<- enricher(brain$gene[which(abs(brain$p_combo)>1.3)], universe=brain$gene, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+#ridgeplot(y)
+ego2<- y@result
+ego2$GeneRatio2<- word(ego2$GeneRatio, 1,1, sep="/")
+ego2$GeneRatio2<- as.numeric(ego2$GeneRatio2)
+
+ggplot(ego2[1:10,], aes(x=Description, y=GeneRatio2, fill=-qvalue)) + geom_bar(stat="identity") + theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1)) + coord_flip() + peri_theme + scale_y_continuous(expand=c(0,0)) + xlab("") + ylab("No genes enriched") + scale_fill_viridis()
+
+knitr::kable(y@result[1:10,], caption="BP enriched GO terms in the median p in the brain", row.names = FALSE) %>% kable_styling()
+
+write.csv(y@result,"../DE_results/GO_status_brain.csv", row.names=FALSE)
+
+
+
+#y<- GSEA(geneList, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+#ridgeplot(y)
+#write.csv(y@result,"GSEA_status_brain.csv", row.names=FALSE)
+
+                   
+ego2<- as.data.frame(y@result$ID)
+colnames(ego2)<- "ID"
+ego2$p.adjust<- y@result$p.adjust
+
+simMatrix <- calculateSimMatrix(ego2$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="BP",
+                                method="Rel")
+scores <- setNames(-log10(ego2$p.adjust), ego2$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+```
+
+
+```{r status brain gene plotting, echo=TRUE}
+tophits<- brain
+tophits$p_combo<- abs(tophits$p_combo)
+tophits<- tophits[order(tophits$p_combo, decreasing=TRUE),]
+tophits<- tophits$gene[1:6]
+out<- list()
+#i="POM"
+for(i in tissue_order){
+  tissue<- status_results[[i]]
+  tissue<- tissue[!is.na(tissue$pvalue),]
+  sub<- tissue[tissue$gene %in% tophits,]
+  out[[i]]<- data.frame(gene=sub$gene, lfc=sub$log2FoldChange, p=sub$pvalue, padj=sub$padj, Tissue=i)
+  }
+status_results_tophits<- do.call("rbind", out)
+status_results_tophits<- status_results_tophits[status_results_tophits$Tissue!="GON" & status_results_tophits$Tissue!="PIT",]
+
+
+outliers=c("PFT2_POM_run1")
+
+brain_behav<- subset(key_behav, Tissue!="GON")
+brain_behav<- subset(brain_behav, Tissue!="PIT")
+brain_behav<- brain_behav[!rownames(brain_behav) %in% outliers,]
+brain_behav<- droplevels(brain_behav)
+
+
+brain_data<- data[,colnames(data) %in% rownames(brain_behav)]
+
+
+
+start<- nrow(brain_data)
+#remove genes with avg read counts <20
+brain_data$avg_count<- apply(brain_data, 1, mean)
+brain_data<- brain_data[brain_data$avg_count>20,]
+brain_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+brain_data$percent_0<- apply(brain_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(brain_data)/2
+brain_data<- brain_data[brain_data$percent_0<=thresh,]
+brain_data$percent_0<-NULL
+#13652 genes.
+
+dd<- DESeqDataSetFromMatrix(countData=brain_data, colData=brain_behav, design= ~ Tissue +  Status)
+dd<- DESeq(dd)
+dd<- dd[which(mcols(dd)$betaConv),] #remove any genes that didn't converge. 
+
+res<- results(dd, alpha=0.1)
+
+
+gone<- plotCounts(dd, gene=row.names(res[tophits[1],]), intgroup=c("Tissue","Status"), returnData=TRUE)
+gtwo<- plotCounts(dd, gene=row.names(res[tophits[2],]), intgroup=c("Tissue","Status"), returnData=TRUE)
+gthree<-  plotCounts(dd, gene=row.names(res[tophits[3],]), intgroup=c("Tissue","Status"), returnData=TRUE)
+gfour<-  plotCounts(dd, gene=row.names(res[tophits[4],]), intgroup=c("Tissue","Status"), returnData=TRUE)
+gfive<-  plotCounts(dd, gene=row.names(res[tophits[5],]), intgroup=c("Tissue","Status"), returnData=TRUE)
+gsix<-  plotCounts(dd, gene=row.names(res[tophits[6],]), intgroup=c("Tissue","Status"), returnData=TRUE)
+vars<- list(gone,gtwo,gthree,gfour,gfive,gsix)
+
+plots<- list()
+#i=2
+for(i in 1:6){
+  dat<- vars[[i]]
+  name<- tophits[i]
+  result<- status_results_tophits[status_results_tophits$gene==name,]
+  result$label<- paste0("LFC=",signif(result$lfc,2), "\np(raw)=", formatC(result$p,2,format="e"))
+  result$x<- 1.5
+  result$y<- max(dat$count)-30
+  plots[[i]]<-  ggplot(dat, aes(x=Status, y=count)) + geom_point(size=2, position=dodge, aes(color=Status)) + geom_boxplot(fill=NA, position=dodge, aes(color=Status)) + labs(title=paste0(name, " p(median)=", formatC(10^-abs(brain_go$p_combo[brain_go$gene==name]),2, format="e")),x="", y="Normalised Counts") + peri_theme + scale_colour_manual(values=status_cols[2:3]) + facet_wrap(. ~Tissue, ncol=5) + geom_text(data=result, aes(x=x, y=y, label=label))
+}
+
+
+g<- ggarrange(plotlist=plots[1:2],ncol=1, nrow=2, common.legend = TRUE, labels=c("A","B"))
+g<- annotate_figure(g, top=textGrob("Top two genes consistently DE in brain with social status",gp=gpar(fontsize=22)), bottom=textGrob("social status",gp=gpar(fontsize=18)))
+g
+ggexport(g, filename = "../DE_results/figure_braintop_status.png", width = 700,height = 900)
+```
+
+
+# Mean testosterone phenotype
+
+## Volcano Plots 
+
+```{r mean T volcanoes, fig.height= 20, fig.width=15}
+rm(list= ls()[!(ls() %in% keep)])
+setwd("../DE_results/")
+files<- list.files(pattern="results_[a-zA-Z]+_mean_T.csv", ignore.case=TRUE)
+status_results<- lapply(files, read.csv)
+names(status_results)<- word(files, 2, sep="_")
+
+
+output<- list()
+plots<- list()
+directionalp<- list()
+pos_neg<- list()
+for(i in tissue_order){
+  tissue<- status_results[[i]]
+  tissue<- tissue[!is.na(tissue$pvalue),]
+  
+  ## counts of positive and negative genes
+  pos_out<- tissue
+  pos_out$neg_sig<- ifelse(pos_out$padj<0.1 & pos_out$log2FoldChange<0,1,0)
+  pos_out$neg_marg<- ifelse(pos_out$pvalue<0.05 & pos_out$padj>0.1 & pos_out$log2FoldChange<0,1,0)
+  pos_out$pos_sig<- ifelse(pos_out$padj<0.1 & pos_out$log2FoldChange>0,1,0)
+  pos_out$pos_marg<- ifelse(pos_out$pvalue<0.05 & pos_out$padj>0.1 & pos_out$log2FoldChange>0,1,0)
+
+  pos_neg[[i]]<- data.frame(tissue=i, res=c(-sum(pos_out$neg_sig, na.rm=TRUE), -sum(pos_out$neg_marg, na.rm=TRUE), sum(pos_out$pos_sig, na.rm=TRUE), sum(pos_out$pos_marg, na.rm=TRUE)), type=c("negative significant", "negative marginal", "positive significant","positive marginal"))
+  
+  ##plots
+  tissue$gene<- plyr::revalue(tissue$gene, c("LOC113993669"="CYP19A1","LOC113983511"="OXT", "LOC113983498"="AVP", "LOC113982601"="AVPR2"))
+
+  tissue$sig<- ifelse(tissue$padj<0.1,"Q<0.1",ifelse(tissue$pvalue<0.05,"P<0.05","NS"))
+  
+  tissue<- tissue[order(tissue$padj),]
+  rownames(tissue)<- 1:nrow(tissue)
+  
+  
+tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
+tissue$is_interesting<- tissue$interesting_genes==""
+plots[[i]]<- ggplot(tissue, aes(x=log2FoldChange, y=-log10(padj), color=sig)) + geom_point(size=4) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + geom_point(data=tissue[tissue$interesting_genes!="",], aes(fill=sig), pch=21,color="grey40", show.legend=FALSE, size=5) + scale_color_manual(values=tissue_cols[[i]]) + scale_fill_manual(values=tissue_cols[[i]][2:3]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + scale_x_continuous(limits=c(-5,6), breaks=c(-5,-4,-3,-2,-1,0,1,2,3,4,5,6)) + scale_y_continuous(limits=c(0,10)) + geom_hline(yintercept=-log10(0.1), linetype="dashed", color = "grey70", size=1)
+tissue$X<- NULL
+tissue$pvalue<- ifelse(is.na(tissue$padj), NA, as.numeric(tissue$pvalue))
+sub<- subset(tissue, select=c("gene","log2FoldChange","pvalue"))
+tissue<- subset(tissue, select=c("gene","pvalue"))
+colnames(tissue)[colnames(tissue)=="pvalue"] <- i
+output[[i]]<- tissue
+
+sub$logP<- -log(sub$pvalue, 10)
+sub$logP<- ifelse(sub$log2FoldChange<0, -(sub$logP), sub$logP)
+sub<- subset(sub, select=c("gene", "logP"))
+colnames(sub)[colnames(sub)=="logP"] <- i
+directionalp[[i]]<- sub
+
+}
+
+g<- ggarrange(plotlist=plots,ncol=3, nrow=4, common.legend = TRUE)
+g<- annotate_figure(g, top=textGrob("Volcano plots by mean T per tissue",gp=gpar(fontsize=22)), bottom=textGrob("LogFoldChange",gp=gpar(fontsize=20)), left=textGrob("-log10(p-adjusted)",gp=gpar(fontsize=20), rot = 90))
+g
+ggexport(g, filename = "figure_volcanoes_mean_T.png", width = 1500,height = 1500, pointsize=32)
+setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/analysis")
+```
+
+
+```{r mean T summary}
+pos_neg_mean_T<- do.call("rbind", pos_neg)
+pos_neg_mean_T$type<- factor(pos_neg_mean_T$type, levels=c("negative significant", "negative marginal","positive significant","positive marginal"))
+pos_neg_mean_T$tissue<- factor(pos_neg_mean_T$tissue, levels=tissue_order)
+pos_neg_mean_T$abs_val<- ifelse(grepl("significant",pos_neg_mean_T$type), abs(pos_neg_mean_T$res), "")
+pos_cols<- c("#0D8CFF", "#AED9FF","#FF3300","#FFBBAA")
+
+ggplot(pos_neg_mean_T, aes(x=tissue, y=res, fill=type)) + geom_bar(stat="identity") + peri_theme + scale_y_continuous(expand=c(0,0), limits=c(-1200, 1200)) + labs(title="mean T", x="", y="") + scale_fill_manual(values=pos_cols) + geom_hline(yintercept=0)+ theme(legend.position = "none") + geom_text(aes(label=abs_val),vjust=pos_neg_mean_T$res < 0)+ theme(plot.margin = unit(c(1,1,0,0), "lines"))
+
+```
+
+```{r mean T plotting GON, eval=FALSE}
+GON_modules<- read.csv("../WGCNA/ByTissue_2021/GON_results_ModuleMembership.csv")
+
+
+candidates<- c("AR", "SRD5A2", "CYP19A1", "LOC113993669","ESR1", "ESR2", "PGR","GNRH1", "PRL","PRLR","VIP", "VIPR1", "VIPR2","OXT", "LOC113983511","OXTR", "AVP","LOC113983511", "AVPR1A", "AVPR1B", "TH", "NR4A1","CHRNA3")
+
+i="GON"
+ tissue<- status_results[[i]]
+  tissue<- tissue[!is.na(tissue$pvalue),]
+  #tissue$gene<- plyr::revalue(tissue$gene, c("LOC113993669"="CYP19A1","LOC113983511"="OXT", "LOC113983511"="AVP"))
+
+  tissue$sig<- ifelse(tissue$padj<0.1,"Q<0.1",ifelse(tissue$pvalue<0.05,"P<0.05","NS"))
+  
+  tissue<- tissue[order(tissue$padj),]
+  rownames(tissue)<- 1:nrow(tissue)
+  
+tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
+tissue$is_interesting<- tissue$interesting_genes==""  
+  
+tissue<- merge(tissue, GON_modules[,c("gene","best_anno","moduleColor")], by="gene")
+tissue$color<- ifelse(tissue$pvalue<0.05, "grey30", "grey60")
+tissue$color<- ifelse(tissue$padj<0.1, as.character(tissue$moduleColor), as.character(tissue$color))
+tissue<- tissue[!is.na(tissue$color),]
+
+tissue$color<-factor(tissue$color,levels=c("grey60","grey30","turquoise","pink","green","salmon","blue","black","brown"))
+modulecols<- c("grey30","grey60","turquoise","pink","green","salmon","blue","black","brown")
+
+tissue$interesting_genes<- ifelse(tissue$interesting_genes!="", as.character(tissue$best_anno),"")
+tissue$interesting_genes[tissue$interesting_genes=="LOC423605"]<- "LOC113988442"
+tissue$outline<- ifelse(tissue$padj<0.1 | tissue$is_interesting==FALSE, "yes", "no")
+
+ggplot(tissue, aes(x=log2FoldChange, y=-log10(pvalue), color=color)) + geom_point(size=4) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + scale_color_manual(values=modulecols) + geom_point(data=tissue[tissue$outline=="yes",],fill=NA, pch=21, stroke=0.01, color="grey40", show.legend=FALSE, size=5) + scale_fill_manual(values=modulecols[3:length(modulecols)]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + theme(legend.position = "none")
+```
+
+
+```{r mean T plotting ICO, eval=FALSE}
+ICO_modules<- read.csv("../WGCNA/ByTissue_2021/ICO_results_ModuleMembership.csv")
+
+
+candidates<- c("AR", "SRD5A2", "CYP19A1", "LOC113993669","ESR1", "ESR2", "PGR","GNRH1", "PRL","PRLR","VIP", "VIPR1", "VIPR2","OXT", "LOC113983511","OXTR", "AVP","LOC113983511", "AVPR1A", "AVPR1B","MMP2")
+
+i="ICO"
+ tissue<- status_results[[i]]
+  tissue<- tissue[!is.na(tissue$pvalue),]
+  #tissue$gene<- plyr::revalue(tissue$gene, c("LOC113993669"="CYP19A1","LOC113983511"="OXT", "LOC113983511"="AVP"))
+
+  tissue$sig<- ifelse(tissue$padj<0.1,"Q<0.1",ifelse(tissue$pvalue<0.05,"P<0.05","NS"))
+  
+  tissue<- tissue[order(tissue$padj),]
+  rownames(tissue)<- 1:nrow(tissue)
+  
+tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
+tissue$is_interesting<- tissue$interesting_genes==""  
+  
+tissue<- merge(tissue, ICO_modules[,c("gene","best_anno","moduleColor")], by="gene")
+tissue$color<- ifelse(tissue$pvalue<0.05, "grey30", "grey60")
+tissue$color<- ifelse(tissue$padj<0.1, as.character(tissue$moduleColor), as.character(tissue$color))
+tissue<- tissue[!is.na(tissue$color),]
+
+tissue$color<-factor(tissue$color,levels=c("grey60","grey30","darkturquoise","turquoise","coral1","maroon","darkviolet" ,"thistle1","bisque4","orangered4","navajowhite1","brown2","firebrick4","darkseagreen3","honeydew1" ,"palevioletred3","darkmagenta","blue2", "greenyellow"))
+modulecols<- c("grey30","grey60","darkturquoise","turquoise","coral1","maroon","darkviolet" ,"thistle1","bisque4","orangered4","navajowhite1","brown2","firebrick4","darkseagreen3","honeydew1" ,"palevioletred3","darkmagenta","blue2", "greenyellow")
+
+tissue$interesting_genes<- ifelse(tissue$interesting_genes!="", as.character(tissue$best_anno),"")
+tissue$interesting_genes[is.na(tissue$interesting_genes)]<- "LOC113988355"
+tissue$outline<- ifelse(tissue$padj<0.1 | tissue$is_interesting==FALSE, "yes", "no")
+
+ggplot(tissue, aes(x=log2FoldChange, y=-log10(pvalue), color=color)) + geom_point(size=4) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + scale_color_manual(values=modulecols) + geom_point(data=tissue[tissue$outline=="yes",],fill=NA, pch=21, stroke=0.01, color="grey40", show.legend=FALSE, size=5) + scale_fill_manual(values=modulecols[3:length(modulecols)]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + theme(legend.position = "none")
+```
+
+## Pairwise Tissue Similarity
+
+```{r mean T similarity pvalue}
+temp<- merge(output[[1]],output[[2]],by="gene", all.x=TRUE)
+temp<- merge(temp, output[[3]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[4]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[5]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[6]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[7]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[8]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[9]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[10]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[11]], by="gene", all.x=TRUE)
+pvalue_data<- merge(temp, output[[12]], by="gene", all.x=TRUE)
+rownames(pvalue_data)<- pvalue_data$gene
+pvalue_data$gene<- NULL
+
+```
+
+```{r mean T similarity directional p}
+temp<- merge(directionalp[[1]],directionalp[[2]],by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[3]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[4]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[5]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[6]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[7]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[8]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[9]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[10]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[11]], by="gene", all=TRUE)
+logpvalue_data<- merge(temp, directionalp[[12]], by="gene", all=TRUE)
+rownames(logpvalue_data)<- logpvalue_data$gene
+
+logpvalue_data$gene<- NULL
+
+pvalue_cor<- cor(logpvalue_data, use= "pairwise.complete.obs", method="pearson")
+
+ps<-colorRampPalette(brewer.pal(n = 7, name =
+  "Purples"))(100)
+
+color=colorRampPalette(brewer.pal(n = 7, name =
+  "YlOrRd"))(100)
+
+exp<- data.frame(row.names=colnames(pvalue_data),mean_logP=apply(-log10(pvalue_data),2, mean,na.rm=TRUE))
+exp$tissue<- tissue_order
+ann_cols<- list(tissue=tissue_colors, mean_logP=ps[1:56])#Max mean_log pvalue is 0.56
+
+color=colorRampPalette(brewer.pal(n = 7, name =
+  "YlOrRd"))(100)
+
+#pvalue_cor<- as.matrix(pvalue_cor)
+#pvalue_cor[lower.tri(pvalue_cor, diag=FALSE)]<- NA
+
+
+pheatmap(pvalue_cor, color=color, annotation_row=exp, border_color = NA, display_numbers = signif(pvalue_cor,2), annotation_colors = ann_cols, clustering_distance_cols = "euclidean", clustering_distance_rows = "euclidean", clustering_method="complete")
+#ggsave("figure_heatmap_mean_T.png", device="png", width=9.5, height=9.5*1.25)
+
+
+
+result <- pvclust(pvalue_cor, method.dist="euclidean", method.hclust="complete", nboot=10000, parallel=TRUE)
+
+
+plot(result)
+pvrect(result, alpha=0.95)
+```
+
+## RRHO2
+
+This approach uses package 'RRHO2' and compares rank ordered gene lists against each-other and uses a hypergeometric test to compare the similarity of gene names in shorter segments along the length gene list. 
+```{r RRHO2 mean T, eval=FALSE}
+RRHO_objects<- list()
+
+comparisons<- combn(tissue_order, 2)
+RRHO_objects<- list()
+for(i in 1:ncol(comparisons)){
+  comparison<- comparisons[,i]
+  p1_name<- comparison[1]
+  p2_name<- comparison[2]
+  p1<- data.frame(gene=row.names(logpvalue_data), logP_1=logpvalue_data[,p1_name])
+  p2<- data.frame(gene=row.names(logpvalue_data), logP_2=logpvalue_data[,p2_name])
+  comb<- merge(p1,p2)
+  comb<- comb[complete.cases(comb),]
+  p11<- comb[, c("gene","logP_1")]
+  p11<- p11[order(p11$logP_1, decreasing=TRUE),]
+  p22<- comb[,c("gene","logP_2")]
+  p22<- p22[order(p22$logP_2, decreasing=TRUE),]
+  p1_p2<- paste(p1_name,p2_name, sep="_")
+  RRHO_objects[[p1_p2]]<- RRHO2_initialize(p11, p22, labels = c(p1_name, p2_name), log10.ind=TRUE, boundary=0.01)
+  #jpeg(filename=paste0("RRHO2_meanT",p1_p2,".jpg"))
+  RRHO2_heatmap(RRHO_objects[[p1_p2]])
+  #dev.off()
+}
+save(RRHO_objects,file="../DE_results/RRHO2/RRHO2_meanT.RData")
+
+```
+
+
+```{r}
+
+load("../DE_results/RRHO2/RRHO2_meanT.RData")
+
+
+
+maxp<- vector(mode="numeric")
+for(i in names(RRHO_objects)){
+  sub<- RRHO_objects[[i]]$hypermat
+  maxp[i]<- max(sub, na.rm=TRUE)
+}
+maxp<- max(maxp)
+
+plots_scaled<- list() # for the plots on the same scale
+plots<- list()
+for(i in names(RRHO_objects)){
+  sub<- RRHO_objects[[i]]$hypermat
+  sub<- melt(sub, na.rm=TRUE)
+  x<- word(i,1,1,sep="_")
+  y<- word(i,2,2,sep="_")
+  plots_scaled[[i]]<- ggplot(data=sub, aes(Var1, Var2, fill=value)) + geom_tile() + peri_theme + scale_y_continuous(expand=c(0,0)) + scale_x_continuous(expand=c(0,0)) + scale_fill_viridis(limits=c(0,maxp)) + theme(axis.text.x=element_blank(),axis.text.y=element_blank(), axis.ticks=element_blank(), legend.position="none") + labs(x=x, y=y)
+  plots[[i]]<- ggplot(data=sub, aes(Var1, Var2, fill=value)) + geom_tile() + scale_y_continuous(expand=c(0,0)) + scale_x_continuous(expand=c(0,0)) + scale_fill_viridis() + theme(axis.text.x=element_blank(),axis.text.y=element_blank(), axis.ticks=element_blank()) + labs(x=x, y=y)
+}
+
+
+#m = diag(11)
+#v=1:66
+#upperm = upper.tri(m, diag = T)
+#m[upperm] = v
+#m<- t(m)
+#for some reasion gridExtra puts pane #1 right in the middle of the plot, not at the top... So I'll have to live with filling by column, not by row. 
+
+
+m <- matrix(NA, 11, 11)
+m[lower.tri(m, diag = T)] <- 1:66
+
+## This plot is just to farm the legend. 
+p<- ggplot(data=sub, aes(Var1, Var2, fill=value)) + geom_tile() + peri_theme + scale_y_continuous(expand=c(0,0)) + scale_x_continuous(expand=c(0,0)) + scale_fill_viridis(limits=c(0,maxp)) + theme(axis.text.x=element_blank(),axis.text.y=element_blank(), axis.ticks=element_blank()) + labs(x=x, y=y)
+leg<- get_legend(p)
+
+m1<- m
+m1[1,11]<- 67
+plots_scaled[["legend"]]<- leg
+
+g<-arrangeGrob(grobs= plots_scaled, layout_matrix = m1)
+
+
+ggsave(file="../DE_results/RRHO2/figure_RRHO_meanT_scaled.pdf", g, units="in", width=20, height=20)
+
+
+g<-grid.arrange(grobs= plots, layout_matrix = m)
+ggsave(file="../DE_results/RRHO2/figure_RRHO_meanT_unscaled.pdf", g, units="in", width=25, height=10)
+```
+
+To view pdf versions of the p-value scaled (featured here), and raw unscaled data please visit the main branch of the github repository under "DE_results/RRHO2".
+
+## Overall brain patterns
+
+Here I am taking just the brain tissues and taking the median p-value of each gene in the rank-ordered gene list. This will give an idea for similar gene expression patterns across the entire brain.
+
+```{r mean T brain}
+
+brain<- logpvalue_data[,-c(1:2)]
+
+brain$p_combo<- apply(brain,1, median)
+brain<- brain[complete.cases(brain),]
+brain$gene<- rownames(brain)
+brain_go<- merge(brain, go_terms, by="gene", all.x=TRUE)
+brain_go<- brain_go[order(brain_go$p_combo, decreasing=TRUE),]
+write.csv(brain,"../DE_results/results_brain_meanT.csv", row.names=FALSE)
+geneList<- brain_go$p_combo
+names(geneList)<- brain_go$gene
+
+#subsets<- brain_go[-1.3>brain_go$p_combo,]
+#y<- GSEA(geneList, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+#ridgeplot(y)
+#go_mean_T<- y@result
+#write.csv(y@result, file="../DE_results/GSEA_BP_brain_mean_T.csv", row.names=FALSE)
+
+#nrow(brain_go[brain_go$p_combo>=1.30103 | brain_go$p_combo<= -1.30103,])
+
+y<- enricher(brain$gene[which(abs(brain$p_combo)>1.3)], universe=brain$gene, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+
+ego2<- y@result
+ego2$GeneRatio2<- word(ego2$GeneRatio, 1,1, sep="/")
+ego2$GeneRatio2<- as.numeric(ego2$GeneRatio2)
+
+ggplot(ego2[1:10,], aes(x=Description, y=GeneRatio2, fill=-qvalue)) + geom_bar(stat="identity") + theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1)) + coord_flip() + peri_theme + scale_y_continuous(expand=c(0,0)) + xlab("") + ylab("No genes enriched") + scale_fill_viridis()
+
+knitr::kable(y@result[1:10,],caption="BP enriched GO terms in the median p in the brain for mean T", row.names = FALSE) %>% kable_styling()
+
+write.csv(y@result,"../DE_results/GO_meanT_brain.csv", row.names=FALSE)
+
+ego2<- as.data.frame(y@result$ID)
+colnames(ego2)<- "ID"
+ego2$p.adjust<- y@result$p.adjust
+
+simMatrix <- calculateSimMatrix(ego2$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="BP",
+                                method="Rel")
+scores <- setNames(-log10(ego2$p.adjust), ego2$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+
+```
+
+```{r}
+
+tophits<- brain
+tophits$p_combo<- abs(tophits$p_combo)
+tophits<- tophits[order(tophits$p_combo, decreasing=TRUE),]
+tophits<- tophits$gene[1:6]
+out<- list()
+#i="POM"
+for(i in tissue_order){
+  tissue<- status_results[[i]]
+  tissue<- tissue[!is.na(tissue$pvalue),]
+  sub<- tissue[tissue$gene %in% tophits,]
+  out[[i]]<- data.frame(gene=sub$gene, lfc=sub$log2FoldChange, p=sub$pvalue, padj=sub$padj, Tissue=i)
+  }
+status_results_tophits<- do.call("rbind", out)
+status_results_tophits<- status_results_tophits[status_results_tophits$Tissue!="GON" & status_results_tophits$Tissue!="PIT",]
+
+
+outliers=c("PFT2_POM_run1")
+
+brain_behav<- subset(key_behav, Tissue!="GON")
+brain_behav<- subset(brain_behav, Tissue!="PIT")
+brain_behav<- brain_behav[!rownames(brain_behav) %in% outliers,]
+brain_behav<- droplevels(brain_behav)
+brain_behav<- brain_behav[which(!is.na(brain_behav$mean_T)),]
+
+brain_data<- data[,colnames(data) %in% rownames(brain_behav)]
+
+
+
+start<- nrow(brain_data)
+#remove genes with avg read counts <20
+brain_data$avg_count<- apply(brain_data, 1, mean)
+brain_data<- brain_data[brain_data$avg_count>20,]
+brain_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+brain_data$percent_0<- apply(brain_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(brain_data)/2
+brain_data<- brain_data[brain_data$percent_0<=thresh,]
+brain_data$percent_0<-NULL
+
+
+
+
+dd<- DESeqDataSetFromMatrix(countData=brain_data, colData=brain_behav, design= ~ Tissue + mean_T)
+dd<- DESeq(dd)
+#dd<- dd[which(mcols(dd)$betaConv),] #remove any genes that didn't converge. 
+
+res<- results(dd, alpha=0.1)
+
+
+gone<- plotCounts(dd, gene=row.names(res[tophits[1],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE)
+gtwo<- plotCounts(dd, gene=row.names(res[tophits[2],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE)
+gthree<-  plotCounts(dd, gene=row.names(res[tophits[3],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE)
+gfour<-  plotCounts(dd, gene=row.names(res[tophits[4],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE)
+gfive<-  plotCounts(dd, gene=row.names(res[tophits[5],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE)
+#gsix<-  plotCounts(dd, gene=row.names(res[tophits[6],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE) #PLIN1 must have met one of the filtering criteria when filtering on all tissues. That's okay I don't look at more than the first two anyway
+vars<- list(gone,gtwo,gthree,gfour,gfive)
+
+plots<- list()
+#i=1
+for(i in 1:5){
+  dat<- vars[[i]]
+  name<- tophits[i]
+  result<- status_results_tophits[status_results_tophits$gene==name,]
+  result$label<- paste0("LFC=",signif(result$lfc,2), "\np(raw)=", formatC(result$p,2,format="e"))
+  result$x<- 0.5
+  result$y<- max(dat$count)-70
+  plots[[i]]<-  ggplot(dat, aes(x=mean_T, y=count)) + geom_point(size=2, aes(color=Status)) + labs(title=paste0(name, " p(median)=", formatC(10^-abs(brain_go$p_combo[brain_go$gene==name]),2, format="e")),x="", y="Normalised Counts") + peri_theme + scale_colour_manual(values=status_cols[2:3]) + facet_wrap(. ~Tissue, ncol=5) + geom_text(data=result, aes(x=x, y=y, label=label))
+}
+
+
+g<- ggarrange(plotlist=plots[1:2],ncol=1, nrow=2, common.legend = TRUE, labels=c("A","B"))
+g<- annotate_figure(g, top=textGrob("Top two genes consistently DE in brain with mean T",gp=gpar(fontsize=22)), bottom=textGrob("individual mean testosterone",gp=gpar(fontsize=18)))
+
+g
+ggexport(g, filename = "../DE_results/figure_braintop_meanT.png", width = 700,height = 900)
+```
+
+
+
+# Social network strength (Cooperative tendency)
+
+## Volcanoes
+
+```{r,  fig.height= 20, fig.width=15}
+rm(list= ls()[!(ls() %in% keep)])
+setwd("../DE_results/")
+files<- list.files(pattern="results_[a-zA-Z]+_Strength.csv", ignore.case=TRUE)
+status_results<- lapply(files, read.csv)
+names(status_results)<- word(files, 2, sep="_")
+
+
+output<- list()
+plots<- list()
+directionalp<- list()
+pos_neg<- list()
+for(i in tissue_order){
+  tissue<- status_results[[i]]
+  tissue<- tissue[!is.na(tissue$pvalue),]
+  ## counts of positive and negative genes
+  pos_out<- tissue
+  pos_out$neg_sig<- ifelse(pos_out$padj<0.1 & pos_out$log2FoldChange<0,1,0)
+  pos_out$neg_marg<- ifelse(pos_out$pvalue<0.05 & pos_out$padj>0.1 & pos_out$log2FoldChange<0,1,0)
+  pos_out$pos_sig<- ifelse(pos_out$padj<0.1 & pos_out$log2FoldChange>0,1,0)
+  pos_out$pos_marg<- ifelse(pos_out$pvalue<0.05 & pos_out$padj>0.1 & pos_out$log2FoldChange>0,1,0)
+
+  pos_neg[[i]]<- data.frame(tissue=i, res=c(-sum(pos_out$neg_sig, na.rm=TRUE), -sum(pos_out$neg_marg, na.rm=TRUE), sum(pos_out$pos_sig, na.rm=TRUE), sum(pos_out$pos_marg, na.rm=TRUE)), type=c("negative significant", "negative marginal", "positive significant","positive marginal"))
+  
+  ##plots
+  tissue$gene<- plyr::revalue(tissue$gene, c("LOC113993669"="CYP19A1","LOC113983511"="OXT", "LOC113983498"="AVP","LOC113982601"="AVPR2"))
+
+  tissue$sig<- ifelse(tissue$padj<0.1,"Q<0.1",ifelse(tissue$pvalue<0.05,"P<0.05","NS"))
+  
+  tissue<- tissue[order(tissue$padj),]
+  rownames(tissue)<- 1:nrow(tissue)
+  
+  
+tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
+tissue$is_interesting<- tissue$interesting_genes==""
+plots[[i]]<- ggplot(tissue, aes(x=log2FoldChange, y=-log10(padj), color=sig)) + geom_point(size=4) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + geom_point(data=tissue[tissue$interesting_genes!="",], aes(fill=sig), pch=21,color="grey40", show.legend=FALSE, size=5) + scale_color_manual(values=tissue_cols[[i]]) + scale_fill_manual(values=tissue_cols[[i]][2:3]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + scale_x_continuous(limits=c(-4,4), breaks=c(-4,-3,-2,-1,0,1,2,3,4)) + scale_y_continuous(limits=c(0,6)) + geom_hline(yintercept=-log10(0.1), linetype="dashed", color = "grey70", size=1)
+tissue$X<- NULL
+tissue$pvalue<- ifelse(is.na(tissue$padj), NA, as.numeric(tissue$pvalue))
+sub<- subset(tissue, select=c("gene","log2FoldChange","pvalue"))
+tissue<- subset(tissue, select=c("gene","pvalue"))
+colnames(tissue)[colnames(tissue)=="pvalue"] <- i
+output[[i]]<- tissue
+
+sub$logP<- -log(sub$pvalue, 10)
+sub$logP<- ifelse(sub$log2FoldChange<0, -(sub$logP), sub$logP)
+sub<- subset(sub, select=c("gene", "logP"))
+colnames(sub)[colnames(sub)=="logP"] <- i
+directionalp[[i]]<- sub
+}
+g<- ggarrange(plotlist=plots,ncol=3, nrow=4, common.legend = TRUE)
+g<- annotate_figure(g, top=textGrob("Volcano plots by social network strength per tissue",gp=gpar(fontsize=22)), bottom=textGrob("LogFoldChange",gp=gpar(fontsize=20)), left=textGrob("-log10(p-adjusted)",gp=gpar(fontsize=20), rot = 90))
+g
+ggexport(g, filename = "figure_volcanoes_strength.png", width = 1500,height = 1500, pointsize=32)
+
+setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/analysis")
+```
+
+
+```{r}
+pos_neg_str<- do.call("rbind", pos_neg)
+pos_neg_str$type<- factor(pos_neg_str$type, levels=c("negative significant", "negative marginal","positive significant","positive marginal"))
+pos_neg_str$tissue<- factor(pos_neg_str$tissue, levels=tissue_order)
+pos_neg_str$abs_val<- ifelse(grepl("significant",pos_neg_str$type), abs(pos_neg_str$res), "")
+pos_cols<- c("#0D8CFF", "#AED9FF","#FF3300","#FFBBAA")
+
+ggplot(pos_neg_str, aes(x=tissue, y=res, fill=type)) + geom_bar(stat="identity") + peri_theme + scale_y_continuous(expand=c(0,0), limits=c(-1200, 1200)) + labs(title="Strength", x="", y="") + scale_fill_manual(values=pos_cols) + geom_hline(yintercept=0)+ theme(legend.position = "none") + geom_text(aes(label=abs_val),vjust=pos_neg_str$res < 0)+ theme(plot.margin = unit(c(1,1,0,0), "lines"))
+
+```
+
+## Pairwise Tissue Similarity
+
+```{r}
+temp<- merge(output[[1]],output[[2]],by="gene", all.x=TRUE)
+temp<- merge(temp, output[[3]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[4]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[5]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[6]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[7]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[8]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[9]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[10]], by="gene", all.x=TRUE)
+temp<- merge(temp, output[[11]], by="gene", all.x=TRUE)
+pvalue_data<- merge(temp, output[[12]], by="gene", all.x=TRUE)
+rownames(pvalue_data)<- pvalue_data$gene
+pvalue_data$gene<- NULL
+
+```
+
+```{r}
+temp<- merge(directionalp[[1]],directionalp[[2]],by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[3]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[4]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[5]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[6]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[7]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[8]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[9]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[10]], by="gene", all=TRUE)
+temp<- merge(temp, directionalp[[11]], by="gene", all=TRUE)
+logpvalue_data<- merge(temp, directionalp[[12]], by="gene", all=TRUE)
+rownames(logpvalue_data)<- logpvalue_data$gene
+
+logpvalue_data$gene<- NULL
+
+pvalue_cor<- cor(logpvalue_data, use= "pairwise.complete.obs", method="pearson")
+
+ps<-colorRampPalette(brewer.pal(n = 7, name =
+  "Purples"))(100)
+
+color=colorRampPalette(brewer.pal(n = 7, name =
+  "YlOrRd"))(100)
+exp<- data.frame(row.names=colnames(pvalue_data),mean_logP=apply(-log10(pvalue_data),2, mean,na.rm=TRUE))
+exp$tissue<- tissue_order
+ann_cols<- list(tissue=tissue_colors, mean_logP=ps[1:67])
+
+
+
+color=colorRampPalette(brewer.pal(n = 7, name =
+  "YlOrRd"))(100)
+
+
+pheatmap(pvalue_cor, color=color, annotation_row=exp, border_color = NA, display_numbers = signif(pvalue_cor,2), annotation_colors = ann_cols, clustering_distance_cols = "euclidean", clustering_distance_rows = "euclidean", clustering_method="complete")
+
+
+
+
+
+result <- pvclust(pvalue_cor, method.dist="euclidean", method.hclust="complete", nboot=10000, parallel=TRUE)
+plot(result)
+pvrect(result, alpha=0.95)
+```
+
+## RRHO2
+
+```{r RRHO strength, eval=FALSE}
+RRHO_objects<- list()
+
+comparisons<- combn(tissue_order, 2)
+RRHO_objects<- list()
+for(i in 1:ncol(comparisons)){
+  comparison<- comparisons[,i]
+  p1_name<- comparison[1]
+  p2_name<- comparison[2]
+  p1<- data.frame(gene=row.names(logpvalue_data), logP_1=logpvalue_data[,p1_name])
+  p2<- data.frame(gene=row.names(logpvalue_data), logP_2=logpvalue_data[,p2_name])
+  comb<- merge(p1,p2)
+  comb<- comb[complete.cases(comb),]
+  p11<- comb[, c("gene","logP_1")]
+  p11<- p11[order(p11$logP_1, decreasing=TRUE),]
+  p22<- comb[,c("gene","logP_2")]
+  p22<- p22[order(p22$logP_2, decreasing=TRUE),]
+  p1_p2<- paste(p1_name,p2_name, sep="_")
+  RRHO_objects[[p1_p2]]<- RRHO2_initialize(p11, p22, labels = c(p1_name, p2_name), log10.ind=TRUE, boundary=0.01)
+  jpeg(filename=paste0("RRHO2_strength",p1_p2,".jpg"))
+  RRHO2_heatmap(RRHO_objects[[p1_p2]])
+  dev.off()
+}
+save(RRHO_objects,file="../DE_results/RRHO2/RRHO2_strength.RData")
+
+```
+
+```{r}
+load("../DE_results/RRHO2/RRHO2_strength.RData")
+maxp<- vector(mode="numeric")
+for(i in names(RRHO_objects)){
+  sub<- RRHO_objects[[i]]$hypermat
+  maxp[i]<- max(sub, na.rm=TRUE)
+}
+maxp<- max(maxp)
+
+plots_scaled<- list() # for the plots on the same scale
+plots<- list()
+for(i in names(RRHO_objects)){
+  sub<- RRHO_objects[[i]]$hypermat
+  sub<- melt(sub, na.rm=TRUE)
+  x<- word(i,1,1,sep="_")
+  y<- word(i,2,2,sep="_")
+  plots_scaled[[i]]<- ggplot(data=sub, aes(Var1, Var2, fill=value)) + geom_tile() + peri_theme + scale_y_continuous(expand=c(0,0)) + scale_x_continuous(expand=c(0,0)) + scale_fill_viridis(limits=c(0,maxp)) + theme(axis.text.x=element_blank(),axis.text.y=element_blank(), axis.ticks=element_blank(), legend.position="none") + labs(x=x, y=y)
+  plots[[i]]<- ggplot(data=sub, aes(Var1, Var2, fill=value)) + geom_tile() + scale_y_continuous(expand=c(0,0)) + scale_x_continuous(expand=c(0,0)) + scale_fill_viridis() + theme(axis.text.x=element_blank(),axis.text.y=element_blank(), axis.ticks=element_blank()) + labs(x=x, y=y)
+}
+
+
+m <- matrix(NA, 11, 11)
+m[lower.tri(m, diag = T)] <- 1:66
+
+## This plot is just to farm the legend. 
+p<- ggplot(data=sub, aes(Var1, Var2, fill=value)) + geom_tile() + peri_theme + scale_y_continuous(expand=c(0,0)) + scale_x_continuous(expand=c(0,0)) + scale_fill_viridis(limits=c(0,maxp)) + theme(axis.text.x=element_blank(),axis.text.y=element_blank(), axis.ticks=element_blank()) + labs(x=x, y=y)
+leg<- get_legend(p)
+
+m1<- m
+m1[1,11]<- 67
+plots_scaled[["legend"]]<- leg
+
+g<-arrangeGrob(grobs= plots_scaled, layout_matrix = m1)
+g
+
+ggsave(file="../DE_results/RRHO2/figure_RRHO_strength_scaled.pdf", g, units="in", width=20, height=20)
+
+
+g<-grid.arrange(grobs= plots, layout_matrix = m)
+ggsave(file="../DE_results/RRHO2/figure_RRHO_strength_unscaled.pdf", g, units="in", width=25, height=10)
+```
+
+
+## Overall brain patterns
+
+```{r}
+brain<- logpvalue_data[,-c(1:2)]
+
+brain$p_combo<- apply(brain,1, median)
+brain<- brain[complete.cases(brain),]
+brain$gene<- rownames(brain)
+brain_go<- merge(brain, go_terms, by="gene", all.x=TRUE)
+brain_go<- brain_go[order(brain_go$p_combo, decreasing=TRUE),]
+write.csv(brain,"../DE_results/results_brain_strength.csv", row.names=FALSE)
+geneList<- brain_go$p_combo
+names(geneList)<- brain_go$gene
+
+#subsets<- brain[-1.3>brain$p_combo,]
+
+#y<- GSEA(geneList, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+#ridgeplot(y)
+
+y<- enricher(brain$gene[which(abs(brain$p_combo)>1.3)], universe=brain$gene, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+#ridgeplot(y)
+ego2<- y@result
+ego2$GeneRatio2<- word(ego2$GeneRatio, 1,1, sep="/")
+ego2$GeneRatio2<- as.numeric(ego2$GeneRatio2)
+
+ggplot(ego2[1:10,], aes(x=Description, y=GeneRatio2, fill=-qvalue)) + geom_bar(stat="identity") + theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1)) + coord_flip() + peri_theme + scale_y_continuous(expand=c(0,0)) + xlab("") + ylab("No genes enriched") + scale_fill_viridis()
+
+knitr::kable(y@result[1:10,], caption="BP enriched GO terms in the median p in the brain for strength", row.names = FALSE) %>% kable_styling()
+
+write.csv(y@result,"../DE_results/GO_strength_brain.csv", row.names=FALSE)
+
+ego2<- as.data.frame(y@result$ID)
+colnames(ego2)<- "ID"
+ego2$p.adjust<- y@result$p.adjust
+
+simMatrix <- calculateSimMatrix(ego2$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="BP",
+                                method="Rel")
+scores <- setNames(-log10(ego2$p.adjust), ego2$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+```
+
+```{r}
+
+tophits<- brain
+tophits$p_combo<- abs(tophits$p_combo)
+tophits<- tophits[order(tophits$p_combo, decreasing=TRUE),]
+tophits<- tophits$gene[1:6]
+out<- list()
+#i="POM"
+for(i in tissue_order){
+  tissue<- status_results[[i]]
+  tissue<- tissue[!is.na(tissue$pvalue),]
+  sub<- tissue[tissue$gene %in% tophits,]
+  out[[i]]<- data.frame(gene=sub$gene, lfc=sub$log2FoldChange, p=sub$pvalue, padj=sub$padj, Tissue=i)
+  }
+status_results_tophits<- do.call("rbind", out)
+status_results_tophits<- status_results_tophits[status_results_tophits$Tissue!="GON" & status_results_tophits$Tissue!="PIT",]
+
+
+outliers=c("PFT2_POM_run1")
+
+brain_behav<- subset(key_behav, Tissue!="GON")
+brain_behav<- subset(brain_behav, Tissue!="PIT")
+brain_behav<- brain_behav[!rownames(brain_behav) %in% outliers,]
+brain_behav<- droplevels(brain_behav)
+brain_behav<- brain_behav[which(!is.na(brain_behav$strength.all_study)),]
+
+brain_data<- data[,colnames(data) %in% rownames(brain_behav)]
+
+
+
+start<- nrow(brain_data)
+#remove genes with avg read counts <20
+brain_data$avg_count<- apply(brain_data, 1, mean)
+brain_data<- brain_data[brain_data$avg_count>20,]
+brain_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+brain_data$percent_0<- apply(brain_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(brain_data)/2
+brain_data<- brain_data[brain_data$percent_0<=thresh,]
+brain_data$percent_0<-NULL
+#13652 genes.
+brain_behav$strength.all_study<- scale(brain_behav$strength.all_study)
+dd<- DESeqDataSetFromMatrix(countData=brain_data, colData=brain_behav, design= ~ Tissue + strength.all_study)
+dd<- DESeq(dd)
+#dd<- dd[which(mcols(dd)$betaConv),] #remove any genes that didn't converge. 
+
+res<- results(dd, alpha=0.1)
+
+
+gone<- plotCounts(dd, gene=row.names(res[tophits[1],]), intgroup=c("Tissue","strength.all_study","Status"), returnData=TRUE)
+gtwo<- plotCounts(dd, gene=row.names(res[tophits[2],]), intgroup=c("Tissue","strength.all_study","Status"), returnData=TRUE)
+gthree<-  plotCounts(dd, gene=row.names(res[tophits[3],]), intgroup=c("Tissue","strength.all_study","Status"), returnData=TRUE)
+gfour<-  plotCounts(dd, gene=row.names(res[tophits[4],]), intgroup=c("Tissue","strength.all_study","Status"), returnData=TRUE)
+gfive<-  plotCounts(dd, gene=row.names(res[tophits[5],]), intgroup=c("Tissue","strength.all_study","Status"), returnData=TRUE)
+gsix<-  plotCounts(dd, gene=row.names(res[tophits[6],]), intgroup=c("Tissue","strength.all_study","Status"), returnData=TRUE)
+vars<- list(gone,gtwo,gthree,gfour,gfive,gsix)
+
+plots<- list()
+#i=1
+for(i in 1:6){
+  dat<- vars[[i]]
+  name<- tophits[i]
+  result<- status_results_tophits[status_results_tophits$gene==name,]
+  result$label<- paste0("LFC=",signif(result$lfc,2), "\np(raw)=", formatC(result$p,2,format="e"))
+  result$x<- 0.5
+  result$y<- max(dat$count)-100
+  plots[[i]]<-  ggplot(dat, aes(x=strength.all_study, y=count)) + geom_point(size=2, position=dodge, aes(color=Status)) + labs(title=paste0(name, " p(median)=", formatC(10^-abs(brain_go$p_combo[brain_go$gene==name]),2, format="e")),x="", y="Normalised Counts") + peri_theme + scale_colour_manual(values=status_cols[2:3]) + facet_wrap(. ~Tissue, ncol=5) + geom_text(data=result, aes(x=x, y=y, label=label))
+}
+
+
+g<- ggarrange(plotlist=plots[1:2],ncol=1, nrow=2, common.legend = TRUE, labels=c("A","B"))
+g<- annotate_figure(g, top=textGrob("Top two genes consistently DE in brain with strength",gp=gpar(fontsize=22)), bottom=textGrob("social network strength",gp=gpar(fontsize=18)))
+
+g
+ggexport(g, filename = "../DE_results/figure_braintop_strength.png", width = 700,height = 900)
+```
+
+
+
+```{r plotting BSTm, eval=FALSE}
+BSTm_modules<- read.csv("../WGCNA/ByTissue_2021/BSTm_results_ModuleMembership.csv")
+
+
+i="BSTm"
+ tissue<- status_results[[i]]
+  tissue<- tissue[!is.na(tissue$pvalue),]
+  tissue$gene<- plyr::revalue(tissue$gene, c("LOC113993669"="CYP19A1","LOC113983511"="OXT", "LOC113983498"="AVP"))
+
+  tissue$sig<- ifelse(tissue$padj<0.1,"Q<0.1",ifelse(tissue$pvalue<0.05,"P<0.05","NS"))
+  
+  tissue<- tissue[order(tissue$padj),]
+  rownames(tissue)<- 1:nrow(tissue)
+  
+tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
+tissue$is_interesting<- tissue$interesting_genes==""  
+  
+tissue<- merge(tissue, BSTm_modules[,c("gene","best_anno","moduleColor")], by="gene")
+tissue$color<- ifelse(tissue$pvalue<0.05, "grey30", "grey60")
+tissue$color<- ifelse(tissue$padj<0.1, as.character(tissue$moduleColor), as.character(tissue$color))
+tissue<- tissue[!is.na(tissue$color),]
+
+tissue$color<-factor(tissue$color,levels=c("grey60","grey30","darkmagenta","salmon4","blue",        "saddlebrown","brown","darkred","coral2" ))
+modulecols<- c("grey30","grey60","darkmagenta","salmon4","blue",        "saddlebrown","brown","darkred","coral2")
+
+tissue$interesting_genes<- ifelse(tissue$interesting_genes!="", as.character(tissue$best_anno),"")
+tissue$outline<- ifelse(tissue$padj<0.1 | tissue$is_interesting==FALSE, "yes", "no")
+
+
+
+#ggplot(tissue, aes(x=log2FoldChange, y=-log10(pvalue), color=sig)) + geom_point(size=4) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + geom_point(data=tissue[tissue$interesting_genes!="",], aes(fill=sig), pch=21,color="grey40", show.legend=FALSE, size=5) + scale_color_manual(values=tissue_cols[[i]]) + scale_fill_manual(values=tissue_cols[[i]][2:3]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + geom_hline(yintercept=-log10(0.1), linetype="dashed", color = "grey70", size=0.0)
+
+
+ggplot(tissue, aes(x=log2FoldChange, y=-log10(pvalue), color=color)) + geom_point(size=4) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + scale_color_manual(values=modulecols) + geom_point(data=tissue[tissue$outline=="yes",],fill=NA, pch=21, stroke=0.01, color="grey40", show.legend=FALSE, size=5) + scale_fill_manual(values=modulecols[3:length(modulecols)]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + theme(legend.position = "none")
+
+
+```
+
+
+
+# Interaction between Status * mean testosterone
+
+This is just for plotting the volcano plots - I did not do the other analyses here.
+
+```{r,  fig.height= 20, fig.width=15, eval=FALSE}
+setwd("../DE_results/")
+files<- list.files(pattern="interactions_[a-zA-Z]*", ignore.case=TRUE)
+status_results<- lapply(files, read.csv)
+names(status_results)<- word(files, 2, sep="_")
+
+
+output<- list()
+plots<- list()
+directionalp<- list()
+pos_neg<- list()
+for(i in tissue_order){
+  tissue<- status_results[[i]]
+  tissue<- tissue[!is.na(tissue$pvalue),]
+  ## counts of positive and negative genes
+  pos_out<- tissue
+  pos_out$neg_sig<- ifelse(pos_out$padj<0.1 & pos_out$log2FoldChange<0,1,0)
+  pos_out$neg_marg<- ifelse(pos_out$pvalue<0.05 & pos_out$padj>0.1 & pos_out$log2FoldChange<0,1,0)
+  pos_out$pos_sig<- ifelse(pos_out$padj<0.1 & pos_out$log2FoldChange>0,1,0)
+  pos_out$pos_marg<- ifelse(pos_out$pvalue<0.05 & pos_out$padj>0.1 & pos_out$log2FoldChange>0,1,0)
+
+  pos_neg[[i]]<- data.frame(tissue=i, res=c(-sum(pos_out$neg_sig, na.rm=TRUE), -sum(pos_out$neg_marg, na.rm=TRUE), sum(pos_out$pos_sig, na.rm=TRUE), sum(pos_out$pos_marg, na.rm=TRUE)), type=c("negative significant", "negative marginal", "positive significant","positive marginal"))
+  
+  ##plots
+  tissue$gene<- plyr::revalue(tissue$gene, c("LOC113993669"="CYP19A1","LOC113983511"="OXT", "LOC113983498"="AVP","LOC113982601"="AVPR2"))
+
+  tissue$sig<- ifelse(tissue$padj<0.1,"Q<0.1",ifelse(tissue$pvalue<0.05,"P<0.05","NS"))
+  
+  tissue<- tissue[order(tissue$padj),]
+  rownames(tissue)<- 1:nrow(tissue)
+  
+  
+tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
+tissue$is_interesting<- tissue$interesting_genes==""
+plots[[i]]<- ggplot(tissue, aes(x=log2FoldChange, y=-log10(padj), color=sig)) + geom_point(size=4) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + geom_point(data=tissue[tissue$interesting_genes!="",], aes(fill=sig), pch=21,color="grey40", show.legend=FALSE, size=5) + scale_color_manual(values=tissue_cols[[i]]) + scale_fill_manual(values=tissue_cols[[i]][2:3]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + scale_x_continuous(limits=c(-4,4), breaks=c(-4,-3,-2,-1,0,1,2,3,4)) + scale_y_continuous(limits=c(0,6)) + geom_hline(yintercept=-log10(0.1), linetype="dashed", color = "grey70", size=1)
+tissue$X<- NULL
+tissue$pvalue<- ifelse(is.na(tissue$padj), NA, as.numeric(tissue$pvalue))
+sub<- subset(tissue, select=c("gene","log2FoldChange","pvalue"))
+tissue<- subset(tissue, select=c("gene","pvalue"))
+colnames(tissue)[colnames(tissue)=="pvalue"] <- i
+output[[i]]<- tissue
+
+sub$logP<- -log(sub$pvalue, 10)
+sub$logP<- ifelse(sub$log2FoldChange<0, -(sub$logP), sub$logP)
+sub<- subset(sub, select=c("gene", "logP"))
+colnames(sub)[colnames(sub)=="logP"] <- i
+directionalp[[i]]<- sub
+}
+g<- ggarrange(plotlist=plots,ncol=3, nrow=4, common.legend = TRUE)
+g<- annotate_figure(g, top=textGrob("Volcano plots by status x mean T interaction per tissue",gp=gpar(fontsize=22)), bottom=textGrob("LogFoldChange",gp=gpar(fontsize=20)), left=textGrob("-log10(p-adjusted)",gp=gpar(fontsize=20), rot = 90))
+g
+ggexport(g, filename = "figure_volcanoes_interactions.png", width = 1500,height = 1500, pointsize=32)
+setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/analysis")
+```
+
+
+```{r, eval=FALSE}
+pos_neg_int<- do.call("rbind", pos_neg)
+pos_neg_int$type<- factor(pos_neg_int$type, levels=c("negative significant", "negative marginal","positive significant","positive marginal"))
+pos_neg_int$tissue<- factor(pos_neg_int$tissue, levels=tissue_order)
+pos_neg_int$abs_val<- ifelse(grepl("significant",pos_neg_int$type), abs(pos_neg_int$res), "")
+pos_cols<- c("#0D8CFF", "#AED9FF","#FF3300","#FFBBAA")
+
+ggplot(pos_neg_int, aes(x=tissue, y=res, fill=type)) + geom_bar(stat="identity") + peri_theme + scale_y_continuous(expand=c(0,0), limits=c(-1200, 1200)) + labs(title="Status x mean T", x="", y="") + scale_fill_manual(values=pos_cols) + geom_hline(yintercept=0)+ theme(legend.position = "none") + geom_text(aes(label=abs_val),vjust=pos_neg_int$res < 0)+ theme(plot.margin = unit(c(1,1,0,0), "lines"))
+
+```
+
+

@@ -1,0 +1,3030 @@
+---
+title: "Candidate Gene Analysis"
+subtitle: "For manuscript: Neurogenomic landscape of male cooperative behavior in a wild bird "
+date: "`r Sys.Date()`"
+author: "Peri Bolton"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    
+    
+---
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning=FALSE)
+```
+
+```{r libraries used, echo=FALSE}
+library(plyr)
+library(reshape2)
+library(ggplot2)
+library(ggpubr)
+library(stringr)
+library(DESeq2)
+library(kableExtra)
+library(VennDiagram)
+library(wesanderson)
+library(MASS)
+library(pheatmap)
+library(RColorBrewer)
+library(reshape2)
+library(WGCNA)
+
+save_pheatmap_png <- function(x, filename, width=1200, height=1000, res = 150) {
+  png(filename, width = width, height = height, res = res)
+  grid::grid.newpage()
+  grid::grid.draw(x$gtable)
+  dev.off()
+}
+
+peri_theme <- theme(panel.background = element_rect(fill="white"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+    axis.title.x = element_text(size = 12), axis.text.x = element_text(size = 10, 
+        colour = "black"), axis.title.y = element_text(size = 12), 
+    axis.text.y = element_text(size = 10, colour = "black"), 
+    legend.text = element_text(size = 10), legend.title = element_text(size = 12), 
+    axis.line.y = element_line(colour = "black"), axis.line.x = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5, size=12),
+    plot.subtitle = element_text(hjust=0.5, size=12))  + theme(legend.key=element_blank())
+dodge=position_dodge(0.8)
+
+peri_presentation <- theme(panel.background = element_rect(fill="white"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+    axis.title.x = element_text(size = 12), axis.text.x = element_text(size = 14, 
+        colour = "black"),strip.text.x = element_text(
+        size = 14, face="bold"), 
+    axis.text.y = element_text(size = 14, colour = "black"), 
+    axis.line.y = element_line(colour = "black", size=1), axis.line.x = element_line(colour = "black", size=1), strip.background = element_rect(color="white", fill="white"))  + theme(legend.key=element_blank())
+
+
+colours<- wes_palette("Darjeeling1", 4, type="discrete")
+dj_col<- c("#00A08A", "#F2AD00")
+status_cols<- c("#86AD44","#E54849","#414042")
+
+```
+
+```{r}
+key<- read.csv("../data_filtered/data_key_Parsed_ReplicatesRemoved.csv")
+               
+behav<- read.csv("../data_unfiltered/PIPFIL_T_and_behav_data.csv")
+rownames(key)<- key$X
+
+key$Color_ID<- sub("/","", key$Color_ID)
+key<- plyr::rename(key, replace=c("Color_ID"="colorID"))
+behav$status<- plyr::revalue(behav$status, c("floa"="floater", "terr"="territorial"))
+key_behav<- merge(key, behav, by="colorID")
+key_behav<- key_behav[!is.na(key_behav$last_behav),]
+
+
+#create a data.frame with all of the observations. 
+not_in_behav<- key[!key$X %in% key_behav$X,]
+cols_not_key<- colnames(key_behav)[!colnames(key_behav) %in% colnames(key)]
+cols_not_key_df<- data.frame(matrix(NA, nrow = nrow(not_in_behav), ncol = length(cols_not_key)))
+colnames(cols_not_key_df)<- cols_not_key
+not_in_behav<- cbind(not_in_behav, cols_not_key_df)
+
+key_behav<- rbind(key_behav, not_in_behav)
+
+rownames(key_behav)<- key_behav$X
+key_behav<- subset(key_behav, select=c("sampleID", "Year", "Tissue", "Batch", "Status", "Class", "final_corrected_T", "mean_T", "effort.all_study", "degree.all_study", "strength.all_study"))
+#key_behav$Class<- word(key_behav$Class,1)
+
+key_behav$Tissue<- factor(key_behav$Tissue, levels=c("GON","PIT","VMH","AH","PVN","POM","ICO","GCT","AI","TNA","LS", "BSTm"))
+key_behav<- key_behav[order(rownames(key_behav)),]
+key_behav$Class<- plyr::revalue(key_behav$Class, replace=c("SCB floater"="Predefinitive floater", "DCB floater "="Definitive floater", "DCB territorial"="Territorial"))
+key_behav$Class<- factor(key_behav$Class, levels=c("Predefinitive floater", "Definitive floater", "Territorial"))
+
+
+data<- read.csv("../data_filtered/data_RawCounts_all_ReplicatesRemoved_antisense_V2.csv")
+rownames(data)<- data$X
+data$X<- NULL
+
+
+
+setwd("../Candidate_gene_results/")
+norm_data<- list.files(pattern="*norm.csv")
+norm_data<- lapply(norm_data, read.csv)
+
+results_names<- list.files(pattern="results*")
+results_names<- results_names[!grepl("brain",results_names)]
+results_data<- lapply(results_names, read.csv)
+results_names<- sub(".csv","", results_names)
+results_names<- sub("results_", "",results_names)
+
+names(results_data)<- results_names
+results_data<- mapply(`[<-`, results_data, 'result', value = results_names, SIMPLIFY = FALSE)
+results_data<- lapply(results_data, function(x) { x["X"] <- NULL; x })
+results_data<- do.call("rbind", results_data)
+results_data$Tissue<- word(results_data$result, 1,1, sep="_")
+results_data$Test<- word(results_data$result, 2,2, sep="_")
+results_data$Test<- as.factor(results_data$Test)
+setwd("../analysis")
+
+results_data$Test<- revalue(results_data$Test, c("status"="Status", "mean"="mean T"))
+#results_sig<- results_data[results_data$pvalue<0.05,]
+results_data$Tissue<- factor(results_data$Tissue, levels=c("GON","PIT","VMH","AH","PVN","POM","ICO","GCT","TNA","AI","LS", "BSTm"))
+
+
+results_data<- droplevels(results_data)
+## List of candidate genes
+
+candidates<- c("AR", "SRD5A2", "LOC113993669", "ESR1", "ESR2", "PGR","GNRH1", "PRL","PRLR","VIP", "VIPR1", "VIPR2","LOC113983511", "OXTR", "LOC113983498", "AVPR1A", "AVPR1B", "LOC113982601")
+
+
+
+results_data<- results_data[which(results_data$gene %in% candidates),]
+
+
+results_data<- results_data[,c(9,10,7,1,2,3,4,5,6)]
+```
+
+
+```{r interaction results}
+## reading in the interaction data
+setwd("../Candidate_gene_results")
+
+results_names<- list.files(pattern="interactions_")
+results_int<- lapply(results_names, read.csv)
+
+results_int<- do.call("rbind", results_int)
+setwd("../analysis")
+
+results_int$Tissue<- factor(results_int$Tissue, levels=c("GON","PIT","VMH","AH","PVN","POM","ICO","GCT","TNA","AI","LS", "BSTm"))
+
+
+results_int<- results_int[which(results_int$gene %in% candidates),]
+
+
+keep<- c("candidates","key_behav", "results_data","results_int","norm_data", "peri_theme","key","dodge", "status_cols", "dj_col", "colours","peri_presentation", "keep", "save_pheatmap_png", "data", "status_cols2")
+
+```
+
+This document contains the differential expression results from DESeq2 for our candidate genes. These candidates are: ```r candidates```.  
+
+* LOC113983511 is OXT (Mesotocin)
+
+* LOC113993669 is CYP19A1 (Aromatase)
+
+* LOC113983498 is vasotocin-neurophysin (AVP precursor) 
+
+* LOC113982601 is AVPR2. 
+
+Originally I was correcting for multiple comparisons using the raw p-values for the number of genes expressed in a tissue (using Benjamini-Hochberg). However, these were more conservative than the corrected p-values from DESeq2. Therefore, i only present the corrected p-values from DESeq2 based on the number of genes expressed in that tissue.
+
+
+
+# LogfoldChange heatmaps
+
+A simple way to present the candidate gene data is through this grid. These are the raw results that went into the publication - but some results will have been subsequently manually excluded on the basis of R^2 and strongly influential individuals. 
+
+## Social Status
+
+```{r Status,echo=TRUE}
+
+
+results_data_status<- results_data[grepl("status", results_data$Test,ignore.case = TRUE),]
+
+results_data_status$gene<- factor(results_data_status$gene, levels=c("AR", "SRD5A2", "LOC113993669", "ESR1", "ESR2", "PGR","GNRH1", "PRL","PRLR","VIP", "VIPR1", "VIPR2","LOC113983511", "OXTR", "LOC113983498", "AVPR1A", "AVPR1B", "LOC113982601"))
+results_data_status$gene<- plyr::revalue(results_data_status$gene, replace=c("LOC113993669"="CYP19A1","LOC113983511"="OXT", "LOC113983498"="AVP", "LOC113982601"="AVPR2"))
+res_data_status<- results_data_status[,c("log2FoldChange", "gene","Tissue")]
+res_data_status<- dcast(res_data_status, gene ~Tissue, value.var="log2FoldChange")
+rownames(res_data_status)<- res_data_status$gene
+res_data_status$gene<- NULL
+res_data_status<- as.matrix(res_data_status)
+
+
+
+res_int<- results_int[,c("log2FoldChange", "gene","Tissue")]
+res_int<- dcast(res_int, gene ~Tissue, value.var="log2FoldChange")
+rownames(res_int)<- res_int$gene
+res_int$gene<- NULL
+res_int<- as.matrix(res_int)
+
+p_data_status<- results_data_status[,c("pvalue", "gene","Tissue")]
+p_data_status<- dcast(p_data_status, gene ~Tissue, value.var="pvalue")
+rownames(p_data_status)<- p_data_status$gene
+p_data_status$gene<- NULL
+p_data_status<- as.matrix(p_data_status)
+
+
+sig<- matrix("", nrow=nrow(p_data_status),ncol=ncol(p_data_status))
+res<- matrix("", nrow=nrow(p_data_status),ncol=ncol(p_data_status))
+logsig<- matrix("", nrow=nrow(p_data_status),ncol=ncol(p_data_status))
+for(i in 1:nrow(p_data_status)){
+  for(j in 1:ncol(p_data_status)){
+    sig[i,j]<- as.numeric(ifelse(p_data_status[i,j]<0.05, signif(p_data_status[i,j],1),""))
+  }
+}
+res<- ifelse(res_data_status<0 & sig!="",-1,ifelse(res_data_status>0 & sig!="",1,NA))
+logsig<- ifelse(res==-1,-(-log10(p_data_status)), ifelse(res==1, -log10(p_data_status),NA))
+sig<- ifelse(is.na(sig),"", as.character(sig))
+
+pheatmap(res, na_col = "white", cluster_rows=FALSE, cluster_cols=FALSE, scale="none", border=NA, display_numbers = sig, color=blueWhiteRed(20), border_color = "grey90", legend=FALSE, main="Raw candidate gene results from social status")
+```
+
+## mean testosterone phenotype
+
+```{r mean T}
+results_data_meanT<- results_data[grepl("mean", results_data$Test,ignore.case = TRUE),]
+
+results_data_meanT$gene<- factor(results_data_meanT$gene, levels=c("AR", "SRD5A2", "LOC113993669", "ESR1", "ESR2", "PGR","GNRH1", "PRL","PRLR","VIP", "VIPR1", "VIPR2","LOC113983511", "OXTR", "LOC113983498", "AVPR1A", "AVPR1B","LOC113982601"))
+results_data_meanT$gene<- plyr::revalue(results_data_meanT$gene, replace=c("LOC113993669"="CYP19A1","LOC113983511"="OXT", "LOC113983498"="AVP","LOC113982601"="AVPR2"))
+res_data_meanT<- results_data_meanT[,c("log2FoldChange", "gene","Tissue")]
+res_data_meanT<- dcast(res_data_meanT, gene ~Tissue, value.var="log2FoldChange")
+rownames(res_data_meanT)<- res_data_meanT$gene
+res_data_meanT$gene<- NULL
+res_data_meanT<- as.matrix(res_data_meanT)
+
+p_data_meanT<- results_data_meanT[,c("pvalue", "gene","Tissue")]
+p_data_meanT<- dcast(p_data_meanT, gene ~Tissue, value.var="pvalue")
+rownames(p_data_meanT)<- p_data_meanT$gene
+p_data_meanT$gene<- NULL
+p_data_meanT<- as.matrix(p_data_meanT)
+
+
+#p_data_meanT<- formatC(p_data_meanT,format = "e",digits = 2)
+
+#pheatmap(res_data_meanT, na_col = "white", cluster_rows=FALSE, cluster_cols=FALSE, scale="column", border=NA, display_numbers = p_data_meanT, main="Log2FoldChange in Gene Expression according to meanT", color=blueWhiteRed(200))
+
+
+
+sig<- matrix("", nrow=nrow(p_data_meanT),ncol=ncol(p_data_meanT))
+res<- matrix("", nrow=nrow(p_data_meanT),ncol=ncol(p_data_meanT))
+logsig<- matrix("", nrow=nrow(p_data_meanT),ncol=ncol(p_data_meanT))
+for(i in 1:nrow(p_data_meanT)){
+  for(j in 1:ncol(p_data_meanT)){
+    sig[i,j]<- as.numeric(ifelse(p_data_meanT[i,j]<0.05, signif(p_data_meanT[i,j],1),""))
+    #res[i,j]<- as.numeric(ifelse(p_data_meanT[i,j]<0.05 & res_data_meanT[i,j]<0,-1,ifelse(p_data_meanT[i,j]<0.05 & res_data_meanT[i,j]>0,1,NA)))
+  }
+}
+res<- ifelse(res_data_meanT<0 & sig!="",-1,ifelse(res_data_meanT>0 & sig!="",1,NA))
+logsig<- ifelse(res==-1,-(-log10(p_data_meanT)), ifelse(res==1, -log10(p_data_meanT),NA))
+sig<- ifelse(is.na(sig),"", as.character(sig))
+#drop OXT and AVP because of their weird expression
+#res<- res[-c(13,15),]
+#sig<- sig[-c(13,15),]
+#logsig<- logsig[-c(13,15),]
+pheatmap(res, na_col = "white", cluster_rows=FALSE, cluster_cols=FALSE, scale="none", border=NA, display_numbers = sig, color=blueWhiteRed(20), border_color = "grey90", legend=FALSE, main="Raw candidate gene results from mean T")
+```
+
+## Status by mean T interaction
+
+```{r status by mean T}
+results_int$gene<- factor(results_int$gene, levels=c("AR", "SRD5A2", "LOC113993669", "ESR1", "ESR2", "PGR","GNRH1", "PRL","PRLR","VIP", "VIPR1", "VIPR2","LOC113983511", "OXTR", "LOC113983498", "AVPR1A", "AVPR1B","LOC113982601"))
+results_int$gene<- plyr::revalue(results_int$gene, replace=c("LOC113993669"="CYP19A1","LOC113983511"="OXT", "LOC113983498"="AVP","LOC113982601"="AVPR2" ))
+res_int<- results_int[,c("log2FoldChange", "gene","Tissue")]
+res_int<- dcast(res_int, gene ~Tissue, value.var="log2FoldChange")
+rownames(res_int)<- res_int$gene
+res_int$gene<- NULL
+res_int<- as.matrix(res_int)
+
+p_int<- results_int[,c("pvalue", "gene","Tissue")]
+p_int<- dcast(p_int, gene ~Tissue, value.var="pvalue")
+rownames(p_int)<- p_int$gene
+p_int$gene<- NULL
+p_int<- as.matrix(p_int)
+
+padj_int<- results_int[,c("pvalue", "gene","Tissue")]
+padj_int<- dcast(padj_int, gene ~Tissue, value.var="pvalue")
+rownames(padj_int)<- padj_int$gene
+padj_int$gene<- NULL
+padj_int<- as.matrix(padj_int)
+
+#p_int<- formatC(p_int,format = "e",digits = 2)
+
+#pheatmap(res_int, na_col = "white", cluster_rows=FALSE, cluster_cols=FALSE, scale="column", border=NA, display_numbers = p_int, main="Log2FoldChange in Gene Expression according to Status * mean T", color=blueWhiteRed(200))
+#save_pheatmap_png(my_heatmap, "interaction_heatmap.png",width=1800, height=1000, res = 150)
+
+
+sig<- matrix("", nrow=nrow(p_int),ncol=ncol(p_int))
+res<- matrix("", nrow=nrow(p_int),ncol=ncol(p_int))
+logsig<- matrix("", nrow=nrow(p_int),ncol=ncol(p_int))
+for(i in 1:nrow(p_int)){
+  for(j in 1:ncol(p_int)){
+    sig[i,j]<- as.numeric(ifelse(p_int[i,j]<0.05, signif(p_int[i,j],1),""))
+    #res[i,j]<- as.numeric(ifelse(p_int[i,j]<0.05 & res_int[i,j]<0,-1,ifelse(p_int[i,j]<0.05 & res_int[i,j]>0,1,NA)))
+  }
+}
+res<- ifelse(res_int<0 & sig!="",-1,ifelse(res_int>0 & sig!="",1,NA))
+logsig<- ifelse(res==-1,-(-log10(p_int)), ifelse(res==1, -log10(p_int),NA))
+sig<- ifelse(is.na(sig),"", as.character(sig))
+#drop OXT and AVP because of their weird expression
+#res<- res[-c(13,15),]
+#sig<- sig[-c(13,15),]
+#logsig<- logsig[-c(13,15),]
+pheatmap(res, na_col = "white", cluster_rows=FALSE, cluster_cols=FALSE, scale="none", border=NA, display_numbers = sig, color=blueWhiteRed(20), border_color = "grey90", legend=FALSE, main="Raw candidate gene results from interaction")
+```
+
+## Cooperative tendency (Social network strength)
+
+
+```{r strength}
+results_data_strength<- results_data[grepl("strength", results_data$Test,ignore.case = TRUE),]
+
+results_data_strength$gene<- factor(results_data_strength$gene, levels=c("AR", "SRD5A2", "LOC113993669", "ESR1", "ESR2", "PGR","GNRH1", "PRL","PRLR","VIP", "VIPR1", "VIPR2","LOC113983511", "OXTR", "LOC113983498", "AVPR1A", "AVPR1B", "LOC113982601"))
+results_data_strength$gene<- plyr::revalue(results_data_strength$gene, replace=c("LOC113993669"="CYP19A1","LOC113983511"="OXT", "LOC113983498"="AVP","LOC113982601"="AVPR2" ))
+res_data_strength<- results_data_strength[,c("log2FoldChange", "gene","Tissue")]
+res_data_strength<- dcast(res_data_strength, gene ~Tissue, value.var="log2FoldChange")
+rownames(res_data_strength)<- res_data_strength$gene
+res_data_strength$gene<- NULL
+res_data_strength<- as.matrix(res_data_strength)
+
+p_data_strength<- results_data_strength[,c("pvalue", "gene","Tissue")]
+p_data_strength<- dcast(p_data_strength, gene ~Tissue, value.var="pvalue")
+rownames(p_data_strength)<- p_data_strength$gene
+p_data_strength$gene<- NULL
+p_data_strength<- as.matrix(p_data_strength)
+#p_data_strength<- formatC(p_data_strength,format = "e",digits = 2)
+
+
+
+#pheatmap(res_data_strength, na_col = "white", cluster_rows=FALSE, cluster_cols=FALSE, scale="column", border=NA, display_numbers =p_data_strength, main="Log2FoldChange in Gene Expression according to social network strength", color=blueWhiteRed(200))
+
+
+sig<- matrix("", nrow=nrow(p_data_strength),ncol=ncol(p_data_strength))
+res<- matrix("", nrow=nrow(p_data_strength),ncol=ncol(p_data_strength))
+logsig<- matrix("", nrow=nrow(p_data_strength),ncol=ncol(p_data_strength))
+for(i in 1:nrow(p_data_strength)){
+  for(j in 1:ncol(p_data_strength)){
+    sig[i,j]<- as.numeric(ifelse(p_data_strength[i,j]<0.05, signif(p_data_strength[i,j],1),""))
+    #res[i,j]<- as.numeric(ifelse(p_data_strength[i,j]<0.05 & res_data_strength[i,j]<0,-1,ifelse(p_data_strength[i,j]<0.05 & res_data_strength[i,j]>0,1,NA)))
+  }
+}
+res<- ifelse(res_data_strength<0 & sig!="",-1,ifelse(res_data_strength>0 & sig!="",1,NA))
+logsig<- ifelse(res==-1,-(-log10(p_data_strength)), ifelse(res==1, -log10(p_data_strength),NA))
+sig<- ifelse(is.na(sig),"", as.character(sig))
+#drop OXT and AVP because of their weird expression
+#res<- res[-c(13,15),]
+#sig<- sig[-c(13,15),]
+#logsig<- logsig[-c(13,15),]
+pheatmap(res, na_col = "white", cluster_rows=FALSE, cluster_cols=FALSE, scale="none", border=NA, display_numbers = sig, color=blueWhiteRed(20), border_color = "grey90", legend=FALSE, main="Raw candidate gene results from strength")
+```
+
+
+# Gonads
+
+The next sections are scatter plots for each of the tissues showing what each of the genes are doing for manual validation. 
+
+```{r GON prep}
+gon_key<- subset(key_behav, Tissue=="GON")
+gon_key<- droplevels(gon_key)
+
+
+gon_data<- data[,colnames(data) %in% rownames(gon_key)]
+
+#remove genes with less than 5 reads
+gon_data$avg_count<- apply(gon_data, 1, mean)
+gon_data<- gon_data[gon_data$avg_count>5,]
+gon_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+gon_data$percent_0<- apply(gon_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(gon_data)/2
+gon_data<- gon_data[gon_data$percent_0<=thresh,]
+gon_data$percent_0<-NULL
+
+dd<- DESeqDataSetFromMatrix(countData=gon_data, colData=gon_key, design= ~ Batch)
+dd<- DESeq(dd)
+
+
+results_gon<- results_data[results_data$Tissue=="GON",]
+#results_gon<- results_gon[results_gon$gene %in% candidates,]
+
+results_gon2<- results_gon[which(results_gon$pvalue<0.05),]
+results_gon2<- results_gon2[order(results_gon2$gene),]
+
+knitr::kable(results_gon2[,-1], row.names=FALSE, digits=3, padding=20, caption="Significant results from DESeq2 before FDR correction in the Gonads (GON). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model)") %>% kable_styling()
+
+```
+
+Here only the data with continuous variables were at all significant so these will be plotted with the extracted Normalized data. 
+
+```{r GON candidate gene plots, fig.height=10, fig.width=10}
+gon_norm<- norm_data[[5]]
+rownames(gon_norm)<- gon_norm$X
+gon_norm$X<- NULL
+gon_norm<- as.data.frame(t(gon_norm))
+gon_norm$sampleID<- rownames(gon_norm)
+
+
+
+#PRLR
+PRLR<- subset(gon_norm, select=c("sampleID","PRLR"))
+PRLR<- merge(gon_key, PRLR, by="sampleID")
+PRLR$PRLR<- as.numeric(PRLR$PRLR)
+Rsq<- signif(cor(PRLR$mean_T, PRLR$PRLR)^2,2)
+lfc<- signif(results_gon$log2FoldChange[results_gon$gene=="PRLR" & results_gon$Test=="mean T"],2)
+praw<- signif(results_gon$pvalue[results_gon$gene=="PRLR" & results_gon$Test=="mean T"],2)
+padj=signif(results_gon$padj[results_gon$gene=="PRLR" & results_gon$Test=="mean T"],2)
+
+meanT_PRLR<- ggplot(PRLR, aes(x=mean_T, y=PRLR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="PRLR X mean T", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c, " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) +scale_colour_manual(values=status_cols, name="Age x Status") 
+
+
+
+#VIPR1 x degree
+VIPR1<- subset(gon_norm, select=c("sampleID","VIPR1"))
+VIPR1<- merge(gon_key, VIPR1, by="sampleID")
+VIPR1$VIPR1<- as.numeric(VIPR1$VIPR1)
+Rsq<- signif(cor(VIPR1$strength.all_study, VIPR1$VIPR1)^2,2)
+lfc<- signif(results_gon$log2FoldChange[results_gon$gene=="VIPR1" & results_gon$Test=="Strength"],2)
+praw<- signif(results_gon$pvalue[results_gon$gene=="VIPR1" & results_gon$Test=="Strength"],2)
+padj=signif(results_gon$padj[results_gon$gene=="VIPR1" & results_gon$Test=="Strength"],2)
+#strength X vipr1
+
+str_vipr1<- ggplot(VIPR1, aes(x=strength.all_study, y=VIPR1, color=factor(Class))) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="VIPR1 X Strength", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c, " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+#AVPR1A mean T
+AVPR1A<- subset(gon_norm, select=c("sampleID","AVPR1A"))
+AVPR1A<- merge(gon_key, AVPR1A, by="sampleID")
+AVPR1A$AVPR1A<- as.numeric(AVPR1A$AVPR1A)
+Rsq<- signif(cor(AVPR1A$mean_T, AVPR1A$AVPR1A)^2,2)
+lfc<- signif(results_gon$log2FoldChange[results_gon$gene=="AVPR1A" & results_gon$Test=="mean T"],2)
+praw<- signif(results_gon$pvalue[results_gon$gene=="AVPR1A" & results_gon$Test=="mean T"],2)
+padj=signif(results_gon$padj[results_gon$gene=="AVPR1A" & results_gon$Test=="mean T"],2)
+
+meanT_AVPR1A<- ggplot(AVPR1A, aes(x=mean_T, y=AVPR1A, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="AVPR1A X Mean T", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c, " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) +scale_colour_manual(values=status_cols, name="Age x Status") 
+
+
+
+
+figure<- ggarrange(meanT_PRLR, str_vipr1, meanT_AVPR1A, ncol=2, nrow=2, common.legend = TRUE)
+figure<- annotate_figure(figure, top = text_grob("Candidate genes in gonads (GON)", face = "bold", size = 12), left=textGrob("Normalized counts", rot = 90, vjust = 1, gp=gpar(fontsize=12)))
+figure
+
+#ggsave(filename="../Candidate_gene_results/GON_significant.png", figure,device="png", width=20, height=20, units="cm", dpi=300)
+
+```
+
+
+## Status specific gene expression in the Gonads
+
+If not already identified as a possible interaction from multiple incidences in the single trait comparison, I also used DESeq2 to extract possible interactions. 
+
+```{r, fig.height=5, fig.width=7}
+VIPR2<- subset(gon_norm, select=c("sampleID","VIPR2"))
+VIPR2<- merge(gon_key, VIPR2, by="sampleID")
+VIPR2$VIPR2<- as.numeric(VIPR2$VIPR2)
+
+
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="VIPR2" & results_int$Tissue=="GON"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="VIPR2" & results_int$Tissue=="GON"],2)
+padj=signif(results_int$padj[results_int$gene=="VIPR2" & results_int$Tissue=="GON"],2)
+status_cols2<- c("#E54849","#414042")
+
+
+
+a<- ggplot(VIPR2, aes(x=mean_T, y=VIPR2, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="VIPR2 X Status * mean T",
+subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+```
+
+Then, I am going to use AIC on simple linear models to decide amongst models to decide whether interaction effects or single term models better explain the data. 
+
+Note that the DESeq2 model for Status only is actually GeneExp ~ Batch + Status, and includes 4 additional samples. However, the linear models here don't differ in biological interpretation.
+
+```{r, echo=TRUE, fig.width=10, fig.height=5}
+VIPR_GON_lm_Status<- lm(VIPR2 ~ Year + Status, data=VIPR2)
+VIPR_GON_lm_meanT<- lm(VIPR2 ~ Year + mean_T, data=VIPR2)
+VIPR_GON_lm_int<- lm(VIPR2 ~ Year + Status*mean_T, data=VIPR2)
+#against the NULL model
+VIPR_GON_lm_null<- lm(VIPR2 ~ Year, data=VIPR2)
+
+model=c("VIPR2 ~ Year", "VIPR2 ~ Year + Status", "VIPR2 ~ Year + mean T","VIPR2 ~ Year + Status * mean T")
+AIC=c(AIC(VIPR_GON_lm_null), AIC(VIPR_GON_lm_Status),AIC(VIPR_GON_lm_meanT),AIC(VIPR_GON_lm_int))
+deltaAIC<- c(NA, AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+lm_p<- c(anova(VIPR_GON_lm_null)$'Pr(>F)'[1],anova(VIPR_GON_lm_Status)$'Pr(>F)'[2],anova(VIPR_GON_lm_meanT)$'Pr(>F)'[2], anova(VIPR_GON_lm_int)$'Pr(>F)'[4])
+
+DESeq2_raw_p=c(NA,results_gon$pvalue[results_gon$gene=="VIPR2" & results_gon$Test=="Status"], results_gon$pvalue[results_gon$gene=="VIPR2" & results_gon$Test=="mean T"], results_int$pvalue[results_int$gene=="VIPR2" & results_int$Tissue=="GON"])
+
+knitr::kable(data.frame(model, AIC, deltaAIC, lm_p, DESeq2_raw_p),row.names=FALSE, padding=20, caption="Model comparisons in the Gonads for VIPR2") %>% kable_styling()
+
+b<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,1), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+
+figure<- ggarrange(a,b, labels=c("A","B"), nrow=2)
+#ggsave(filename="../Candidate_gene_results/GON_interaction.png", figure,device="png", width=15, height=20, units="cm", dpi=300, bg="white")
+```
+
+
+# Pituitary
+
+```{r PIT prep}
+
+rm(list= ls()[!(ls() %in% keep)])
+
+
+pit_key<- subset(key_behav, Tissue=="PIT")
+pit_key<- droplevels(pit_key)
+
+#there were no pituitary samples in the pilot study so can just use the same data for the whole lot... 
+pit_norm<- norm_data[[8]]
+rownames(pit_norm)<- pit_norm$X
+pit_norm$X<- NULL
+
+
+results_pit<- results_data[results_data$Tissue=="PIT",]
+results_pit2<- results_pit[which(results_pit$pvalue<0.05),]
+results_pit2<- results_pit2[order(results_pit2$gene),]
+
+knitr::kable(results_pit2[,-1], row.names=FALSE, digits=3, padding=20, caption="Significant results from DESeq2 before FDR correction in the Pituitary (PIT). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).") %>% kable_styling()
+```
+
+
+```{r pit candidate gene plots, fig.width=10, fig.height=35}
+pit_norm<- as.data.frame(t(pit_norm))
+pit_norm$sampleID<- rownames(pit_norm)
+
+pit_plots<-list()
+
+
+
+#ESR1
+ESR1<- subset(pit_norm, select=c("sampleID","ESR1"))
+ESR1<- merge(pit_key, ESR1, by="sampleID")
+ESR1$ESR1<- as.numeric(ESR1$ESR1)
+
+#Rsq<- signif(cor(ESR1$mean_T, ESR1$ESR1)^2,2)
+lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="ESR1" & results_pit$Test=="Status"],2)
+praw<- signif(results_pit$pvalue[results_pit$gene=="ESR1" & results_pit$Test=="Status"],2)
+padj=signif(results_pit$padj[results_pit$gene=="ESR1" & results_pit$Test=="Status"],2)
+
+pit_plots[["status_ESR1"]]<- ggplot(ESR1, aes(x=Status, y=ESR1, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="ESR1 X Status", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)))+ scale_colour_manual(values=status_cols, name="Age x Status") 
+
+#ESR2
+ESR2<- subset(pit_norm, select=c("sampleID","ESR2"))
+ESR2<- merge(pit_key, ESR2, by="sampleID")
+ESR2$ESR2<- as.numeric(ESR2$ESR2)
+
+Rsq<- signif(cor(ESR2$strength.all_study, ESR2$ESR2)^2,2)
+lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="ESR2" & results_pit$Test=="Strength"],2)
+praw<- signif(results_pit$pvalue[results_pit$gene=="ESR2" & results_pit$Test=="Strength"],2)
+padj=signif(results_pit$padj[results_pit$gene=="ESR2" & results_pit$Test=="Strength"],2)
+
+pit_plots[["str_esr2"]]<- ggplot(ESR2, aes(x=strength.all_study, y=ESR2, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="ESR2 X Strength", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+#PRL
+PRL<- subset(pit_norm, select=c("sampleID","PRL"))
+PRL<- merge(pit_key, PRL, by="sampleID")
+PRL$PRL<- as.numeric(PRL$PRL)
+
+
+Rsq<- signif(cor(PRL$strength.all_study, PRL$PRL)^2,2)
+lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="PRL" & results_pit$Test=="Strength"],2)
+praw<- signif(results_pit$pvalue[results_pit$gene=="PRL" & results_pit$Test=="Strength"],2)
+padj=signif(results_pit$padj[results_pit$gene=="PRL" & results_pit$Test=="Strength"],2)
+
+
+pit_plots[["str_PRL"]]<- ggplot(PRL, aes(x=strength.all_study, y=PRL, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="PRL X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) +scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+#VIPR1 x degree
+VIPR1<- subset(pit_norm, select=c("sampleID","VIPR1"))
+VIPR1<- merge(pit_key, VIPR1, by="sampleID")
+VIPR1$VIPR1<- as.numeric(VIPR1$VIPR1)
+#strength X vipr1
+
+
+
+
+
+#VIPR2 
+VIPR2<- subset(pit_norm, select=c("sampleID","VIPR2"))
+VIPR2<- merge(pit_key, VIPR2, by="sampleID")
+VIPR2$VIPR2<- as.numeric(VIPR2$VIPR2)
+
+Rsq<- signif(cor(VIPR2$mean_T, VIPR2$VIPR2)^2,2)
+lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="VIPR2" & results_pit$Test=="mean T"],2)
+praw<- signif(results_pit$pvalue[results_pit$gene=="VIPR2" & results_pit$Test=="mean T"],2)
+padj=signif(results_pit$padj[results_pit$gene=="VIPR2" & results_pit$Test=="mean T"],2)
+
+
+
+pit_plots[["meanT_vipr2"]]<- ggplot(VIPR2, aes(x=mean_T, y=VIPR2, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="VIPR2 X mean T", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status") 
+
+#VIPR2 X strength
+
+Rsq<- signif(cor(VIPR2$strength.all_study, VIPR2$VIPR2)^2,2)
+lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="VIPR2" & results_pit$Test=="Strength"],2)
+praw<- signif(results_pit$pvalue[results_pit$gene=="VIPR2" & results_pit$Test=="Strength"],2)
+padj=signif(results_pit$padj[results_pit$gene=="VIPR2" & results_pit$Test=="Strength"],2)
+
+pit_plots[["str_vipr2"]]<- ggplot(VIPR2, aes(x=strength.all_study, y=VIPR2, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="VIPR2 X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) + scale_colour_manual(values=status_cols, name="Age x Status") 
+
+#AVP=LOC113983498
+AVP<- subset(pit_norm, select=c("sampleID","LOC113983498"))
+AVP<- merge(pit_key, AVP, by="sampleID")
+AVP$AVP<- as.numeric(AVP$LOC113983498)
+
+Rsq<- signif(cor(AVP$mean_T, AVP$AVP)^2,2)
+lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="LOC113983498" & results_pit$Test=="mean T"],2)
+praw<- signif(results_pit$pvalue[results_pit$gene=="LOC113983498" & results_pit$Test=="mean T"],2)
+padj=signif(results_pit$padj[results_pit$gene=="LOC113983498" & results_pit$Test=="mean T"],2)
+
+
+pit_plots[["meanT_AVP"]]<- ggplot(AVP, aes(x=mean_T, y=AVP, colour=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="AVP X Mean T", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) +scale_colour_manual(values=status_cols, name="Age x Status")
+
+# AVP strength
+
+Rsq<- signif(cor(AVP$strength.all_study, AVP$AVP)^2,2)
+lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="LOC113983498" & results_pit$Test=="Strength"],2)
+praw<- signif(results_pit$pvalue[results_pit$gene=="LOC113983498" & results_pit$Test=="Strength"],2)
+padj=signif(results_pit$padj[results_pit$gene=="LOC113983498" & results_pit$Test=="Strength"],2)
+
+pit_plots[["strength_AVP"]]<- ggplot(AVP, aes(x=strength.all_study, y=AVP, colour=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="AVP X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) +scale_colour_manual(values=status_cols, name="Age x Status")
+
+# AVPR1B
+AVPR1B<- subset(pit_norm, select=c("sampleID","AVPR1B"))
+AVPR1B<- merge(pit_key, AVPR1B, by="sampleID")
+AVPR1B$AVPR1B<- as.numeric(AVPR1B$AVPR1B)
+
+
+Rsq<- signif(cor(AVPR1B$strength.all_study, AVPR1B$AVPR1B)^2,2)
+lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="AVPR1B" & results_pit$Test=="Strength"],2)
+praw<- signif(results_pit$pvalue[results_pit$gene=="AVPR1B" & results_pit$Test=="Strength"],2)
+padj=signif(results_pit$padj[results_pit$gene=="AVPR1B" & results_pit$Test=="Strength"],2)
+
+pit_plots[["Strength_avpr1b"]]<- ggplot(AVPR1B, aes(x=strength.all_study, y=AVPR1B, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="AVPR1B X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status") 
+
+
+#OXT=LOC113983511
+OXT<- subset(pit_norm, select=c("sampleID","LOC113983511"))
+OXT<- merge(pit_key, OXT, by="sampleID")
+OXT$OXT<- as.numeric(OXT$LOC113983511)
+
+
+Rsq<- signif(cor(OXT$mean_T, OXT$OXT)^2,2)
+lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="LOC113983511" & results_pit$Test=="mean T"],2)
+praw<- signif(results_pit$pvalue[results_pit$gene=="LOC113983511" & results_pit$Test=="mean T"],2)
+padj=signif(results_pit$padj[results_pit$gene=="LOC113983511" & results_pit$Test=="mean T"],2)
+
+pit_plots[["meanT_oxt"]]<- ggplot(OXT, aes(x=mean_T, y=OXT, colour=Class)) + geom_point(size=4,pch=19)+ peri_theme + labs(x="Mean Testosterone", y="", title="OXT X mean T", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+
+Rsq<- signif(cor(OXT$strength.all_study, OXT$OXT)^2,2)
+lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="LOC113983511" & results_pit$Test=="Strength"],2)
+praw<- signif(results_pit$pvalue[results_pit$gene=="LOC113983511" & results_pit$Test=="Strength"],2)
+padj=signif(results_pit$padj[results_pit$gene=="LOC113983511" & results_pit$Test=="Strength"],2)
+
+
+pit_plots[["strength_oxt"]]<- ggplot(OXT, aes(x=strength.all_study, y=OXT, colour=Class)) + geom_point(size=4,pch=19)+ peri_theme + labs(x="Strength", y="OXT Normalized Counts", title="OXT X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+
+
+figure<- ggarrange(plotlist=pit_plots, ncol=2, nrow=5, common.legend = TRUE)
+figure<- annotate_figure(figure, top = text_grob("Candidate genes in pituitary (PIT)", face = "bold", size = 12), left=textGrob("Normalized counts", rot = 90, vjust = 1, gp=gpar(fontsize=12)))
+figure
+
+#ggsave(filename="../Candidate_gene_results/PIT_significant.png", figure,device="png", width=50, height=20, units="cm", dpi=300, bg="white")
+```
+
+
+
+## Status specific gene expression in the Pituitary
+
+I am excluding AVP and OXT because the expression patterns are odd.
+
+```{r}
+AVPR1A<- subset(pit_norm, select=c("sampleID","AVPR1A"))
+AVPR1A<- merge(pit_key, AVPR1A, by="sampleID")
+AVPR1A$AVPR1A<- as.numeric(AVPR1A$AVPR1A)
+status_cols2<- c("#E54849","#414042")
+
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="AVPR1A" & results_int$Tissue=="PIT"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="AVPR1A" & results_int$Tissue=="PIT"],2)
+padj=signif(results_int$padj[results_int$gene=="AVPR1A" & results_int$Tissue=="PIT"],2)
+
+
+a<- ggplot(AVPR1A, aes(x=mean_T, y=AVPR1A, color=Status)) + geom_point(size=4,pch=19) + labs(title="AVPR1A X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+a
+
+```
+
+```{r}
+AVPR1A_pit_lm_Status<- lm(AVPR1A ~ Batch  + Status, data=AVPR1A)
+AVPR1A_pit_lm_meanT<- lm(AVPR1A ~Batch +  mean_T, data=AVPR1A)
+AVPR1A_pit_lm_int<- lm(AVPR1A ~ Batch + Status*mean_T, data=AVPR1A)
+#against the NULL model
+AVPR1A_pit_lm_null<- lm(AVPR1A ~ Batch  , data=AVPR1A)
+
+model=c("AVPR1A ~ Batch", "AVPR1A ~ Batch + Status", "AVPR1A ~ Batch + mean T", "AVPR1A ~ Batch + Status * mean T") 
+AIC=c(AIC(AVPR1A_pit_lm_null), AIC(AVPR1A_pit_lm_Status),AIC(AVPR1A_pit_lm_meanT), AIC(AVPR1A_pit_lm_int))
+deltaAIC<- c(NA,AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+
+lm_p<- c(anova(AVPR1A_pit_lm_null)$'Pr(>F)'[1],anova(AVPR1A_pit_lm_Status)$'Pr(>F)'[2],anova(AVPR1A_pit_lm_meanT)$'Pr(>F)'[2],anova(AVPR1A_pit_lm_int)$'Pr(>F)'[4])
+DESeq2_raw_p=c(NA,
+               results_pit$pvalue[results_pit$gene=="AVPR1A" & results_pit$Test=="Status"],
+               results_pit$pvalue[results_pit$gene=="AVPR1A" & results_pit$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="AVPR1A" & results_int$Tissue=="PIT"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC,lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20,caption="Model validation in the pituitary (pit) for how AVPR1A expression is related to our interest variables") %>% kable_styling()
+
+b<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,1), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+
+figure<- ggarrange(a,b, labels=c("A","B"), nrow=2)
+#ggsave(filename="../Candidate_gene_results/PIT_interaction.png", figure,device="png", width=15, height=20, units="cm", dpi=300, bg="white")
+
+```
+
+
+# Ventromedial Hypothalamus
+
+
+```{r VMH prep}
+rm(list= ls()[!(ls() %in% keep)])
+vmh_key<- subset(key_behav, Tissue=="VMH")
+vmh_key<- droplevels(vmh_key)
+
+
+vmh_data<- data[,colnames(data) %in% rownames(vmh_key)]
+
+#remove genes with less than 5 reads
+vmh_data$avg_count<- apply(vmh_data, 1, mean)
+vmh_data<- vmh_data[vmh_data$avg_count>5,]
+vmh_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+vmh_data$percent_0<- apply(vmh_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(vmh_data)/2
+vmh_data<- vmh_data[vmh_data$percent_0<=thresh,]
+vmh_data$percent_0<-NULL
+
+dd<- DESeqDataSetFromMatrix(countData=vmh_data, colData=vmh_key, design= ~ Batch)
+dd<- DESeq(dd)
+
+results_vmh<- results_data[results_data$Tissue=="VMH",]
+
+
+results_vmh2<- results_vmh[which(results_vmh$pvalue<0.05),]
+results_vmh2<- results_vmh2[order(results_vmh2$gene),]
+
+knitr::kable(results_vmh2[,-1], row.names=FALSE, digits=3, padding=20, caption="Significant results from DESeq2 before FDR correction in the Ventromedial Hypothalamus (VMH). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).") %>% kable_styling()
+
+gd<- counts(dd,normalized=TRUE)
+```
+
+```{r VMH candidate gene plots, fig.width=10, fig.height=15}
+
+vmh_norm<- norm_data[[12]]
+rownames(vmh_norm)<- vmh_norm$X
+vmh_norm$X<- NULL
+vmh_norm<- as.data.frame(t(vmh_norm))
+vmh_norm$sampleID<- rownames(vmh_norm)
+
+
+
+status_results<- gd[rownames(gd) %in% candidates,]
+status_results<- as.data.frame(t(status_results))
+status_results$sampleID<- rownames(status_results)
+status_results<- merge(vmh_key, status_results, by="sampleID")
+
+vmh_plots<- list()
+
+#AR
+AR<- subset(vmh_norm, select=c("sampleID","AR"))
+AR<- merge(vmh_key, AR, by="sampleID")
+AR$AR<- as.numeric(AR$AR)
+
+
+Rsq<- signif(cor(AR$strength.all_study, AR$AR)^2,2)
+lfc<- signif(results_vmh$log2FoldChange[results_vmh$gene=="AR" & results_vmh$Test=="Strength"],2)
+praw<- signif(results_vmh$pvalue[results_vmh$gene=="AR" & results_vmh$Test=="Strength"],2)
+padj=signif(results_vmh$padj[results_vmh$gene=="AR" & results_vmh$Test=="Strength"],2)
+
+
+vmh_plots[["strength_AR"]]<- ggplot(AR, aes(x=strength.all_study, y=AR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="AR X Strength", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+#ESR2
+
+status_results$ESR2<- as.numeric(status_results$ESR2)
+
+lfc<- signif(results_vmh$log2FoldChange[results_vmh$gene=="ESR2" & results_vmh$Test=="Status"],2)
+praw<- signif(results_vmh$pvalue[results_vmh$gene=="ESR2" & results_vmh$Test=="Status"],2)
+padj=signif(results_vmh$padj[results_vmh$gene=="ESR2" & results_vmh$Test=="Status"],2)
+
+vmh_plots[["status_esr2"]]<- ggplot(status_results, aes(x=Status, y=ESR2, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="ESR2 X Status", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj))) +scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+
+#GNRH1
+GNRH1<- subset(vmh_norm, select=c("sampleID","GNRH1"))
+GNRH1<- merge(vmh_key, GNRH1, by="sampleID")
+GNRH1$GNRH1<- as.numeric(GNRH1$GNRH1)
+
+
+Rsq<- signif(cor(GNRH1$strength.all_study, GNRH1$GNRH1)^2,2)
+lfc<- signif(results_vmh$log2FoldChange[results_vmh$gene=="GNRH1" & results_vmh$Test=="Strength"],2)
+praw<- signif(results_vmh$pvalue[results_vmh$gene=="GNRH1" & results_vmh$Test=="Strength"],2)
+padj=signif(results_vmh$padj[results_vmh$gene=="GNRH1" & results_vmh$Test=="Strength"],2)
+
+
+#####
+vmh_plots[["str_GNRH1"]]<- ggplot(GNRH1, aes(x=strength.all_study, y=GNRH1, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="GNRH1 X Strength", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+#####
+
+
+
+#OXT
+OXT<- subset(vmh_norm, select=c("sampleID","LOC113983511"))
+OXT<- merge(vmh_key, OXT, by="sampleID")
+OXT$OXT<- as.numeric(OXT$LOC113983511)
+
+Rsq<- signif(cor(OXT$mean_T, OXT$OXT)^2,2)
+lfc<- signif(results_vmh$log2FoldChange[results_vmh$gene=="LOC113983511" & results_vmh$Test=="mean T"],2)
+praw<- signif(results_vmh$pvalue[results_vmh$gene=="LOC113983511" & results_vmh$Test=="mean T"],2)
+padj=signif(results_vmh$padj[results_vmh$gene=="LOC113983511" & results_vmh$Test=="mean T"],2)
+
+vmh_plots[["meanT_OXT"]]<- ggplot(OXT, aes(x=mean_T, y=OXT, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="OXT X mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+#AVP
+AVP<- subset(vmh_norm, select=c("sampleID","LOC113983498"))
+AVP<- merge(vmh_key, AVP, by="sampleID")
+AVP$AVP<- as.numeric(AVP$LOC113983498)
+
+
+Rsq<- signif(cor(AVP$mean_T, AVP$AVP)^2,2)
+lfc<- signif(results_vmh$log2FoldChange[results_vmh$gene=="LOC113983498" & results_vmh$Test=="mean T"],2)
+praw<- signif(results_vmh$pvalue[results_vmh$gene=="LOC113983498" & results_vmh$Test=="mean T"],2)
+padj=signif(results_vmh$padj[results_vmh$gene=="LOC113983498" & results_vmh$Test=="mean T"],2)
+
+vmh_plots[["meanT_AVP"]]<- ggplot(AVP, aes(x=mean_T, y=AVP, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="AVP Normalized Counts", title="AVP X mean T", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+#AVPR2
+AVPR<- subset(vmh_norm, select=c("sampleID","LOC113982601"))
+AVPR<- merge(vmh_key, AVPR, by="sampleID")
+AVPR$AVPR2<- as.numeric(AVPR$LOC113982601)
+Rsq<- cor(AVPR$mean_T, AVPR$AVPR2)^2
+
+Rsq<- signif(cor(AVPR$mean_T, AVPR$AVPR2)^2,2)
+lfc<- signif(results_vmh$log2FoldChange[results_vmh$gene=="LOC113982601" & results_vmh$Test=="mean T"],2)
+praw<- signif(results_vmh$pvalue[results_vmh$gene=="LOC113982601" & results_vmh$Test=="mean T"],2)
+padj=signif(results_vmh$padj[results_vmh$gene=="LOC113982601" & results_vmh$Test=="mean T"],2)
+
+vmh_plots[["meanT_AVPR2"]]<- ggplot(AVPR, aes(x=mean_T, y=AVPR2, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="AVPR2 X mean T", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+
+
+
+figure<- ggarrange(plotlist=vmh_plots, ncol=2, nrow=3, common.legend=TRUE)
+figure<- annotate_figure(figure, top = text_grob("Candidate genes in Ventromedial Hypothalamus (VMH)", face = "bold", size = 12))
+figure
+#ggsave(filename="../Candidate_gene_results/VMH_significant.png", figure,device="png", width=20, height=30, units="cm", dpi=300, bg="white")
+```
+
+Nothing convincingly significant after FDR correction!
+
+## Status specific gene expression in the VMH
+
+### PGR
+```{r, fig.height=5, fig.width=7}
+PGR<- subset(vmh_norm, select=c("sampleID","PGR"))
+PGR<- merge(vmh_key, PGR, by="sampleID")
+PGR$PGR<- as.numeric(PGR$PGR)
+
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="PGR" & results_int$Tissue=="VMH"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="PGR" & results_int$Tissue=="VMH"],2)
+padj=signif(results_int$padj[results_int$gene=="PGR" & results_int$Tissue=="VMH"],2)
+
+
+status_cols2<- c("#E54849","#414042")
+ggplot(PGR, aes(x=mean_T, y=PGR, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="PGR X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+```
+
+Rubbish.
+
+### GNRH1
+```{r, fig.height=5, fig.width=7}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="GNRH1" & results_int$Tissue=="VMH"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="GNRH1" & results_int$Tissue=="VMH"],2)
+padj=signif(results_int$padj[results_int$gene=="GNRH1" & results_int$Tissue=="VMH"],2)
+
+ggplot(GNRH1, aes(x=mean_T, y=GNRH1, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="GNRH1 X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+
+```
+
+Also Rubbish.
+
+### AVPR1A
+
+```{r, fig.height=5, fig.width=7}
+AVPR1A<- subset(vmh_norm, select=c("sampleID","AVPR1A"))
+AVPR1A<- merge(vmh_key, AVPR1A, by="sampleID")
+AVPR1A$AVPR1A<- as.numeric(AVPR1A$AVPR1A)
+
+
+ggplot(AVPR1A, aes(x=mean_T, y=AVPR1A, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title=paste0("AVPR1A X Status * mean T, Base mean=", signif(results_int$baseMean[results_int$gene=="AVPR1A" & results_int$Tissue=="VMH"],2), "\n LFC=", signif(results_int$log2FoldChange[results_int$gene=="AVPR1A" & results_int$Tissue=="VMH"],2), ", p=",signif(results_int$pvalue[results_int$gene=="AVPR1A" & results_int$Tissue=="VMH"],3), ", padj=", signif(results_int$padj[results_int$gene=="AVPR1A" & results_int$Tissue=="VMH"],3)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+```
+
+Also Rubbish.
+
+# Anterior Hypothalamus
+
+```{r AH prep}
+rm(list= ls()[!(ls() %in% keep)])
+
+ah_key<- subset(key_behav, Tissue=="AH")
+ah_key<- droplevels(ah_key)
+
+
+ah_norm<- norm_data[[1]]
+rownames(ah_norm)<- ah_norm$X
+ah_norm$X<- NULL
+
+results_ah<- results_data[results_data$Tissue=="AH",]
+
+results_ah2<- results_ah[which(results_ah$pvalue<0.05),]
+results_ah2<- results_ah2[order(results_ah2$gene),]
+
+knitr::kable(results_ah2[,-1], row.names=FALSE, digits=3, padding=20, caption="Significant results from DESeq2 before FDR correction in the Anterior Hypothalamus (AH). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model)") %>% kable_styling()
+
+
+```
+
+No candidate genes significant in the AH
+
+
+No interaction effects
+
+
+# Paraventricular Nucleus 
+
+
+```{r PVN prep}
+rm(list= ls()[!(ls() %in% keep)])
+pvn_key<- subset(key_behav, Tissue=="PVN")
+pvn_key<- droplevels(pvn_key)
+
+
+pvn_norm<- norm_data[[10]]
+rownames(pvn_norm)<- pvn_norm$X
+pvn_norm$X<- NULL
+
+results_pvn<- results_data[results_data$Tissue=="PVN",]
+
+results_pvn2<- results_pvn[which(results_pvn$pvalue<0.05),]
+results_pvn2<- results_pvn2[order(results_pvn2$gene),]
+
+knitr::kable(results_pvn2[,-1], row.names=FALSE, digits=3, padding=20, caption="Significant results from DESeq2 before FDR correction in the Paraventricular Nucleus (PVN). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).") %>% kable_styling()
+
+pvn_norm<- as.data.frame(t(pvn_norm))
+pvn_norm$sampleID<- rownames(pvn_norm)
+```
+
+```{r PVN candidate gene plots, fig.width=10, fig.height=20}
+
+
+pvn_plots<- list()
+
+#AR
+AR<- subset(pvn_norm, select=c("sampleID","AR"))
+AR<- merge(pvn_key, AR, by="sampleID")
+AR$AR<- as.numeric(AR$AR)
+
+
+Rsq<- signif(cor(AR$mean_T, AR$AR)^2,2)
+lfc<- signif(results_pvn$log2FoldChange[results_pvn$gene=="AR" & results_pvn$Test=="mean T"],2)
+praw<- signif(results_pvn$pvalue[results_pvn$gene=="AR" & results_pvn$Test=="mean T"],2)
+padj=signif(results_pvn$padj[results_pvn$gene=="AR" & results_pvn$Test=="mean T"],2)
+
+pvn_plots[["meanT_ar"]]<- ggplot(AR, aes(x=mean_T, y=AR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="AR X Mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+Rsq<- signif(cor(AR$strength.all_study, AR$AR)^2,2)
+lfc<- signif(results_pvn$log2FoldChange[results_pvn$gene=="AR" & results_pvn$Test=="Strength"],2)
+praw<- signif(results_pvn$pvalue[results_pvn$gene=="AR" & results_pvn$Test=="Strength"],2)
+padj=signif(results_pvn$padj[results_pvn$gene=="AR" & results_pvn$Test=="Strength"],2)
+
+
+pvn_plots[["strength_ar"]]<- ggplot(AR, aes(x=strength.all_study, y=AR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="AR X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)) ) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+#ESR2
+ESR2<- subset(pvn_norm, select=c("sampleID","ESR2"))
+ESR2<- merge(pvn_key, ESR2, by="sampleID")
+ESR2$ESR2<- as.numeric(ESR2$ESR2)
+
+
+lfc<- signif(results_pvn$log2FoldChange[results_pvn$gene=="ESR2" & results_pvn$Test=="Status"],2)
+praw<- signif(results_pvn$pvalue[results_pvn$gene=="ESR2" & results_pvn$Test=="Status"],2)
+padj=signif(results_pvn$padj[results_pvn$gene=="ESR2" & results_pvn$Test=="Status"],2)
+
+
+pvn_plots[["status_esr2"]]<- ggplot(ESR2, aes(x=Status, y=ESR2, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="ESR2 X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+#ggplot(ESR2, aes(x=Status, y=ESR2, color=Status)) + geom_point(size=4,pch=19) + peri_theme + labs(x="", y="Normalized Counts", title="Estrogen Receptor 2 in \nParaventricular Nucleus (PVN)")+ scale_colour_manual(values=status_cols[2:3]) + geom_boxplot(fill=NA) + theme(legend.position = "none")
+
+
+
+#VIPR1
+VIPR1<- subset(pvn_norm, select=c("sampleID","VIPR1"))
+VIPR1<- merge(pvn_key, VIPR1, by="sampleID")
+VIPR1$VIPR1<- as.numeric(VIPR1$VIPR1)
+
+lfc<- signif(results_pvn$log2FoldChange[results_pvn$gene=="VIPR1" & results_pvn$Test=="Status"],2)
+praw<- signif(results_pvn$pvalue[results_pvn$gene=="VIPR1" & results_pvn$Test=="Status"],2)
+padj=signif(results_pvn$padj[results_pvn$gene=="VIPR1" & results_pvn$Test=="Status"],2)
+
+pvn_plots[["status_vipr1"]]<- ggplot(VIPR1, aes(x=Status, y=VIPR1, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="VIPR1 X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+#AVP
+AVP<- subset(pvn_norm, select=c("sampleID","LOC113983498"))
+AVP<- merge(pvn_key, AVP, by="sampleID")
+AVP$AVP<- as.numeric(AVP$LOC113983498)
+Rsq<- cor(AVP$strength.all_study, AVP$AVP)^2
+
+Rsq<- signif(cor(AVP$strength.all_study, AVP$AVP)^2,2)
+lfc<- signif(results_pvn$log2FoldChange[results_pvn$gene=="LOC113983498" & results_pvn$Test=="Strength"],2)
+praw<- signif(results_pvn$pvalue[results_pvn$gene=="LOC113983498" & results_pvn$Test=="Strength"],2)
+padj=signif(results_pvn$padj[results_pvn$gene=="LOC113983498" & results_pvn$Test=="Strength"],2)
+
+
+pvn_plots[["strength_AVP"]]<- ggplot(AVP, aes(x=strength.all_study, y=AVP, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="AVP X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+#AVPR2
+AVPR2<- subset(pvn_norm, select=c("sampleID","LOC113982601"))
+AVPR2<- merge(pvn_key, AVPR2, by="sampleID")
+AVPR2$AVPR2<- as.numeric(AVPR2$LOC113982601)
+
+Rsq<- signif(cor(AVPR2$strength.all_study, AVPR2$AVPR2)^2,2)
+lfc<- signif(results_pvn$log2FoldChange[results_pvn$gene=="LOC113982601" & results_pvn$Test=="Strength"],2)
+praw<- signif(results_pvn$pvalue[results_pvn$gene=="LOC113982601" & results_pvn$Test=="Strength"],2)
+padj=signif(results_pvn$padj[results_pvn$gene=="LOC113982601" & results_pvn$Test=="Strength"],2)
+
+pvn_plots[["strength_AVPR2"]]<- ggplot(AVPR2, aes(x=strength.all_study, y=AVPR2, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="AVPR2 X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+OXT<- subset(pvn_norm, select=c("sampleID","LOC113983511"))
+OXT<- merge(pvn_key, OXT, by="sampleID")
+OXT$OXT<- as.numeric(OXT$LOC113983511)
+
+Rsq<- signif(cor(OXT$strength.all_study, OXT$OXT)^2,2)
+lfc<- signif(results_pvn$log2FoldChange[results_pvn$gene=="LOC113983511" & results_pvn$Test=="Strength"],2)
+praw<- signif(results_pvn$pvalue[results_pvn$gene=="LOC113983511" & results_pvn$Test=="Strength"],2)
+padj=signif(results_pvn$padj[results_pvn$gene=="LOC113983511" & results_pvn$Test=="Strength"],2)
+
+pvn_plots[["strength_OXT"]]<- ggplot(OXT, aes(x=strength.all_study, y=OXT, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="OXT X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+figure<- ggarrange(plotlist=pvn_plots, ncol=2, nrow=4, common.legend=TRUE)
+figure<- annotate_figure(figure, top = text_grob("Candidate genes in Paraventricular Nucleus (PVN)", face = "bold", size = 12))
+figure
+#ggsave(filename="../Candidate_gene_results/PVN_significant.png", figure,device="png", width=40, height=20, units="cm", dpi=300, bg="white")
+```
+
+
+
+## Interaction in the Paraventricular Nucleus
+
+### AR
+```{r, fig.height=5, fig.width=7}
+status_cols2<- c("#E54849","#414042")
+
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="AR" & results_int$Tissue=="PVN"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="AR" & results_int$Tissue=="PVN"],2)
+padj=signif(results_int$padj[results_int$gene=="AR" & results_int$Tissue=="PVN"],2)
+
+a<- ggplot(AR, aes(x=mean_T, y=AR, color=Status)) + geom_point(size=4,pch=19) + labs(title="AR X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+a
+
+```
+
+```{r}
+
+
+
+AR_pvn_lm_Status<- lm(AR ~Status, data=AR)
+AR_pvn_lm_meanT<- lm(AR ~ mean_T, data=AR)
+AR_pvn_lm_int<- lm(AR ~ Status*mean_T, data=AR)
+AR_pvn_lm_strength<- lm(AR ~ strength.all_study, data=AR)
+#against the NULL model
+AR_pvn_lm_null<- lm(AR ~ 1, data=AR)
+
+model=c("AR ~ 1", "AR ~ Status", "AR ~ mean T","AR ~ Strength","AR ~ Status * mean T") 
+AIC=c(AIC(AR_pvn_lm_null),AIC(AR_pvn_lm_Status),AIC(AR_pvn_lm_meanT), AIC(AR_pvn_lm_strength),AIC(AR_pvn_lm_int))
+deltaAIC<- c(NA,AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4], AIC[1]-AIC[5])
+
+lm_p<- c(anova(AR_pvn_lm_null)$'Pr(>F)'[1],anova(AR_pvn_lm_Status)$'Pr(>F)'[1],anova(AR_pvn_lm_meanT)$'Pr(>F)'[1],anova(AR_pvn_lm_strength)$'Pr(>F)'[1], anova(AR_pvn_lm_int)$'Pr(>F)'[3])
+
+DESeq2_raw_p=c(NA,
+               results_pvn$pvalue[results_pvn$gene=="AR" & results_pvn$Test=="Status"],
+               results_pvn$pvalue[results_pvn$gene=="AR" & results_pvn$Test=="mean T"],
+               results_pvn$pvalue[results_pvn$gene=="AR" & results_pvn$Test=="Strength"],
+               results_int$pvalue[results_int$gene=="AR" & results_int$Tissue=="PVN"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC, lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20, caption="Model comparisons in the Paraventricular Nucleus for Androgen Receptor") %>% kable_styling()
+
+b<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,1), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+
+figure<- ggarrange(a,b, labels=c("A","B"), nrow=2)
+#ggsave(filename="../Candidate_gene_results/PVN_interaction.png", figure,device="png", width=15, height=20, units="cm", dpi=300, bg="white")
+
+
+```
+
+
+# Medial Preoptic Area (POM) 
+
+
+```{r POM prep}
+rm(list= ls()[!(ls() %in% keep)])
+pom_key<- subset(key_behav, Tissue=="POM")
+pom_key<- droplevels(pom_key)
+
+outlier<- "PFT2_POM_run1"
+
+pom_key<- pom_key[!rownames(pom_key) %in% outlier,]
+
+
+pom_data<- data[,colnames(data) %in% rownames(pom_key)]
+
+#remove genes with less than 5 reads
+pom_data$avg_count<- apply(pom_data, 1, mean)
+pom_data<- pom_data[pom_data$avg_count>5,]
+pom_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+pom_data$percent_0<- apply(pom_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(pom_data)/2
+pom_data<- pom_data[pom_data$percent_0<=thresh,]
+pom_data$percent_0<-NULL
+
+dd<- DESeqDataSetFromMatrix(countData=pom_data, colData=pom_key, design= ~ Batch)
+dd<- DESeq(dd)
+
+
+results_pom<- results_data[results_data$Tissue=="POM",]
+results_pom2<- results_pom[which(results_pom$pvalue<0.05),]
+knitr::kable(results_pom2[,-1], row.names=FALSE, digits=3, padding=20, caption="Significant results from DESeq2 before FDR correction in the Medial Preoptic Area (POM). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).") %>% kable_styling()
+
+gd<- counts(dd,normalized=TRUE)
+
+pom_norm<- norm_data[[9]]
+rownames(pom_norm)<- pom_norm$X
+pom_norm$X<- NULL
+
+pom_norm<- as.data.frame(t(pom_norm))
+pom_norm$sampleID<- rownames(pom_norm)
+pom_norm<- pom_norm[, colnames(pom_norm) %in% candidates]
+pom_norm$sampleID<- rownames(pom_norm)
+pom_norm<- merge(pom_norm, pom_key, by="sampleID")
+
+status_results<- gd[rownames(gd) %in% candidates,]
+status_results<- as.data.frame(t(status_results))
+status_results$sampleID<- rownames(status_results)
+status_results<- merge(pom_key, status_results, by="sampleID")
+```
+
+
+```{r POM candidate gene plots, fig.width=10, fig.height=20}
+
+
+
+pom_plots<- list()
+
+#AR
+
+pom_norm$AR<- as.numeric(pom_norm$AR)
+
+
+lfc<- signif(results_pom$log2FoldChange[results_pom$gene=="AR" & results_pom$Test=="Status"],2)
+praw<- signif(results_pom$pvalue[results_pom$gene=="AR" & results_pom$Test=="Status"],2)
+padj=signif(results_pom$padj[results_pom$gene=="AR" & results_pom$Test=="Status"],2)
+
+
+pom_plots[["status_ar"]]<- ggplot(status_results, aes(x=Status, y=AR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="AR X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+Rsq<- signif(cor(pom_norm$mean_T, pom_norm$AR)^2,2)
+
+lfc<- signif(results_pom$log2FoldChange[results_pom$gene=="AR" & results_pom$Test=="mean T"],2)
+praw<- signif(results_pom$pvalue[results_pom$gene=="AR" & results_pom$Test=="mean T"],2)
+padj=signif(results_pom$padj[results_pom$gene=="AR" & results_pom$Test=="mean T"],2)
+
+pom_plots[["meanT_ar"]]<- ggplot(pom_norm, aes(x=mean_T, y=AR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="AR X Mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+#ggplot(pom_norm, aes(x=mean_T, y=AR)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="Normalized Counts") + geom_smooth(method="lm", color="black", alpha=0.15) + geom_point(aes(color=Status),size=4,pch=19) + scale_colour_manual(values=status_cols[2:3]) + theme(legend.position = "none") +  labs(x="Mean Testosterone", y="AR Normalized Counts", title=paste0("AR X Mean T, Base mean=", signif(results_pom$baseMean[results_pom$gene=="AR" & results_pom$Test=="mean T"],2), "\n LFC=", signif(results_pom$log2FoldChange[results_pom$gene=="AR" & results_pom$Test=="mean T"],2), ", p=",signif(results_pom$pvalue[results_pom$gene=="AR" & results_pom$Test=="mean T"],3), ", padj=", signif(results_pom$padj[results_pom$gene=="AR" & results_pom$Test=="mean T"],2),", R^2=", signif(Rsq,2))) + scale_y_continuous(breaks=c(500,1000,1500), limits=c(250,1500))
+
+
+
+#ggplot(status_results, aes(x=Status, y=AR, color=Status)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="AR Normalized Counts", title=paste0("AR X Status, Base mean=", signif(results_pom$baseMean[8],2), "\n LFC=", signif(results_pom$log2FoldChange[8],2), ", p=",signif(results_pom$pvalue[8],4), ", padj=", signif(results_pom$padj[8],3))) + scale_color_manual(values=c("#E54849","#414042")) + geom_boxplot(alpha=0.15, fill=NA)
+
+pom_norm$CYP19A1<- as.numeric(pom_norm$LOC113993669)
+Rsq<- signif(cor(pom_norm$mean_T, pom_norm$LOC113993669)^2,2)
+
+lfc<- signif(results_pom$log2FoldChange[results_pom$gene=="LOC113993669" & results_pom$Test=="mean T"],2)
+praw<- signif(results_pom$pvalue[results_pom$gene=="LOC113993669" & results_pom$Test=="mean T"],2)
+padj=signif(results_pom$padj[results_pom$gene=="LOC113993669" & results_pom$Test=="mean T"],2)
+
+
+pom_plots[["meanT_cyp19"]]<- ggplot(pom_norm, aes(x=mean_T, y=CYP19A1, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="CYP19A1 X Mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+#PGR 
+
+lfc<- signif(results_pom$log2FoldChange[results_pom$gene=="PGR" & results_pom$Test=="Status"],2)
+praw<- signif(results_pom$pvalue[results_pom$gene=="PGR" & results_pom$Test=="Status"],2)
+padj=signif(results_pom$padj[results_pom$gene=="PGR" & results_pom$Test=="Status"],2)
+
+pom_plots[["status_pgr"]]<- ggplot(status_results, aes(x=Status, y=PGR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="PGR X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=",c),list(a=lfc, b=praw, c=padj)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+#PRLR
+
+lfc<- signif(results_pom$log2FoldChange[results_pom$gene=="PRLR" & results_pom$Test=="Status"],2)
+praw<- signif(results_pom$pvalue[results_pom$gene=="PRLR" & results_pom$Test=="Status"],2)
+padj=signif(results_pom$padj[results_pom$gene=="PRLR" & results_pom$Test=="Status"],2)
+
+pom_plots[["status_prlr"]]<- ggplot(status_results, aes(x=Status, y=PRLR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="PRLR X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+Rsq<- signif(cor(pom_norm$mean_T, pom_norm$PRLR)^2,2)
+lfc<- signif(results_pom$log2FoldChange[results_pom$gene=="PRLR" & results_pom$Test=="mean T"],2)
+praw<- signif(results_pom$pvalue[results_pom$gene=="PRLR" & results_pom$Test=="mean T"],2)
+padj=signif(results_pom$padj[results_pom$gene=="PRLR" & results_pom$Test=="mean T"],2)
+
+
+pom_plots[["meanT_prlr"]]<- ggplot(pom_norm, aes(x=mean_T, y=PRLR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="PRLR X Mean T", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+#GNRH1
+
+Rsq<- signif(cor(pom_norm$mean_T, pom_norm$GNRH1)^2,2)
+lfc<- signif(results_pom$log2FoldChange[results_pom$gene=="GNRH1" & results_pom$Test=="mean T"],2)
+praw<- signif(results_pom$pvalue[results_pom$gene=="GNRH1" & results_pom$Test=="mean T"],2)
+padj=signif(results_pom$padj[results_pom$gene=="GNRH1" & results_pom$Test=="mean T"],2)
+
+pom_plots[["meanT_gnrh"]]<- ggplot(pom_norm, aes(x=mean_T, y=GNRH1, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="GNRH1 X mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+figure<- ggarrange(plotlist=pom_plots, ncol=2, nrow=4, common.legend=TRUE)
+figure<- annotate_figure(figure, top = text_grob("Candidate genes in Medial Preoptic Area (POM)", face = "bold", size = 12), left=textGrob("Normalized counts", rot = 90, vjust = 1, gp=gpar(fontsize=12)))
+figure
+#ggsave(filename="../Candidate_gene_results/POM_significant.png", figure,device="png", width=40, height=20, units="cm", dpi=300, bg="white")
+```
+
+
+## Interaction in the Medial Preoptic Area
+
+### VIP
+
+```{r, fig.height=5, fig.width=7}
+status_cols2<- c("#E54849","#414042")
+
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="VIP" & results_int$Tissue=="POM"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="VIP" & results_int$Tissue=="POM"],2)
+padj=signif(results_int$padj[results_int$gene=="VIP" & results_int$Tissue=="POM"],2)
+
+a<- ggplot(pom_norm, aes(x=mean_T, y=VIP, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="VIP X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+a
+```
+
+```{r}
+
+VIP_POM_lm_Status<- lm(VIP ~Status, data=pom_norm)
+VIP_POM_lm_meanT<- lm(VIP ~ mean_T, data=pom_norm)
+VIP_POM_lm_int<- lm(VIP ~ Status*mean_T, data=pom_norm)
+#against the NULL model
+VIP_POM_lm_null<- lm(VIP ~ 1, data=pom_norm)
+
+model=c("VIP ~ 1", "VIP ~ Status", "VIP ~ mean T", "VIP ~ Status * mean T") 
+AIC=c(AIC(VIP_POM_lm_null), AIC(VIP_POM_lm_Status),AIC(VIP_POM_lm_meanT),AIC(VIP_POM_lm_int))
+deltaAIC<- c(NA, AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+
+lm_p<- c(anova(VIP_POM_lm_null)$'Pr(>F)'[1],anova(VIP_POM_lm_Status)$'Pr(>F)'[1],anova(VIP_POM_lm_meanT)$'Pr(>F)'[1], anova(VIP_POM_lm_int)$'Pr(>F)'[3])
+residual_df<- c(VIP_POM_lm_null$df.residual,VIP_POM_lm_Status$df.residual, VIP_POM_lm_meanT$df.residual, VIP_POM_lm_int$df.residual)
+DESeq2_raw_p=c(NA,
+               results_pom$pvalue[results_pom$gene=="VIP" & results_pom$Test=="Status"],
+               results_pom$pvalue[results_pom$gene=="VIP" & results_pom$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="VIP" & results_int$Tissue=="POM"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC,lm_p, residual_df, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20,caption="Model validation in the medial preoptic areaea (POM) for how VIP expression is related to mean T and Status") %>% kable_styling()
+
+b<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+
+figurea<- ggarrange(a,b, labels=c("A","B"), nrow=2)
+##ggsave(filename="pom_interaction.png", figure,device="png", width=15, height=20, units="cm", dpi=300, bg="white")
+
+```
+
+
+
+## Checking other multiple hits in the POM
+
+### AR
+
+```{r}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="AR" & results_int$Tissue=="POM"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="AR" & results_int$Tissue=="POM"],2)
+padj=signif(results_int$padj[results_int$gene=="AR" & results_int$Tissue=="POM"],2)
+
+c<- ggplot(pom_norm, aes(x=mean_T, y=AR, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="AR X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+c
+
+
+AR_POM_lm_Status<- lm(AR ~Status, data=pom_norm)
+AR_POM_lm_meanT<- lm(AR ~ mean_T, data=pom_norm)
+AR_POM_lm_int<- lm(AR ~ Status*mean_T, data=pom_norm)
+#against the NULL model
+AR_POM_lm_null<- lm(AR ~ 1, data=pom_norm)
+
+model=c("AR ~ 1", "AR ~ Status", "AR ~ mean T", "AR ~ Status * mean T") 
+AIC=c(AIC(AR_POM_lm_null), AIC(AR_POM_lm_Status),AIC(AR_POM_lm_meanT),AIC(AR_POM_lm_int))
+deltaAIC<- c(NA, AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+lm_p<- c(anova(AR_POM_lm_null)$'Pr(>F)'[1],anova(AR_POM_lm_Status)$'Pr(>F)'[1],anova(AR_POM_lm_meanT)$'Pr(>F)'[1], anova(AR_POM_lm_int)$'Pr(>F)'[3])
+residual_df<- c(AR_POM_lm_null$df.residual,
+                AR_POM_lm_Status$df.residual,
+                AR_POM_lm_meanT$df.residual,
+                AR_POM_lm_int$df.residual)
+DESeq2_raw_p=c(NA,
+               results_pom$pvalue[results_pom$gene=="AR" & results_pom$Test=="Status"],
+               results_pom$pvalue[results_pom$gene=="AR" & results_pom$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="AR" & results_int$Tissue=="POM"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC, lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20, caption="Model validation in the medial preoptic area (POM) for how AR expression is related to mean T and Status") %>% kable_styling
+
+d<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+figurec<- ggarrange(c,d, labels=c("C","D"), nrow=2)
+
+```
+
+
+
+
+
+### PRLR
+
+
+```{r}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="PRLR" & results_int$Tissue=="POM"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="PRLR" & results_int$Tissue=="POM"],2)
+padj=signif(results_int$padj[results_int$gene=="PRLR" & results_int$Tissue=="POM"],2)
+
+e<- ggplot(pom_norm, aes(x=mean_T, y=PRLR, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="PRLR X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+e
+
+
+PRLR_POM_lm_Status<- lm(PRLR ~Status, data=pom_norm)
+PRLR_POM_lm_meanT<- lm(PRLR ~ mean_T, data=pom_norm)
+PRLR_POM_lm_int<- lm(PRLR ~ Status*mean_T, data=pom_norm)
+#against the NULL model
+PRLR_POM_lm_null<- lm(PRLR ~ 1, data=pom_norm)
+
+model=c("PRLR ~ 1", "PRLR ~ Status", "PRLR ~ mean T", "PRLR ~ Status * mean T") 
+AIC=c(AIC(PRLR_POM_lm_null), AIC(PRLR_POM_lm_Status),AIC(PRLR_POM_lm_meanT),AIC(PRLR_POM_lm_int))
+deltaAIC<- c(NA, AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+lm_p<- c(anova(PRLR_POM_lm_null)$'Pr(>F)'[1],anova(PRLR_POM_lm_Status)$'Pr(>F)'[1],anova(PRLR_POM_lm_meanT)$'Pr(>F)'[1], anova(PRLR_POM_lm_int)$'Pr(>F)'[3])
+DESeq2_raw_p=c(NA,
+               results_pom$pvalue[results_pom$gene=="PRLR" & results_pom$Test=="Status"],
+               results_pom$pvalue[results_pom$gene=="PRLR" & results_pom$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="PRLR" & results_int$Tissue=="POM"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC,lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20) %>% kable_styling()
+
+f<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+figuree<- ggarrange(e,f, labels=c("E","F"), nrow=2)
+
+figure<-ggarrange(figurea,figurec,figuree, ncol=3)
+#ggsave(filename="../Candidate_gene_results/POM_interaction.png", figure,device="png", width=45, height=20, units="cm", dpi=300, bg="white")
+```
+
+# Dorsomedial Intercollicular Nucleus (ICo)
+
+
+```{r ICO prep}
+
+rm(list= ls()[!(ls() %in% keep)])
+ico_key<- subset(key_behav, Tissue=="ICO")
+ico_key<- droplevels(ico_key)
+
+
+ico_data<- data[,colnames(data) %in% rownames(ico_key)]
+
+#remove genes with less than 5 reads
+ico_data$avg_count<- apply(ico_data, 1, mean)
+ico_data<- ico_data[ico_data$avg_count>5,]
+ico_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+ico_data$percent_0<- apply(ico_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(ico_data)/2
+ico_data<- ico_data[ico_data$percent_0<=thresh,]
+ico_data$percent_0<-NULL
+
+dd<- DESeqDataSetFromMatrix(countData=ico_data, colData=ico_key, design= ~ Batch)
+dd<- DESeq(dd)
+gd<- counts(dd,normalized=TRUE)
+results_ico<- results_data[results_data$Tissue=="ICO",]
+
+results_ico2<- results_ico[which(results_ico$pvalue<0.05),]
+results_ico2<- results_ico2[order(results_ico2$gene),]
+
+
+knitr::kable(results_ico2[,-1], row.names=FALSE, digits=3, padding=20, caption="Significant results from DESeq2 before FDR correction in the Dorsomedial Intercollicular Nucleus (ICo). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).") %>% kable_styling()
+
+ico_norm<- norm_data[[6]]
+rownames(ico_norm)<- ico_norm$X
+ico_norm$X<- NULL
+
+ico_norm<- as.data.frame(t(ico_norm))
+ico_norm$sampleID<- rownames(ico_norm)
+ico_norm<- ico_norm[, colnames(ico_norm) %in% candidates]
+ico_norm$sampleID<- rownames(ico_norm)
+ico_norm<- merge(ico_norm, ico_key, by="sampleID")
+
+
+```
+
+
+```{r ICO candidate gene plots, fig.width=10, fig.height=5}
+
+
+ico_plots<- list()
+
+
+
+#VIP
+ico_norm$VIP<- as.numeric(ico_norm$VIP)
+Rsq<- signif(cor(ico_norm$mean_T, ico_norm$VIP)^2,2)
+
+lfc<- signif(results_ico$log2FoldChange[results_ico$gene=="VIP" & results_ico$Test=="mean T"],2)
+praw<- signif(results_ico$pvalue[results_ico$gene=="VIP" & results_ico$Test=="mean T"],2)
+padj=signif(results_ico$padj[results_ico$gene=="VIP" & results_ico$Test=="mean T"],2)
+
+ico_plots[["meanT_VIP"]]<- ggplot(ico_norm, aes(x=mean_T, y=VIP, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="VIP X Mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+#VIPR1
+ico_norm$VIPR1<- as.numeric(ico_norm$VIPR1)
+
+
+#VIPR2
+ico_norm$VIPR2<- as.numeric(ico_norm$VIPR2)
+Rsq<- signif(cor(ico_norm$strength.all_study, ico_norm$VIPR2)^2,2)
+
+
+lfc<- signif(results_ico$log2FoldChange[results_ico$gene=="VIPR2" & results_ico$Test=="Strength"],2)
+praw<- signif(results_ico$pvalue[results_ico$gene=="VIPR2" & results_ico$Test=="Strength"],2)
+padj=signif(results_ico$padj[results_ico$gene=="VIPR2" & results_ico$Test=="Strength"],2)
+
+ico_plots[["strength_vipr2"]]<- ggplot(ico_norm, aes(x=strength.all_study, y=VIPR2, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="VIPR2 X Strength", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+figure<- ggarrange(plotlist=ico_plots, ncol=2, nrow=1, common.legend = TRUE)
+figure<- annotate_figure(figure, top = text_grob("Candidate genes in Dorsomedial Intercollicular Nucleus (ICo)", face = "bold", size = 12),left=textGrob("Normalized counts", rot = 90, vjust = 1, gp=gpar(fontsize=12)))
+figure
+#ggsave(filename="../Candidate_gene_results/ICO_significant.png", figure,device="png", width=20, height=10, units="cm", dpi=300, bg="white")
+```
+
+## Interaction in the Ico
+
+### AVPR1A
+
+```{r, fig.width=5, fig.width=7}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="AVPR1A" & results_int$Tissue=="ICO"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="AVPR1A" & results_int$Tissue=="ICO"],2)
+padj=signif(results_int$padj[results_int$gene=="AVPR1A" & results_int$Tissue=="ICO"],2)
+
+a<- ggplot(ico_norm, aes(x=mean_T, y=AVPR1A, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="AVPR1A X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+a
+```
+
+```{r}
+
+AVPR1A_ICO_lm_Status<- lm(AVPR1A ~ Batch + Year + Status, data=ico_norm)
+AVPR1A_ICO_lm_meanT<- lm(AVPR1A ~Batch + Year +  mean_T, data=ico_norm)
+AVPR1A_ICO_lm_int<- lm(AVPR1A ~ Batch + Year + Status*mean_T, data=ico_norm)
+#against the NULL model
+AVPR1A_ICO_lm_null<- lm(AVPR1A ~ Batch + Year  , data=ico_norm)
+
+model=c("AVPR1A ~ Batch + Year ", "AVPR1A ~ Batch + Year + Status", "AVPR1A ~Batch + Year +  mean T", "AVPR1A ~ Batch + Year + Status * mean T") 
+AIC=c(AIC(AVPR1A_ICO_lm_null), AIC(AVPR1A_ICO_lm_Status),AIC(AVPR1A_ICO_lm_meanT),AIC(AVPR1A_ICO_lm_int))
+deltaAIC<-c(NA,AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+lm_p<- c(anova(AVPR1A_ICO_lm_null)$'Pr(>F)'[2],anova(AVPR1A_ICO_lm_Status)$'Pr(>F)'[3],anova(AVPR1A_ICO_lm_meanT)$'Pr(>F)'[3], anova(AVPR1A_ICO_lm_int)$'Pr(>F)'[5])
+DESeq2_raw_p=c(NA,
+               results_ico$pvalue[results_ico$gene=="AVPR1A" & results_ico$Test=="Status"],
+               results_ico$pvalue[results_ico$gene=="AVPR1A" & results_ico$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="AVPR1A" & results_int$Tissue=="ICO"])
+
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC,lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20,caption="Model validation in the dorsomedial intercollicular nucleus (ICo) for how AVPR1A expression, status and mean T influences social behavior") %>% kable_styling()
+
+b<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+
+figurea<- ggarrange(a,b, labels=c("A","B"), nrow=2)
+
+
+```
+
+
+###AVP
+
+
+```{r, fig.width=5,fig.width=7}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="AVP" & results_int$Tissue=="ICO"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="AVP" & results_int$Tissue=="ICO"],2)
+padj=signif(results_int$padj[results_int$gene=="AVP" & results_int$Tissue=="ICO"],2)
+
+
+c<- ggplot(ico_norm, aes(x=mean_T, y=LOC113983498, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="AVP X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+c
+```
+
+```{r}
+AVP_ICO_lm_Status<- lm(LOC113983498 ~Batch + Year + Status, data=ico_norm)
+AVP_ICO_lm_meanT<- lm(LOC113983498 ~ Batch + Year + mean_T, data=ico_norm)
+AVP_ICO_lm_int<- lm(LOC113983498 ~ Batch + Year + Status*mean_T, data=ico_norm)
+#against the NULL model
+AVP_ICO_lm_null<- lm(LOC113983498~ Batch + Year, data=ico_norm)
+
+model=c("AVP ~ Batch + Year", "AVP ~ Batch + Year + Status", "AVP ~ Batch + Year + mean T", "AVP ~ Batch + Year +  Status * mean T") 
+AIC=c(AIC(AVP_ICO_lm_null), AIC(AVP_ICO_lm_Status),AIC(AVP_ICO_lm_meanT),AIC(AVP_ICO_lm_int))
+deltaAIC<- c(NA, AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+lm_p<- c(anova(AVP_ICO_lm_null)$'Pr(>F)'[2],
+         anova(AVP_ICO_lm_Status)$'Pr(>F)'[3],
+         anova(AVP_ICO_lm_meanT)$'Pr(>F)'[3], 
+         anova(AVP_ICO_lm_int)$'Pr(>F)'[5])
+DESeq2_raw_p=c(NA,
+               results_ico$pvalue[results_ico$gene=="LOC113983498" & results_ico$Test=="Status"],
+               results_ico$pvalue[results_ico$gene=="LOC113983498" & results_ico$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="AVP" & results_int$Tissue=="ICO"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC, lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20, caption="Model validation in the dorsomedial intercollicular nucleus (ICo) for how Arginine Vasotocin (AVP) expression" ) %>% kable_styling()
+
+d<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+
+figurec<- ggarrange(c,d, labels=c("C","D"), nrow=2)
+
+```
+
+###OXTR
+
+
+```{r, fig.width=5, fig.width=7}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="OXTR" & results_int$Tissue=="ICO"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="OXTR" & results_int$Tissue=="ICO"],2)
+padj=signif(results_int$padj[results_int$gene=="OXTR" & results_int$Tissue=="ICO"],2)
+
+e<- ggplot(ico_norm, aes(x=mean_T, y=OXTR, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="OXTR X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+e
+
+
+OXTR_ICO_lm_Status<- lm(OXTR ~ Batch + Year + Status, data=ico_norm)
+OXTR_ICO_lm_meanT<- lm(OXTR ~ Batch + Year + mean_T, data=ico_norm)
+OXTR_ICO_lm_int<- lm(OXTR ~ Batch + Year + Status*mean_T, data=ico_norm)
+#against the NULL model
+OXTR_ICO_lm_null<- lm(OXTR~ Batch + Year, data=ico_norm)
+
+model=c("OXTR ~ Batch + Year", "OXTR ~ Batch + Year + Status", "OXTR ~ Batch + Year + mean T", "OXTR ~ Batch + Year +  Status * mean T") 
+AIC=c(AIC(OXTR_ICO_lm_null), AIC(OXTR_ICO_lm_Status),AIC(OXTR_ICO_lm_meanT),AIC(OXTR_ICO_lm_int))
+deltaAIC<- c(NA, AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+lm_p<- c(anova(OXTR_ICO_lm_null)$'Pr(>F)'[2],anova(OXTR_ICO_lm_Status)$'Pr(>F)'[3],anova(OXTR_ICO_lm_meanT)$'Pr(>F)'[3], anova(OXTR_ICO_lm_int)$'Pr(>F)'[5])
+DESeq2_raw_p=c(NA,
+               results_ico$pvalue[results_ico$gene=="OXTR" & results_ico$Test=="Status"],
+               results_ico$pvalue[results_ico$gene=="OXTR" & results_ico$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="OXTR" & results_int$Tissue=="ICO"])
+
+knitr::kable(data.frame(model, AIC,deltaAIC, lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20, caption="Model validation in the dorsomedial intercollicular nucleus (ICo) for how Arginine Vasotocin (AVP) expression" ) %>% kable_styling()
+
+f<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+figuree<- ggarrange(e,f, labels=c("E","F"), nrow=2)
+
+
+figure<-ggarrange(figurea,figurec,figuree, ncol=3)
+
+#ggsave(filename="../Candidate_gene_results/ICO_interaction.png", figure,device="png", width=50, height=20, units="cm", dpi=300, bg="white")
+```
+
+
+# Midbrain Central Gray (GCT)
+
+
+```{r GCT prep}
+rm(list= ls()[!(ls() %in% keep)])
+gct_key<- subset(key_behav, Tissue=="GCT")
+gct_key<- droplevels(gct_key)
+
+
+gct_data<- data[,colnames(data) %in% rownames(gct_key)]
+
+#remove genes with less than 5 reads
+gct_data$avg_count<- apply(gct_data, 1, mean)
+gct_data<- gct_data[gct_data$avg_count>5,]
+gct_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+gct_data$percent_0<- apply(gct_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(gct_data)/2
+gct_data<- gct_data[gct_data$percent_0<=thresh,]
+gct_data$percent_0<-NULL
+
+dd<- DESeqDataSetFromMatrix(countData=gct_data, colData=gct_key, design= ~ Batch)
+dd<- DESeq(dd)
+
+
+results_gct<- results_data[results_data$Tissue=="GCT",]
+results_gct2<- results_gct[which(results_gct$pvalue<0.05),]
+results_gct2<- results_gct2[order(results_gct2$gene),]
+
+knitr::kable(results_gct2[,-1], row.names=FALSE, digits=3, padding=20, caption="Significant results from DESeq2 before FDR correction in the Midbrain Central Grey (GCt). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).") %>% kable_styling()
+
+
+gd<- counts(dd,normalized=TRUE)
+
+gct_norm<- norm_data[[4]]
+rownames(gct_norm)<- gct_norm$X
+gct_norm$X<- NULL
+
+gct_norm<- as.data.frame(t(gct_norm))
+gct_norm$sampleID<- rownames(gct_norm)
+gct_norm<- gct_norm[, colnames(gct_norm) %in% candidates]
+gct_norm$sampleID<- rownames(gct_norm)
+gct_norm<- merge(gct_norm, gct_key, by="sampleID")
+
+status_results<- gd[rownames(gd) %in% candidates,]
+status_results<- as.data.frame(t(status_results))
+status_results$sampleID<- rownames(status_results)
+status_results<- merge(gct_key, status_results, by="sampleID")
+
+```
+
+```{r GCT candidate gene plots, fig.width=10, fig.height=20}
+
+
+
+gct_plots<- list()
+
+#AR
+gct_norm$AR<- as.numeric(gct_norm$AR)
+
+Rsq<- cor(gct_norm$strength.all_study, gct_norm$AR)^2
+lfc<- signif(results_gct$log2FoldChange[results_gct$gene=="AR" & results_gct$Test=="Strength"],2)
+praw<- signif(results_gct$pvalue[results_gct$gene=="AR" & results_gct$Test=="Strength"],2)
+padj=signif(results_gct$padj[results_gct$gene=="AR" & results_gct$Test=="Strength"],2)
+
+
+gct_plots[["strength_ar"]]<- ggplot(gct_norm, aes(x=strength.all_study, y=AR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="AR X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+#CYP19A1
+gct_norm$CYP19A1<- as.numeric(gct_norm$LOC113993669)
+Rsq<- signif(cor(gct_norm$mean_T, gct_norm$LOC113993669)^2,2)
+lfc<- signif(results_gct$log2FoldChange[results_gct$gene=="LOC113993669" & results_gct$Test=="mean T"],2)
+praw<- signif(results_gct$pvalue[results_gct$gene=="LOC113993669" & results_gct$Test=="mean T"],2)
+padj=signif(results_gct$padj[results_gct$gene=="LOC113993669" & results_gct$Test=="mean T"],2)
+
+
+
+gct_plots[["meanT_cyp19"]]<- ggplot(gct_norm, aes(x=mean_T, y=CYP19A1, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="CYP19A1 X mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) +  scale_colour_manual(values=status_cols, name="Age x Status")
+
+#ggplot(gct_norm, aes(x=mean_T, y=LOC113993669)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="Normalized Counts") + geom_smooth(method="lm", color="black", alpha=0.15) + geom_point(aes(color=Status),size=4,pch=19) + scale_colour_manual(values=status_cols[2:3]) + theme(legend.position = "none") +  labs(x="Mean Testosterone", y="LOC113993669 Normalized Counts", title=paste0("LOC113993669 X Mean T, Base mean=", signif(results_gct$baseMean[results_gct$gene=="LOC113993669" & results_gct$Test=="mean T"],2), "\n LFC=", signif(results_gct$log2FoldChange[results_gct$gene=="LOC113993669" & results_gct$Test=="mean T"],2), ", p=",signif(results_gct$pvalue[results_gct$gene=="LOC113993669" & results_gct$Test=="mean T"],3), ", padj=", signif(results_gct$padj[results_gct$gene=="LOC113993669" & results_gct$Test=="mean T"],2),", R^2=", signif(Rsq,2)))
+
+
+
+#PGR 
+gct_norm$PGR<- as.numeric(gct_norm$PGR)
+
+Rsq<- signif(cor(gct_norm$mean_T, gct_norm$PGR)^2,2)
+lfc<- signif(results_gct$log2FoldChange[results_gct$gene=="PGR" & results_gct$Test=="mean T"],2)
+praw<- signif(results_gct$pvalue[results_gct$gene=="PGR" & results_gct$Test=="mean T"],2)
+padj=signif(results_gct$padj[results_gct$gene=="PGR" & results_gct$Test=="mean T"],2)
+
+gct_plots[["meanT_pgr"]]<- ggplot(gct_norm, aes(x=mean_T, y=PGR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="PGR X Mean T", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+Rsq<- signif(cor(gct_norm$strength.all_study, gct_norm$PGR)^2,2)
+  
+lfc<- signif(results_gct$log2FoldChange[results_gct$gene=="PGR" & results_gct$Test=="Strength"],2)
+praw<- signif(results_gct$pvalue[results_gct$gene=="PGR" & results_gct$Test=="Strength"],2)
+padj=signif(results_gct$padj[results_gct$gene=="PGR" & results_gct$Test=="Strength"],2)  
+  
+gct_plots[["str_pgr"]]<- ggplot(gct_norm, aes(x=strength.all_study, y=PGR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="PGR X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+#VIP
+gct_norm$VIP<- as.numeric(gct_norm$VIP)
+
+status_results$VIP<- as.numeric(status_results$VIP)
+lfc<- signif(results_gct$log2FoldChange[results_gct$gene=="VIP" & results_gct$Test=="Status"],2)
+praw<- signif(results_gct$pvalue[results_gct$gene=="VIP" & results_gct$Test=="Status"],2)
+padj=signif(results_gct$padj[results_gct$gene=="VIP" & results_gct$Test=="Status"],2)  
+
+
+gct_plots[["status_VIP"]]<- ggplot(status_results, aes(x=Status, y=VIP, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="VIP X Status", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+Rsq<- signif(cor(gct_norm$mean_T, gct_norm$VIP)^2,2)
+lfc<- signif(results_gct$log2FoldChange[results_gct$gene=="VIP" & results_gct$Test=="mean T"],2)
+praw<- signif(results_gct$pvalue[results_gct$gene=="VIP" & results_gct$Test=="mean T"],2)
+padj=signif(results_gct$padj[results_gct$gene=="VIP" & results_gct$Test=="mean T"],2)
+
+
+gct_plots[["meanT_VIP"]]<- ggplot(gct_norm, aes(x=mean_T, y=VIP, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="VIP X Mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+Rsq<- signif(cor(gct_norm$strength.all_study, gct_norm$VIP)^2,2)
+lfc<- signif(results_gct$log2FoldChange[results_gct$gene=="VIP" & results_gct$Test=="Strength"],2)
+praw<- signif(results_gct$pvalue[results_gct$gene=="VIP" & results_gct$Test=="Strength"],2)
+padj=signif(results_gct$padj[results_gct$gene=="VIP" & results_gct$Test=="Strength"],2)
+
+
+
+gct_plots[["strength_VIP"]]<- ggplot(gct_norm, aes(x=strength.all_study, y=VIP, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="VIP X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+#OXT
+gct_norm$OXT<- as.numeric(gct_norm$LOC113983511)
+
+lfc<- signif(results_gct$log2FoldChange[results_gct$gene=="LOC113983511" & results_gct$Test=="Status"],2)
+praw<- signif(results_gct$pvalue[results_gct$gene=="LOC113983511" & results_gct$Test=="Status"],2)
+padj=signif(results_gct$padj[results_gct$gene=="LOC113983511" & results_gct$Test=="Status"],2)
+
+gct_plots[["status_oxt"]]<- ggplot(gct_norm, aes(x=Status, y=OXT, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="OXT X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) +  scale_colour_manual(values=status_cols, name="Age x Status")
+
+figure<- ggarrange(plotlist=gct_plots, ncol=2, nrow=4, common.legend = TRUE)
+figure<- annotate_figure(figure, top = text_grob("Candidate genes in Midbrain Central Gray (GCT)", face = "bold", size = 12), left=textGrob("Normalized counts", rot = 90, vjust = 1, gp=gpar(fontsize=12)))
+figure
+#ggsave(filename="../Candidate_gene_results/GCT_significant.png", figure,device="png", width=40, height=20, units="cm", dpi=300, bg="white")
+```
+
+
+
+## Interaction in the midbrain central gray
+
+### VIP
+
+```{r, fig.width=5, fig.width=7}
+status_cols2<- c("#E54849","#414042")
+
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="VIP" & results_int$Tissue=="GCT"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="VIP" & results_int$Tissue=="GCT"],2)
+padj=signif(results_int$padj[results_int$gene=="VIP" & results_int$Tissue=="GCT"],2)
+
+
+a<- ggplot(gct_norm, aes(x=mean_T, y=VIP, color=Status)) + geom_point(size=4,pch=19)  + labs(title="VIP X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15) + theme(legend.position="none")
+a
+```
+
+```{r}
+
+VIP_GCT_lm_Status<- lm(VIP ~ Batch  + Status, data=gct_norm)
+VIP_GCT_lm_meanT<- lm(VIP ~Batch +  mean_T, data=gct_norm)
+VIP_GCT_lm_int<- lm(VIP ~ Batch + Status*mean_T, data=gct_norm)
+VIP_GCT_lm_strength<- lm(VIP ~ Batch + strength.all_study, data=gct_norm)
+#against the NULL model
+VIP_GCT_lm_null<- lm(VIP ~ Batch  , data=gct_norm)
+
+model=c("VIP ~ Batch", "VIP ~ Batch + Status", "VIP ~ Batch + mean T", "VIP ~ Batch + Strength", "VIP ~ Batch + Status * mean T") 
+AIC=c(AIC(VIP_GCT_lm_null), AIC(VIP_GCT_lm_Status),AIC(VIP_GCT_lm_meanT), AIC(VIP_GCT_lm_strength), AIC(VIP_GCT_lm_int))
+deltaAIC<- c(NA,AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4], AIC[1]-AIC[5])
+
+lm_p<- c(anova(VIP_GCT_lm_null)$'Pr(>F)'[1],anova(VIP_GCT_lm_Status)$'Pr(>F)'[2],anova(VIP_GCT_lm_meanT)$'Pr(>F)'[2], anova(VIP_GCT_lm_strength)$'Pr(>F)'[2], anova(VIP_GCT_lm_int)$'Pr(>F)'[4])
+DESeq2_raw_p=c(NA,
+               results_gct$pvalue[results_gct$gene=="VIP" & results_gct$Test=="Status"],
+               results_gct$pvalue[results_gct$gene=="VIP" & results_gct$Test=="mean T"],
+               results_gct$pvalue[results_gct$gene=="VIP" & results_gct$Test=="Strength"],
+               results_int$pvalue[results_int$gene=="VIP" & results_int$Tissue=="GCT"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC,lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20,caption="Model validation in the midbrain central grey (GCt) for how VIP expression is related to our interest variables") %>% kable_styling()
+
+#anova(VIP_GCT_lm_null)
+b<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+figurea<- ggarrange(a,b, labels=c("A","B"), nrow=2)
+
+
+
+```
+
+
+
+
+### PGR
+
+
+```{r, fig.width=7, fig.height=5}
+
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="PGR" & results_int$Tissue=="GCT"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="PGR" & results_int$Tissue=="GCT"],2)
+padj=signif(results_int$padj[results_int$gene=="PGR" & results_int$Tissue=="GCT"],2)
+
+
+c<- ggplot(gct_norm, aes(x=mean_T, y=PGR, color=Status)) + geom_point(size=4,pch=19)  + labs(title="PGR X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15) + theme(legend.position="none")
+c
+```
+
+```{r}
+#against the NULL model
+PGR_GCT_lm_null<- lm(PGR ~ Batch  , data=gct_norm)
+PGR_GCT_lm_Status<- lm(PGR ~ Batch  + Status, data=gct_norm)
+PGR_GCT_lm_meanT<- lm(PGR ~Batch +  mean_T, data=gct_norm)
+PGR_GCT_lm_strength<- lm(PGR ~ Batch + strength.all_study, data=gct_norm)
+PGR_GCT_lm_int<- lm(PGR ~ Batch + Status*mean_T, data=gct_norm)
+
+model=c("PGR ~ Batch", 
+        "PGR ~ Batch + Status", 
+        "PGR ~ Batch + mean T", 
+        "PGR ~ Batch + Strength", 
+        "PGR ~ Batch + Status * mean T") 
+AIC=c(AIC(PGR_GCT_lm_null), 
+      AIC(PGR_GCT_lm_Status),
+      AIC(PGR_GCT_lm_meanT),
+      AIC(PGR_GCT_lm_strength), 
+      AIC(PGR_GCT_lm_int))
+
+deltaAIC<- c(NA,AIC[1]-AIC[2],  AIC[1]-AIC[3], AIC[1]-AIC[4], AIC[1]-AIC[5])
+
+lm_p<- c(anova(PGR_GCT_lm_null)$'Pr(>F)'[1],
+         anova(PGR_GCT_lm_Status)$'Pr(>F)'[2],
+         anova(PGR_GCT_lm_meanT)$'Pr(>F)'[2], 
+         anova(PGR_GCT_lm_strength)$'Pr(>F)'[2], 
+         anova(PGR_GCT_lm_int)$'Pr(>F)'[4])
+DESeq2_raw_p=c(NA,
+               results_gct$pvalue[results_gct$gene=="PGR" & results_gct$Test=="Status"],
+               results_gct$pvalue[results_gct$gene=="PGR" & results_gct$Test=="mean T"],
+               results_gct$pvalue[results_gct$gene=="PGR" & results_gct$Test=="Strength"],
+               results_int$pvalue[results_int$gene=="PGR" & results_int$Tissue=="GCT"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC,lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20, caption="Model validation in the midbrain central grey (GCt) for how Progesterone (PGR) expression is related to our interest variables") %>% kable_styling()
+
+d<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+figurec<- ggarrange(c,d, labels=c("C","D"), nrow=2)
+
+
+```
+
+
+
+### ESR1
+
+```{r, fig.height=5, fig.width=7}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="ESR1" & results_int$Tissue=="GCT"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="ESR1" & results_int$Tissue=="GCT"],2)
+padj=signif(results_int$padj[results_int$gene=="ESR1" & results_int$Tissue=="GCT"],2)
+
+e<- ggplot(gct_norm, aes(x=mean_T, y=ESR1, color=Status)) + geom_point(size=4,pch=19) + labs(title="ESR1 X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15) + theme(legend.position="none")
+e
+```
+
+```{r}
+ESR1_GCT_lm_null<- lm(ESR1 ~ Batch  , data=gct_norm)
+ESR1_GCT_lm_Status<- lm(ESR1 ~ Batch  + Status, data=gct_norm)
+ESR1_GCT_lm_meanT<- lm(ESR1 ~Batch +  mean_T, data=gct_norm)
+ESR1_GCT_lm_int<- lm(ESR1 ~ Batch + Status*mean_T, data=gct_norm)
+
+
+model=c("ESR1 ~ Batch", 
+        "ESR1 ~ Batch + Status", 
+        "ESR1 ~ Batch + mean T", 
+        "ESR1 ~ Batch + Status * mean T") 
+AIC=c(AIC(ESR1_GCT_lm_null),
+      AIC(ESR1_GCT_lm_Status),
+      AIC(ESR1_GCT_lm_meanT),
+      AIC(ESR1_GCT_lm_int))
+deltaAIC<- c(NA, AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+
+lm_p<- c(anova(ESR1_GCT_lm_null)$'Pr(>F)'[1],
+         anova(ESR1_GCT_lm_Status)$'Pr(>F)'[2],
+         anova(ESR1_GCT_lm_meanT)$'Pr(>F)'[2],
+         anova(ESR1_GCT_lm_int)$'Pr(>F)'[4])
+
+DESeq2_raw_p=c(NA,
+               results_gct$pvalue[results_gct$gene=="ESR1" & results_gct$Test=="Status"],
+               results_gct$pvalue[results_gct$gene=="ESR1" & results_gct$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="ESR1" & results_int$Tissue=="GCT"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC, lm_p,DESeq2_raw_p),row.names=FALSE, digits=3, padding=20) %>% kable_styling()
+
+f<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+figuree<- ggarrange(e,f, labels=c("E","F"), nrow=2)
+
+```
+
+
+
+
+
+###PRLR
+
+
+```{r, fig.height=5, fig.width=7}
+
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="PRLR" & results_int$Tissue=="GCT"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="PRLR" & results_int$Tissue=="GCT"],2)
+padj=signif(results_int$padj[results_int$gene=="PRLR" & results_int$Tissue=="GCT"],2)
+
+g<- ggplot(gct_norm, aes(x=mean_T, y=PRLR, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="PRLR X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)+ theme(legend.position="none")
+g
+```
+
+```{r}
+PRLR_GCT_lm_null<- lm(PRLR ~ Batch  , data=gct_norm)
+PRLR_GCT_lm_Status<- lm(PRLR ~ Batch  + Status, data=gct_norm)
+PRLR_GCT_lm_meanT<- lm(PRLR ~Batch +  mean_T, data=gct_norm)
+PRLR_GCT_lm_int<- lm(PRLR ~ Batch + Status*mean_T, data=gct_norm)
+
+
+model=c("PRLR ~ Batch", 
+        "PRLR ~ Batch + Status", 
+        "PRLR ~ Batch + mean T", 
+        "PRLR ~ Batch + Status * mean T") 
+AIC=c(AIC(PRLR_GCT_lm_null),
+      AIC(PRLR_GCT_lm_Status),
+      AIC(PRLR_GCT_lm_meanT),
+      AIC(PRLR_GCT_lm_int))
+deltaAIC<- c(NA, AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+
+lm_p<- c(anova(PRLR_GCT_lm_null)$'Pr(>F)'[1],
+         anova(PRLR_GCT_lm_Status)$'Pr(>F)'[2],
+         anova(PRLR_GCT_lm_meanT)$'Pr(>F)'[2],
+         anova(PRLR_GCT_lm_int)$'Pr(>F)'[4])
+
+DESeq2_raw_p=c(NA,
+               results_gct$pvalue[results_gct$gene=="PRLR" & results_gct$Test=="Status"],
+               results_gct$pvalue[results_gct$gene=="PRLR" & results_gct$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="PRLR" & results_int$Tissue=="GCT"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC, lm_p,DESeq2_raw_p),row.names=FALSE, digits=3, padding=20) %>% kable_styling()
+
+h<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+figureg<- ggarrange(g,h, labels=c("G","H"), nrow=2)
+
+
+
+figure<-ggarrange(figurea,figurec,figuree,figureg, ncol=2, nrow=2)
+
+#ggsave(filename="../Candidate_gene_results/GCT_interaction.png", figure,device="png", width=30, height=45, units="cm", dpi=300, bg="white")
+```
+
+# Nucleus Taenia (TnA)
+
+
+
+```{r TNA prep}
+rm(list= ls()[!(ls() %in% keep)])
+tna_key<- subset(key_behav, Tissue=="TNA")
+tna_key<- droplevels(tna_key)
+
+
+tna_data<- data[,colnames(data) %in% rownames(tna_key)]
+
+#remove genes with less than 5 reads
+tna_data$avg_count<- apply(tna_data, 1, mean)
+tna_data<- tna_data[tna_data$avg_count>5,]
+tna_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+tna_data$percent_0<- apply(tna_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(tna_data)/2
+tna_data<- tna_data[tna_data$percent_0<=thresh,]
+tna_data$percent_0<-NULL
+
+dd<- DESeqDataSetFromMatrix(countData=tna_data, colData=tna_key, design= ~ Batch)
+dd<- DESeq(dd)
+
+
+results_tna<- results_data[results_data$Tissue=="TNA",]
+results_tna2<- results_tna[which(results_tna$pvalue<0.05),]
+
+knitr::kable(results_tna2[,-1], row.names=FALSE, digits=3, padding=20, caption="Significant results from DESeq2 before FDR correction in the Nucleus Taenia (TnA). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).") %>% kable_styling()
+
+
+gd<- counts(dd,normalized=TRUE)
+
+
+tna_norm<- norm_data[[11]]
+rownames(tna_norm)<- tna_norm$X
+tna_norm$X<- NULL
+
+tna_norm<- as.data.frame(t(tna_norm))
+tna_norm$sampleID<- rownames(tna_norm)
+tna_norm<- tna_norm[, colnames(tna_norm) %in% candidates]
+tna_norm$sampleID<- rownames(tna_norm)
+tna_norm<- merge(tna_norm, tna_key, by="sampleID")
+
+
+status_results<- gd[rownames(gd) %in% candidates,]
+status_results<- as.data.frame(t(status_results))
+status_results$sampleID<- rownames(status_results)
+status_results<- merge(tna_key, status_results, by="sampleID")
+
+```
+
+```{r TNA candidate gene plots, fig.width=10, fig.height=15}
+
+tna_plots<- list()
+
+#AR
+tna_norm$AR<- as.numeric(tna_norm$AR)
+lfc<- signif(results_tna$log2FoldChange[results_tna$gene=="AR" & results_tna$Test=="Status"],2)
+praw<- signif(results_tna$pvalue[results_tna$gene=="AR" & results_tna$Test=="Status"],2)
+padj=signif(results_tna$padj[results_tna$gene=="AR" & results_tna$Test=="Status"],2)
+
+tna_plots[["status_ar"]]<- ggplot(status_results, aes(x=Status, y=AR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="AR X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+#tna_AR<- ggplot(status_results, aes(x=Status, y=AR, color=Status)) + geom_point(size=4,pch=19) + peri_theme + labs(x="", y="AR Normalized Counts", title="Androgen Receptor in \nNucleus Taenia (TnA)")+ scale_colour_manual(values=status_cols[2:3]) + geom_boxplot(fill=NA)
+
+#ESR2
+tna_norm$ESR2<- as.numeric(tna_norm$ESR2)
+Rsq<- signif(cor(tna_norm$mean_T, tna_norm$ESR2)^2,2)
+lfc<- signif(results_tna$log2FoldChange[results_tna$gene=="ESR2" & results_tna$Test=="mean T"],2)
+praw<- signif(results_tna$pvalue[results_tna$gene=="ESR2" & results_tna$Test=="mean T"],2)
+padj=signif(results_tna$padj[results_tna$gene=="ESR2" & results_tna$Test=="mean T"],2)
+
+
+
+tna_plots[["meanT_esr2"]]<- ggplot(tna_norm, aes(x=mean_T, y=ESR2, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="ESR2 X Mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+#ggplot(tna_norm, aes(x=mean_T, y=ESR2)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="ESR1 Normalized Counts") + geom_smooth(method="lm", color="black", alpha=0.15) + geom_point(aes(color=Status),size=4,pch=19) + scale_colour_manual(values=status_cols[2:3]) + theme(legend.position = "none") +  labs(x="Mean Testosterone", y="ESR2 Normalized Counts", title=paste0("ESR2 X Mean T, Base mean=", signif(results_tna$baseMean[results_tna$gene=="ESR2" & results_tna$Test=="mean T"],2), "\n LFC=", signif(results_tna$log2FoldChange[results_tna$gene=="ESR2" & results_tna$Test=="mean T"],2), ", p=",signif(results_tna$pvalue[results_tna$gene=="ESR2" & results_tna$Test=="mean T"],3), ", padj=", signif(results_tna$padj[results_tna$gene=="ESR2" & results_tna$Test=="mean T"],2)))
+
+
+
+#PGR 
+tna_norm$PGR<- as.numeric(tna_norm$PGR)
+Rsq<- signif(cor(tna_norm$strength.all_study, tna_norm$PGR)^2,2)
+lfc<- signif(results_tna$log2FoldChange[results_tna$gene=="PGR" & results_tna$Test=="Strength"],2)
+praw<- signif(results_tna$pvalue[results_tna$gene=="PGR" & results_tna$Test=="Strength"],2)
+padj=signif(results_tna$padj[results_tna$gene=="PGR" & results_tna$Test=="Strength"],2)
+
+
+
+tna_plots[["str_pgr"]]<- ggplot(tna_norm, aes(x=strength.all_study, y=PGR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="PGR X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+#AVP
+tna_norm$AVP<- as.numeric(tna_norm$LOC113983498)
+Rsq<- signif(cor(tna_norm$mean_T, tna_norm$AVP)^2,2)
+
+lfc<- signif(results_tna$log2FoldChange[results_tna$gene=="LOC113983498" & results_tna$Test=="mean T"],2)
+praw<- signif(results_tna$pvalue[results_tna$gene=="LOC113983498" & results_tna$Test=="mean T"],2)
+padj=signif(results_tna$padj[results_tna$gene=="LOC113983498" & results_tna$Test=="mean T"],2)
+
+tna_plots[["meanT_AVP"]]<- ggplot(tna_norm, aes(x=mean_T, y=AVP, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="AVP X Mean T", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+status_results$AVP<- as.numeric(status_results$LOC113983498)
+lfc<- signif(results_tna$log2FoldChange[results_tna$gene=="LOC113983498" & results_tna$Test=="Status"],2)
+praw<- signif(results_tna$pvalue[results_tna$gene=="LOC113983498" & results_tna$Test=="Status"],2)
+padj=signif(results_tna$padj[results_tna$gene=="LOC113983498" & results_tna$Test=="Status"],2)
+
+tna_plots[["status_AVP"]]<- ggplot(status_results, aes(x=Status, y=AVP, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="AVP X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+#AVPR1A
+tna_norm$AVPR1A<- as.numeric(tna_norm$AVPR1A)
+Rsq<- signif(cor(tna_norm$strength.all_study, tna_norm$AVPR1A)^2,2)
+lfc<- signif(results_tna$log2FoldChange[results_tna$gene=="AVPR1A" & results_tna$Test=="Status"],2)
+praw<- signif(results_tna$pvalue[results_tna$gene=="AVPR1A" & results_tna$Test=="Status"],2)
+padj=signif(results_tna$padj[results_tna$gene=="AVPR1A" & results_tna$Test=="Status"],2)
+
+tna_plots[["str_AVPR1A"]]<- ggplot(tna_norm, aes(x=strength.all_study, y=AVPR1A, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="AVPR1A Normalized Counts", title="AVPR1A X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) + scale_colour_manual(values=status_cols, name="Age x Status") 
+
+
+
+figure<- ggarrange(plotlist=tna_plots, ncol=2, nrow=3, common.legend = TRUE)
+figure<- annotate_figure(figure, top = text_grob("Candidate genes in Nucleus Taenia (TnA)", face = "bold", size = 12), left=textGrob("Normalized counts", rot = 90, vjust = 1, gp=gpar(fontsize=12)))
+figure
+#ggsave(filename="../Candidate_gene_results/TNA_significant.png", figure,device="png", width=20, height=30, units="cm", dpi=300, bg="white")
+```
+
+
+
+
+## Interaction in the Nucleus Taenia
+
+### CYP19A1
+
+```{r, fig.height=5, fig.width=7}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="CYP19A1" & results_int$Tissue=="TNA"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="CYP19A1" & results_int$Tissue=="TNA"],2)
+padj=signif(results_int$padj[results_int$gene=="CYP19A1" & results_int$Tissue=="TNA"],2)
+
+
+
+a<- ggplot(tna_norm, aes(x=mean_T, y=LOC113993669, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="CYP19A1 X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15) + theme(legend.position="none")
+a
+```
+
+```{r}
+CYP19A1_TNA_lm_Status<- lm(LOC113993669 ~ Batch  + Status, data=tna_norm)
+CYP19A1_TNA_lm_meanT<- lm(LOC113993669 ~Batch +  mean_T, data=tna_norm)
+CYP19A1_TNA_lm_int<- lm(LOC113993669 ~ Batch + Status*mean_T, data=tna_norm)
+#against the NULL model
+CYP19A1_TNA_lm_null<- lm(LOC113993669 ~ Batch  , data=tna_norm)
+
+model=c("CYP19A1 ~ Batch", "CYP19A1 ~ Batch + Status", "CYP19A1 ~ Batch + mean T", "CYP19A1 ~ Batch + Status * mean T") 
+AIC=c(AIC(CYP19A1_TNA_lm_null), AIC(CYP19A1_TNA_lm_Status),AIC(CYP19A1_TNA_lm_meanT), AIC(CYP19A1_TNA_lm_int))
+deltaAIC<- c(NA,AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+
+DESeq2_raw_p=c(NA,
+               results_tna$pvalue[results_tna$gene=="LOC113993669" & results_tna$Test=="Status"],
+               results_tna$pvalue[results_tna$gene=="LOC113993669" & results_tna$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="CYP19A1" & results_int$Tissue=="TNA"])
+
+lm_p<- c(anova(CYP19A1_TNA_lm_null)$'Pr(>F)'[1],
+         anova(CYP19A1_TNA_lm_Status)$'Pr(>F)'[2],
+         anova(CYP19A1_TNA_lm_meanT)$'Pr(>F)'[2],
+         anova(CYP19A1_TNA_lm_int)$'Pr(>F)'[4])
+
+knitr::kable(data.frame(model, AIC,deltaAIC, lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20) %>% kable_styling()
+
+
+b<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+figurea<- ggarrange(a,b, labels=c("A","B"), nrow=2)
+
+```
+
+
+
+### PRLR
+
+
+```{r, fig.height=5, fig.width=7}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="PRLR" & results_int$Tissue=="TNA"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="PRLR" & results_int$Tissue=="TNA"],2)
+padj=signif(results_int$padj[results_int$gene=="PRLR" & results_int$Tissue=="TNA"],2)
+
+
+c<-ggplot(tna_norm, aes(x=mean_T, y=PRLR, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="PRLR X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15) + theme(legend.position="none")
+c
+```
+
+```{r}
+PRLR_TNA_lm_Status<- lm(PRLR ~ Batch  + Status, data=tna_norm)
+PRLR_TNA_lm_meanT<- lm(PRLR ~Batch +  mean_T, data=tna_norm)
+PRLR_TNA_lm_int<- lm(PRLR ~ Batch + Status*mean_T, data=tna_norm)
+#against the NULL model
+PRLR_TNA_lm_null<- lm(PRLR ~ Batch  , data=tna_norm)
+
+model=c("PRLR ~ Batch", "PRLR ~ Batch + Status", "PRLR ~ Batch + mean T",  "PRLR ~ Batch + Status * mean T") 
+AIC=c(AIC(PRLR_TNA_lm_null), AIC(PRLR_TNA_lm_Status),AIC(PRLR_TNA_lm_meanT), AIC(PRLR_TNA_lm_int))
+
+deltaAIC<- c(NA, AIC[1]-AIC[2],AIC[1]-AIC[3],AIC[1]-AIC[4])
+lm_p<- c(anova(PRLR_TNA_lm_null)$'Pr(>F)'[1],
+         anova(PRLR_TNA_lm_Status)$'Pr(>F)'[2],
+         anova(PRLR_TNA_lm_meanT)$'Pr(>F)'[2],
+         anova(PRLR_TNA_lm_int)$'Pr(>F)'[4])
+DESeq2_raw_p=c(NA,
+               results_tna$pvalue[results_tna$gene=="PRLR" & results_tna$Test=="Status"],
+               results_tna$pvalue[results_tna$gene=="PRLR" & results_tna$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="PRLR" & results_int$Tissue=="TNA"])
+
+
+
+knitr::kable(data.frame(model, AIC, deltaAIC,lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20) %>% kable_styling()
+
+d<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+figurec<- ggarrange(c,d, labels=c("C","D"), nrow=2)
+```
+
+
+### VIP
+
+```{r, fig.height=5, fig.width=7}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="VIP" & results_int$Tissue=="TNA"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="VIP" & results_int$Tissue=="TNA"],2)
+padj=signif(results_int$padj[results_int$gene=="VIP" & results_int$Tissue=="TNA"],2)
+
+e<-ggplot(tna_norm, aes(x=mean_T, y=VIP, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="VIP X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15) + theme(legend.position="none")
+e
+```
+
+```{r}
+
+VIP_TNA_lm_Status<- lm(VIP ~ Batch  + Status, data=tna_norm)
+VIP_TNA_lm_meanT<- lm(VIP ~Batch +  mean_T, data=tna_norm)
+VIP_TNA_lm_int<- lm(VIP ~ Batch + Status*mean_T, data=tna_norm)
+#against the NULL model
+VIP_TNA_lm_null<- lm(VIP ~ Batch  , data=tna_norm)
+
+model=c("VIP ~ Batch", "VIP ~ Batch + Status", "VIP ~ Batch + mean T", "VIP ~ Batch + Status * mean T") 
+AIC=c(AIC(VIP_TNA_lm_null), AIC(VIP_TNA_lm_Status),AIC(VIP_TNA_lm_meanT), AIC(VIP_TNA_lm_int))
+deltaAIC<- c(NA,AIC[1]-AIC[2], AIC[1]-AIC[3],AIC[1]-AIC[4])
+lm_p<- c(anova(VIP_TNA_lm_null)$'Pr(>F)'[1],
+         anova(VIP_TNA_lm_Status)$'Pr(>F)'[2],
+         anova(VIP_TNA_lm_meanT)$'Pr(>F)'[2],
+         anova(VIP_TNA_lm_int)$'Pr(>F)'[4])
+DESeq2_raw_p=c(NA,
+               results_tna$pvalue[results_tna$gene=="VIP" & results_tna$Test=="Status"],
+               results_tna$pvalue[results_tna$gene=="VIP" & results_tna$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="VIP" & results_int$Tissue=="TNA"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC, lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20) %>% kable_styling()
+
+f<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+figuree<- ggarrange(e,f, labels=c("E","F"), nrow=2)
+```
+
+
+nothing compelling. 
+
+### VIPR1
+
+
+```{r,fig.width=7, fig.height=5}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="VIPR1" & results_int$Tissue=="TNA"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="VIPR1" & results_int$Tissue=="TNA"],2)
+padj=signif(results_int$padj[results_int$gene=="VIPR1" & results_int$Tissue=="TNA"],2)
+
+g<- ggplot(tna_norm, aes(x=mean_T, y=VIPR1, color=Status)) + geom_point(size=4,pch=19) + labs(title="VIPR1 X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15) + theme(legend.position = "none")
+g
+
+```
+
+```{r}
+
+VIPR1_TNA_lm_Status<- lm(VIPR1 ~ Batch  + Status, data=tna_norm)
+VIPR1_TNA_lm_meanT<- lm(VIPR1 ~Batch +  mean_T, data=tna_norm)
+VIPR1_TNA_lm_int<- lm(VIPR1 ~ Batch + Status*mean_T, data=tna_norm)
+#against the NULL model
+VIPR1_TNA_lm_null<- lm(VIPR1 ~ Batch  , data=tna_norm)
+
+model=c("VIPR1 ~ Batch", "VIPR1 ~ Batch + Status", "VIPR1 ~ Batch + mean T", "VIPR1 ~ Batch + Status * mean T") 
+AIC=c(AIC(VIPR1_TNA_lm_null), AIC(VIPR1_TNA_lm_Status),AIC(VIPR1_TNA_lm_meanT), AIC(VIPR1_TNA_lm_int))
+deltaAIC<- c(NA, AIC[1]-AIC[2],AIC[1]-AIC[3],AIC[1]-AIC[4])
+lm_p<- c(anova(VIPR1_TNA_lm_null)$'Pr(>F)'[1],
+         anova(VIPR1_TNA_lm_Status)$'Pr(>F)'[2],
+         anova(VIPR1_TNA_lm_meanT)$'Pr(>F)'[2],
+         anova(VIPR1_TNA_lm_int)$'Pr(>F)'[4])
+DESeq2_raw_p=c(NA,
+               results_tna$pvalue[results_tna$gene=="VIPR1" & results_tna$Test=="Status"],
+               results_tna$pvalue[results_tna$gene=="VIPR1" & results_tna$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="VIPR1" & results_int$Tissue=="TNA"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC, lm_p,DESeq2_raw_p),row.names=FALSE, digits=3, padding=20) %>% kable_styling()
+
+h<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+figureg<- ggarrange(g,h, labels=c("G","H"), nrow=2)
+
+
+figure<-ggarrange(figurea,figurec,figuree,figureg, ncol=2, nrow=2)
+
+#ggsave(filename="../Candidate_gene_results/TNA_interaction.png", figure,device="png", width=30, height=45, units="cm", dpi=300, bg="white")
+```
+
+
+# Arcopallium Intermedium (Ai)
+
+
+
+```{r AI prep}
+rm(list= ls()[!(ls() %in% keep)])
+ai_key<- subset(key_behav, Tissue=="AI")
+ai_key<- droplevels(ai_key)
+
+
+ai_data<- data[,colnames(data) %in% rownames(ai_key)]
+
+#remove genes with less than 5 reads
+ai_data$avg_count<- apply(ai_data, 1, mean)
+ai_data<- ai_data[ai_data$avg_count>5,]
+ai_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+ai_data$percent_0<- apply(ai_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(ai_data)/2
+ai_data<- ai_data[ai_data$percent_0<=thresh,]
+ai_data$percent_0<-NULL
+
+dd<- DESeqDataSetFromMatrix(countData=ai_data, colData=ai_key, design= ~ Batch)
+dd<- DESeq(dd)
+
+
+results_ai<- results_data[results_data$Tissue=="AI",]
+results_ai2<- results_ai[which(results_ai$pvalue<0.05),]
+knitr::kable(results_ai2[,-1], row.names=FALSE, digits=3, padding=20, caption="Significant results from DESeq2 before FDR correction in the Arcopallium Intermedium (Ai). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).") %>% kable_styling()
+
+
+gd<- counts(dd,normalized=TRUE)
+
+
+ai_norm<- norm_data[[2]]
+rownames(ai_norm)<- ai_norm$X
+ai_norm$X<- NULL
+
+ai_norm<- as.data.frame(t(ai_norm))
+ai_norm$sampleID<- rownames(ai_norm)
+ai_norm<- ai_norm[, colnames(ai_norm) %in% candidates]
+ai_norm$sampleID<- rownames(ai_norm)
+ai_norm<- merge(ai_norm, ai_key, by="sampleID")
+
+
+status_results<- gd[rownames(gd) %in% candidates,]
+status_results<- as.data.frame(t(status_results))
+status_results$sampleID<- rownames(status_results)
+status_results<- merge(ai_key, status_results, by="sampleID")
+
+```
+
+```{r AI candidate gene plots, fig.width=10, fig.height=10}
+
+
+ai_plots<- list()
+
+
+#PGR 
+ai_norm$PGR<- as.numeric(ai_norm$PGR)
+Rsq<- signif(cor(ai_norm$mean_T, ai_norm$PGR)^2, 2)
+lfc<- signif(results_ai$log2FoldChange[results_ai$gene=="PGR" & results_ai$Test=="mean T"],2)
+praw<- signif(results_ai$pvalue[results_ai$gene=="PGR" & results_ai$Test=="mean T"],2)
+padj=signif(results_ai$padj[results_ai$gene=="PGR" & results_ai$Test=="mean T"],2)
+
+ai_plots[["meanT_pgr"]]<- ggplot(ai_norm, aes(x=mean_T, y=PGR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="PGR X Mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+##PRLR
+ai_norm$PRLR<- as.numeric(ai_norm$PRLR)
+
+lfc<- signif(results_ai$log2FoldChange[results_ai$gene=="PRLR" & results_ai$Test=="Status"],2)
+praw<- signif(results_ai$pvalue[results_ai$gene=="PRLR" & results_ai$Test=="Status"],2)
+padj=signif(results_ai$padj[results_ai$gene=="PRLR" & results_ai$Test=="Status"],2)
+
+
+ai_plots[["status_PRLR"]]<- ggplot(status_results, aes(x=Status, y=PRLR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="PRLR X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+#VIP
+ai_norm$VIP<- as.numeric(ai_norm$VIP)
+Rsq<- signif(cor(ai_norm$mean_T, ai_norm$VIP)^2,2)
+lfc<- signif(results_ai$log2FoldChange[results_ai$gene=="VIP" & results_ai$Test=="mean T"],2)
+praw<- signif(results_ai$pvalue[results_ai$gene=="VIP" & results_ai$Test=="mean T"],2)
+padj=signif(results_ai$padj[results_ai$gene=="VIP" & results_ai$Test=="mean T"],2)
+
+
+ai_plots[["meanT_VIP"]]<- ggplot(ai_norm, aes(x=mean_T, y=VIP, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="VIP X Mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+Rsq<- signif(cor(ai_norm$strength.all_study, ai_norm$VIP)^2,2)
+
+lfc<- signif(results_ai$log2FoldChange[results_ai$gene=="VIP" & results_ai$Test=="Strength"],2)
+praw<- signif(results_ai$pvalue[results_ai$gene=="VIP" & results_ai$Test=="Strength"],2)
+padj=signif(results_ai$padj[results_ai$gene=="VIP" & results_ai$Test=="Strength"],2)
+
+ai_plots[["strength_VIP"]]<- ggplot(ai_norm, aes(x=strength.all_study, y=VIP, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="VIP X Strength", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+figure<- ggarrange(plotlist=ai_plots, ncol=2, nrow=2, common.legend=TRUE)
+figure<- annotate_figure(figure, top = text_grob("Candidate genes in Arcopallium Intermedium (Ai)", face = "bold", size = 12), left=textGrob("Normalized counts", rot = 90, vjust = 1, gp=gpar(fontsize=12)))
+figure
+#ggsave(filename="../Candidate_gene_results/AI_significant.png", figure,device="png", width=20, height=20, units="cm", dpi=300, bg="white")
+```
+
+## Interaction in the Arcopallium Intermedium
+
+### AVP
+
+```{r}
+
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="AVP" & results_int$Tissue=="AI"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="AVP" & results_int$Tissue=="AI"],2)
+padj=signif(results_int$padj[results_int$gene=="AVP" & results_int$Tissue=="AI"],2)
+
+a<- ggplot(ai_norm, aes(x=mean_T, y=LOC113983498, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="AVP X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+a
+```
+
+
+
+```{r}
+
+AVP_ai_lm_Status<- lm(LOC113983498 ~ Status, data=ai_norm)
+AVP_ai_lm_meanT<- lm(LOC113983498 ~ mean_T, data=ai_norm)
+AVP_ai_lm_int<- lm(LOC113983498 ~ Status*mean_T, data=ai_norm)
+#against the NULL model
+AVP_ai_lm_null<- lm(LOC113983498 ~ 1, data=ai_norm)
+
+model=c("AVP ~ 1", "AVP ~ Status", "AVP ~ mean T","AVP ~Status * mean T") 
+AIC=c(AIC(AVP_ai_lm_null), 
+      AIC(AVP_ai_lm_Status),
+      AIC(AVP_ai_lm_meanT), 
+      AIC(AVP_ai_lm_int))
+deltaAIC<- c(NA, AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+lm_p<- c(anova(AVP_ai_lm_null)$'Pr(>F)'[1],
+         anova(AVP_ai_lm_Status)$'Pr(>F)'[1],
+         anova(AVP_ai_lm_meanT)$'Pr(>F)'[1],
+         anova(AVP_ai_lm_int)$'Pr(>F)'[3])
+DESeq2_raw_p=c(NA,
+               results_ai$pvalue[results_ai$gene=="LOC113983498" & results_ai$Test=="Status"],
+               results_ai$pvalue[results_ai$gene=="LOC113983498" & results_ai$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="AVP" & results_int$Tissue=="AI"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC,lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20,caption="Model validation in the arcopallium intermedium (ai) for how AVP expression is related to our interest variables") %>% kable_styling()
+
+b<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+
+figurea<- ggarrange(a,b, labels=c("A","B"), nrow=2)
+
+
+```
+
+Looks like the parameterised model is worse than the null model. 
+
+
+### AVPR1A
+
+```{r}
+
+ggplot(ai_norm, aes(x=mean_T, y=AVPR1A, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title=paste0("AVPR1A X Status * mean T, Base mean=", signif(results_int$baseMean[results_int$gene=="AVPR1A" & results_int$Tissue=="AI"],2), "\n LFC=", signif(results_int$log2FoldChange[results_int$gene=="AVPR1A" & results_int$Tissue=="AI"],2), ", p=",signif(results_int$pvalue[results_int$gene=="AVPR1A" & results_int$Tissue=="AI"],3), ", padj=", signif(results_int$padj[results_int$gene=="AVPR1A" & results_int$Tissue=="AI"],3)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+```
+
+Not very convincing
+
+
+```{r}
+
+AVPR1A_ai_lm_Status<- lm(AVPR1A ~ Status, data=ai_norm)
+AVPR1A_ai_lm_meanT<- lm(AVPR1A ~ mean_T, data=ai_norm)
+AVPR1A_ai_lm_int<- lm(AVPR1A ~ Status*mean_T, data=ai_norm)
+#against the NULL model
+AVPR1A_ai_lm_null<- lm(AVPR1A ~ 1, data=ai_norm)
+
+model=c("AVPR1A ~ 1", "AVPR1A ~ Status", "AVPR1A ~ mean T","AVPR1A ~Status * mean T") 
+AIC=c(AIC(AVPR1A_ai_lm_null), 
+      AIC(AVPR1A_ai_lm_Status),
+      AIC(AVPR1A_ai_lm_meanT), 
+      AIC(AVPR1A_ai_lm_int))
+lm_p<- c(anova(AVPR1A_ai_lm_null)$'Pr(>F)'[1],
+         anova(AVPR1A_ai_lm_Status)$'Pr(>F)'[1],
+         anova(AVPR1A_ai_lm_meanT)$'Pr(>F)'[1],
+         anova(AVPR1A_ai_lm_int)$'Pr(>F)'[3])
+DESeq2_raw_p=c(NA,
+               results_ai$pvalue[results_ai$gene=="AVPR1A" & results_ai$Test=="Status"],
+               results_ai$pvalue[results_ai$gene=="AVPR1A" & results_ai$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="AVPR1A" & results_int$Tissue=="AI"])
+
+
+
+knitr::kable(data.frame(model, AIC,lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20,caption="Model validation in the arcopallium intermedium (ai) for how AVPR1A expression is related to our interest variables") %>% kable_styling()
+
+```
+ 
+ And indeed this model does not appear to be bette either
+ 
+ 
+###VIPR1
+
+```{r}
+
+ggplot(ai_norm, aes(x=mean_T, y=VIPR1, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title=paste0("VIPR1 X Status * mean T, Base mean=", signif(results_int$baseMean[results_int$gene=="VIPR1" & results_int$Tissue=="AI"],2), "\n LFC=", signif(results_int$log2FoldChange[results_int$gene=="VIPR1" & results_int$Tissue=="AI"],2), ", p=",signif(results_int$pvalue[results_int$gene=="VIPR1" & results_int$Tissue=="AI"],3), ", padj=", signif(results_int$padj[results_int$gene=="VIPR1" & results_int$Tissue=="AI"],3)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+```
+
+
+
+```{r}
+
+VIPR1_ai_lm_Status<- lm(VIPR1 ~ Status, data=ai_norm)
+VIPR1_ai_lm_meanT<- lm(VIPR1 ~ mean_T, data=ai_norm)
+VIPR1_ai_lm_int<- lm(VIPR1 ~ Status*mean_T, data=ai_norm)
+#against the NULL model
+VIPR1_ai_lm_null<- lm(VIPR1 ~ 1, data=ai_norm)
+
+model=c("VIPR1 ~ 1", "VIPR1 ~ Status", "VIPR1 ~ mean T","VIPR1 ~Status * mean T") 
+AIC=c(AIC(VIPR1_ai_lm_null), 
+      AIC(VIPR1_ai_lm_Status),
+      AIC(VIPR1_ai_lm_meanT), 
+      AIC(VIPR1_ai_lm_int))
+deltaAIC<- c(NA, AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4])
+lm_p<- c(anova(VIPR1_ai_lm_null)$'Pr(>F)'[1],
+         anova(VIPR1_ai_lm_Status)$'Pr(>F)'[1],
+         anova(VIPR1_ai_lm_meanT)$'Pr(>F)'[1],
+         anova(VIPR1_ai_lm_int)$'Pr(>F)'[3])
+DESeq2_raw_p=c(NA,
+               results_ai$pvalue[results_ai$gene=="LOC113983498" & results_ai$Test=="Status"],
+               results_ai$pvalue[results_ai$gene=="LOC113983498" & results_ai$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="VIPR1" & results_int$Tissue=="AI"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC,lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20,caption="Model validation in the arcopallium intermedium (ai) for how VIPR1 expression is related to our interest variables") %>% kable_styling()
+
+```
+
+ 
+## Checking other multiple hits in the AI
+ 
+### VIP
+
+```{r}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="VIP" & results_int$Tissue=="AI"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="VIP" & results_int$Tissue=="AI"],2)
+padj=signif(results_int$padj[results_int$gene=="VIP" & results_int$Tissue=="AI"],2)
+
+c<- ggplot(ai_norm, aes(x=mean_T, y=VIP, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="VIP X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+c
+```
+
+
+```{r}
+VIP_AI_lm_Strength<-  lm(VIP ~strength.all_study, data=ai_norm)
+VIP_AI_lm_Status<- lm(VIP ~Status, data=ai_norm)
+VIP_AI_lm_meanT<- lm(VIP ~ mean_T, data=ai_norm)
+
+VIP_AI_lm_int<- lm(VIP ~ Status*mean_T, data=ai_norm)
+#against the NULL model
+VIP_AI_lm_null<- lm(VIP ~ 1, data=ai_norm)
+
+model=c("VIP ~ 1", "VIP ~ Strength",
+        "VIP ~ Status", 
+        "VIP ~ mean T", 
+        "VIP ~ Status * mean T") 
+AIC=c(AIC(VIP_AI_lm_null), 
+       AIC(VIP_AI_lm_Strength),
+      AIC(VIP_AI_lm_Status),
+      AIC(VIP_AI_lm_meanT),
+      AIC(VIP_AI_lm_int))
+deltaAIC<- c(NA, AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4], AIC[1]-AIC[5])
+lm_p<- c(anova(VIP_AI_lm_null)$'Pr(>F)'[1],
+         anova(VIP_AI_lm_Strength)$'Pr(>F)'[1],
+         anova(VIP_AI_lm_Status)$'Pr(>F)'[1],
+         anova(VIP_AI_lm_meanT)$'Pr(>F)'[1], 
+         anova(VIP_AI_lm_int)$'Pr(>F)'[3])
+DESeq2_raw_p=c(NA,
+               results_ai$pvalue[results_ai$gene=="VIP" & results_ai$Test=="Strength"],
+               results_ai$pvalue[results_ai$gene=="VIP" & results_ai$Test=="Status"],
+               results_ai$pvalue[results_ai$gene=="VIP" & results_ai$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="VIP" & results_int$Tissue=="AI"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC,lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20, caption="Model validation in the Arcopallium Intermedium (AI) for how VIP expression, status and mean T influences social behavior") %>% kable_styling()
+
+
+d<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+
+figurec<- ggarrange(c,d, labels=c("C","D"), nrow=2)
+
+figure<-ggarrange(figurea,figurec, ncol=2)
+
+#ggsave(filename="../Candidate_gene_results/AI_interaction.png", figure,device="png", width=35, height=25, units="cm", dpi=300, bg="white")
+```
+
+Ok, looks like it's tricky to distinguish between the two interest models ~ Strength and ~ Mean T
+
+We have some very low absolute expression here too... 
+
+
+# Lateral Septum (LS)
+
+
+
+```{r LS prep}
+rm(list= ls()[!(ls() %in% keep)])
+ls_key<- subset(key_behav, Tissue=="LS")
+ls_key<- droplevels(ls_key)
+
+
+ls_data<- data[,colnames(data) %in% rownames(ls_key)]
+
+#remove genes with less than 5 reads
+ls_data$avg_count<- apply(ls_data, 1, mean)
+ls_data<- ls_data[ls_data$avg_count>5,]
+ls_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+ls_data$percent_0<- apply(ls_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(ls_data)/2
+ls_data<- ls_data[ls_data$percent_0<=thresh,]
+ls_data$percent_0<-NULL
+
+dd<- DESeqDataSetFromMatrix(countData=ls_data, colData=ls_key, design= ~ Batch)
+dd<- DESeq(dd)
+
+results_ls<- results_data[results_data$Tissue=="LS",]
+results_ls2<- results_ls[which(results_ls$pvalue<0.05),]
+
+
+knitr::kable(results_ls2[,-1], row.names=FALSE, digits=3, padding=20, caption="Significant results from DESeq2 before FDR correction in the Lateral Septum (LS). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).") %>% kable_styling()
+
+gd<- counts(dd,normalized=TRUE)
+
+ls_norm<- norm_data[[7]]
+rownames(ls_norm)<- ls_norm$X
+ls_norm$X<- NULL
+
+ls_norm<- as.data.frame(t(ls_norm))
+ls_norm$sampleID<- rownames(ls_norm)
+ls_norm<- ls_norm[, colnames(ls_norm) %in% candidates]
+ls_norm$sampleID<- rownames(ls_norm)
+ls_norm<- merge(ls_norm, ls_key, by="sampleID")
+
+
+status_results<- gd[rownames(gd) %in% candidates,]
+status_results<- as.data.frame(t(status_results))
+status_results$sampleID<- rownames(status_results)
+status_results<- merge(ls_key, status_results, by="sampleID")
+```
+
+```{r LS candidate gene plots, fig.width=10, fig.height=10}
+
+ls_plots<- list()
+
+
+#SRD5A2
+lfc<- signif(results_ls$log2FoldChange[results_ls$gene=="SRD5A2" & results_ls$Test=="Status"],2)
+praw<- signif(results_ls$pvalue[results_ls$gene=="SRD5A2" & results_ls$Test=="Status"],2)
+padj=signif(results_ls$padj[results_ls$gene=="SRD5A2" & results_ls$Test=="Status"],2)
+
+ls_plots[["status_SRD5A2"]]<- ggplot(status_results, aes(x=Status, y=SRD5A2, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="SRD5A2 X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+#ls_reduct<- ggplot(status_results, aes(x=Status, y=SRD5A2, color=Status)) + geom_point(size=4,pch=19) + peri_theme + labs(x="", y="SRD5A2 Normalized Counts", title="5-alpha reductase 2 (SRD5A2) in \nLateral Septum (LS)") + scale_colour_manual(values=status_cols[2:3]) + geom_boxplot(fill=NA)
+
+
+
+Rsq<- signif(cor(ls_norm$strength.all_study, ls_norm$GNRH1)^2,2)
+lfc<- signif(results_ls$log2FoldChange[results_ls$gene=="GNRH1" & results_ls$Test=="Strength"],2)
+praw<- signif(results_ls$pvalue[results_ls$gene=="GNRH1" & results_ls$Test=="Strength"],2)
+padj=signif(results_ls$padj[results_ls$gene=="GNRH1" & results_ls$Test=="Strength"],2)
+
+ls_plots[["strength_GNRH"]]<- ggplot(ls_norm, aes(x=strength.all_study, y=GNRH1, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="GNRH1 X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d, " DESeq2 Excluded"),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+
+lfc<- signif(results_ls$log2FoldChange[results_ls$gene=="GNRH1" & results_ls$Test=="Status"],2)
+praw<- signif(results_ls$pvalue[results_ls$gene=="GNRH1" & results_ls$Test=="Status"],2)
+padj=signif(results_ls$padj[results_ls$gene=="GNRH1" & results_ls$Test=="Status"],2)
+ls_plots[["status_GNRH"]]<- ggplot(status_results, aes(x=Status, y=GNRH1, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="GNRH1 X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+#VIP
+
+lfc<- signif(results_ls$log2FoldChange[results_ls$gene=="VIP" & results_ls$Test=="Status"],2)
+praw<- signif(results_ls$pvalue[results_ls$gene=="VIP" & results_ls$Test=="Status"],2)
+padj=signif(results_ls$padj[results_ls$gene=="VIP" & results_ls$Test=="Status"],2)
+
+ls_plots[["status_VIP"]]<- ggplot(status_results, aes(x=Status, y=VIP, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="VIP X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+
+figure<- ggarrange(plotlist=ls_plots, ncol=2, nrow=2, common.legend = TRUE)
+figure<- annotate_figure(figure, top = text_grob("Candidate genes in Lateral Septum (LS)", face = "bold", size = 12), left=textGrob("Normalized counts", rot = 90, vjust = 1, gp=gpar(fontsize=12)))
+figure
+#ggsave(filename="../Candidate_gene_results/LS_significant.png", figure,device="png", width=20, height=20, units="cm", dpi=300, bg="white")
+```
+
+
+
+## Interactions in the Lateral Septum
+
+### AR
+
+```{r, fig.width=7, fig.height=5}
+status_cols2<- c("#E54849","#414042")
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="AR" & results_int$Tissue=="LS"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="AR" & results_int$Tissue=="LS"],2)
+padj=signif(results_int$padj[results_int$gene=="AR" & results_int$Tissue=="LS"],2)
+a<- ggplot(ls_norm, aes(x=mean_T, y=AR, color=Status)) + geom_point(size=4,pch=19)  + labs(title="AR X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+a
+```
+
+```{r}
+
+AR_LS_lm_Status<- lm(AR ~ Status, data=ls_norm)
+AR_LS_lm_meanT<- lm(AR ~ mean_T, data=ls_norm)
+AR_LS_lm_int<- lm(AR ~ Status*mean_T, data=ls_norm)
+#against the NULL model
+AR_LS_lm_null<- lm(AR ~ 1, data=ls_norm)
+
+model=c("AR ~ 1", "AR ~ Status", "AR ~ mean T",  "AR ~ Status * mean T") 
+AIC=c(AIC(AR_LS_lm_null), AIC(AR_LS_lm_Status),AIC(AR_LS_lm_meanT), AIC(AR_LS_lm_int))
+deltaAIC<- c(NA,AIC[1]-AIC[2],AIC[1]-AIC[3],AIC[1]-AIC[4])
+lm_p<- c(anova(AR_LS_lm_null)$'Pr(>F)'[1],
+         anova(AR_LS_lm_Status)$'Pr(>F)'[1],
+         anova(AR_LS_lm_meanT)$'Pr(>F)'[1],
+         anova(AR_LS_lm_int)$'Pr(>F)'[3])
+DESeq2_raw_p=c(NA,
+               results_ls$pvalue[results_ls$gene=="AR" & results_ls$Test=="Status"],
+               results_ls$pvalue[results_ls$gene=="AR" & results_ls$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="AR" & results_int$Tissue=="LS"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC,lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20) %>% kable_styling()
+
+b<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+
+figurea<- ggarrange(a,b, labels=c("A","B"), nrow=2)
+
+
+
+#ggsave(filename="../Candidate_gene_results/LS_interaction.png", figurea,device="png", width=15, height=20, units="cm", dpi=300, bg="white")
+
+```
+
+
+# Bed Nucleus of the Stria Terminalis (BSTm)
+
+```{r BSTm prep}
+rm(list= ls()[!(ls() %in% keep)])
+bstm_key<- subset(key_behav, Tissue=="BSTm")
+bstm_key<- droplevels(bstm_key)
+
+
+bstm_data<- data[,colnames(data) %in% rownames(bstm_key)]
+
+#remove genes with less than 5 reads
+bstm_data$avg_count<- apply(bstm_data, 1, mean)
+bstm_data<- bstm_data[bstm_data$avg_count>5,]
+bstm_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+bstm_data$percent_0<- apply(bstm_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(bstm_data)/2
+bstm_data<- bstm_data[bstm_data$percent_0<=thresh,]
+bstm_data$percent_0<-NULL
+
+dd<- DESeqDataSetFromMatrix(countData=bstm_data, colData=bstm_key, design= ~ Batch)
+dd<- DESeq(dd)
+
+results_bstm<- results_data[results_data$Tissue=="BSTm",]
+
+results_bstm2<- results_bstm[which(results_bstm$pvalue<0.05),]
+
+
+knitr::kable(results_bstm2[,-1], row.names=FALSE, digits=3, padding=20) %>% kable_styling()
+
+
+gd<- counts(dd,normalized=TRUE)
+
+bstm_norm<- norm_data[[3]]
+rownames(bstm_norm)<- bstm_norm$X
+bstm_norm$X<- NULL
+
+bstm_norm<- as.data.frame(t(bstm_norm))
+bstm_norm$sampleID<- rownames(bstm_norm)
+bstm_norm<- bstm_norm[, colnames(bstm_norm) %in% candidates]
+bstm_norm$sampleID<- rownames(bstm_norm)
+bstm_norm<- merge(bstm_norm, bstm_key, by="sampleID")
+
+
+status_results<- gd[rownames(gd) %in% candidates,]
+status_results<- as.data.frame(t(status_results))
+status_results$sampleID<- rownames(status_results)
+status_results<- merge(bstm_key, status_results, by="sampleID")
+
+```
+
+```{r BSTm candidate gene plots, fig.width=10, fig.height=10}
+
+
+bstm_plots<- list()
+
+#AR
+bstm_norm$AR<- as.numeric(bstm_norm$AR)
+
+lfc<- signif(results_bstm$log2FoldChange[results_bstm$gene=="AR" & results_bstm$Test=="Status"],2)
+praw<- signif(results_bstm$pvalue[results_bstm$gene=="AR" & results_bstm$Test=="Status"],2)
+padj=signif(results_bstm$padj[results_bstm$gene=="AR" & results_bstm$Test=="Status"],2)
+
+bstm_plots[["status_ar"]]<- ggplot(status_results, aes(x=Status, y=AR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Status", y="", title="AR X Status",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)))+ scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+#bstm_AR<- ggplot(status_results, aes(x=Status, y=AR, color=Status)) + geom_point(size=4,pch=19) + peri_theme + labs(x="", y="AR Normalized Counts", title="Androgen Receptor in \nBed Nucleus of the Stria Terminalis (BSTm)")+ scale_colour_manual(values=status_cols[2:3]) + geom_boxplot(fill=NA) + theme(legend.position = "none")
+
+#PGR
+bstm_norm$PGR<- as.numeric(bstm_norm$PGR)
+Rsq<- signif(cor(bstm_norm$strength.all_study, bstm_norm$PGR)^2,2)
+
+lfc<- signif(results_bstm$log2FoldChange[results_bstm$gene=="PGR" & results_bstm$Test=="Strength"],2)
+praw<- signif(results_bstm$pvalue[results_bstm$gene=="PGR" & results_bstm$Test=="Strength"],2)
+padj=signif(results_bstm$padj[results_bstm$gene=="PGR" & results_bstm$Test=="Strength"],2)
+
+bstm_plots[["strength_pgr"]]<- ggplot(bstm_norm, aes(x=strength.all_study, y=PGR, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="PGR X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+#ESR2
+Rsq<- signif(cor(bstm_norm$strength.all_study, bstm_norm$ESR2)^2,2)
+
+lfc<- signif(results_bstm$log2FoldChange[results_bstm$gene=="ESR2" & results_bstm$Test=="Strength"],2)
+praw<- signif(results_bstm$pvalue[results_bstm$gene=="ESR2" & results_bstm$Test=="Strength"],2)
+padj=signif(results_bstm$padj[results_bstm$gene=="ESR2" & results_bstm$Test=="Strength"],2)
+
+
+bstm_plots[["strength_esr"]]<- ggplot(bstm_norm, aes(x=strength.all_study, y=ESR2, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="ESR2 X Strength", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) + scale_colour_manual(values=status_cols, name="Age x Status")
+
+
+figure<- ggarrange(plotlist=bstm_plots, ncol=2, nrow=2, common.legend = TRUE)
+figure<- annotate_figure(figure, top = text_grob("Candidate genes in Bed Nucleus of the Stria Terminalis (BSTm)", face = "bold", size = 12),left=textGrob("Normalized counts", rot = 90, vjust = 1, gp=gpar(fontsize=12)))
+figure
+#ggsave(filename="../Candidate_gene_results/BSTm_significant.png", figure,device="png", width=20, height=20, units="cm", dpi=300, bg="white")
+```
+
+
+## Interactions in the Bed Nucleus of the Stria Terminalis
+
+
+### ESR1
+
+```{r, fig.width=7, fig.height=5}
+
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="ESR1" & results_int$Tissue=="BSTm"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="ESR1" & results_int$Tissue=="BSTm"],2)
+padj=signif(results_int$padj[results_int$gene=="ESR1" & results_int$Tissue=="BSTm"],2)
+
+
+a<- ggplot(bstm_norm, aes(x=mean_T, y=ESR1, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="ESR1 X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15) + theme(legend.position = "none")
+a
+```
+
+```{r, fig.width=7, fig.height=5}
+ESR1_BSTm_lm_Status<- lm(ESR1 ~ Status, data=bstm_norm)
+ESR1_BSTm_lm_meanT<- lm(ESR1 ~ mean_T, data=bstm_norm)
+ESR1_BSTm_lm_int<- lm(ESR1 ~  Status*mean_T, data=bstm_norm)
+#against the NULL model
+ESR1_BSTm_lm_null<- lm(ESR1 ~ 1 , data=bstm_norm)
+
+model=c("ESR1 ~ 1", "ESR1 ~ + Status", "ESR1 ~  mean T", "ESR1 ~ Status * mean T") 
+AIC=c(AIC(ESR1_BSTm_lm_null), AIC(ESR1_BSTm_lm_Status),AIC(ESR1_BSTm_lm_meanT), AIC(ESR1_BSTm_lm_int))
+deltaAIC<- c(NA,AIC[1]-AIC[2],AIC[1]-AIC[3], AIC[1]-AIC[4])
+lm_p<- c(anova(ESR1_BSTm_lm_null)$'Pr(>F)'[1],
+         anova(ESR1_BSTm_lm_Status)$'Pr(>F)'[1],
+         anova(ESR1_BSTm_lm_meanT)$'Pr(>F)'[1],
+         anova(ESR1_BSTm_lm_int)$'Pr(>F)'[3])
+DESeq2_raw_p=c(NA,
+               results_bstm$pvalue[results_bstm$gene=="ESR1" & results_bstm$Test=="Status"],
+               results_bstm$pvalue[results_bstm$gene=="ESR1" & results_bstm$Test=="mean T"],
+               results_int$pvalue[results_int$gene=="ESR1" & results_int$Tissue=="BSTm"])
+
+
+
+knitr::kable(data.frame(model, AIC, deltaAIC, lm_p,DESeq2_raw_p),row.names=FALSE, digits=3, padding=20) %>% kable_styling()
+
+
+b<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+
+figurea<- ggarrange(a,b, labels=c("A","B"), nrow=2)
+
+
+```
+
+
+
+### ESR2
+```{r, fig.width=7, fig.height=5}
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="ESR2" & results_int$Tissue=="BSTm"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="ESR2" & results_int$Tissue=="BSTm"],2)
+padj=signif(results_int$padj[results_int$gene=="ESR2" & results_int$Tissue=="BSTm"],2)
+
+c<-ggplot(bstm_norm, aes(x=mean_T, y=ESR2, color=Status)) + geom_point(size=4,pch=19) + geom_smooth(method="lm", alpha=0.15) + labs(title="ESR2 X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15) + theme(legend.position="none")
+c
+```
+
+```{r}
+ESR2_BSTm_lm_Status<- lm(ESR2 ~ Status, data=bstm_norm)
+ESR2_BSTm_lm_meanT<- lm(ESR2 ~ mean_T, data=bstm_norm)
+ESR2_BSTm_lm_int<- lm(ESR2 ~  Status*mean_T, data=bstm_norm)
+ESR2_BSTm_lm_strength<- lm(ESR2 ~  strength.all_study, data=bstm_norm)
+#against the NULL model
+ESR2_BSTm_lm_null<- lm(ESR2 ~ 1 , data=bstm_norm)
+
+model=c("ESR2 ~ 1", "ESR2 ~ Status", "ESR2 ~  mean T", "ESR2 ~ Strength", "ESR2 ~ Status * mean T") 
+AIC=c(AIC(ESR2_BSTm_lm_null), AIC(ESR2_BSTm_lm_Status),AIC(ESR2_BSTm_lm_meanT),AIC(ESR2_BSTm_lm_strength), AIC(ESR2_BSTm_lm_int))
+deltaAIC<- c(NA,AIC[1]-AIC[2], AIC[1]-AIC[3],AIC[1]-AIC[4],AIC[1]-AIC[5])
+lm_p<- c(anova(ESR1_BSTm_lm_null)$'Pr(>F)'[1],
+         anova(ESR1_BSTm_lm_Status)$'Pr(>F)'[1],
+         anova(ESR1_BSTm_lm_meanT)$'Pr(>F)'[1],
+         anova(ESR2_BSTm_lm_strength)$'Pr(>F)'[1],
+         anova(ESR1_BSTm_lm_int)$'Pr(>F)'[3])
+DESeq2_raw_p=c(NA,
+               results_bstm$pvalue[results_bstm$gene=="ESR2" & results_bstm$Test=="Status"],
+               results_bstm$pvalue[results_bstm$gene=="ESR2" & results_bstm$Test=="mean T"],
+               results_bstm$pvalue[results_bstm$gene=="ESR2" & results_bstm$Test=="Strength"],
+               results_int$pvalue[results_int$gene=="ESR2" & results_int$Tissue=="BSTm"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC, lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20) %>% kable_styling()
+
+d<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,2), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+
+figurec<- ggarrange(c,d, labels=c("C","D"), nrow=2)
+
+figure<-ggarrange(figurea,figurec, ncol=2)
+
+#ggsave(filename="../Candidate_gene_results/BSTm_interaction.png", figure,device="png", width=30, height=25, units="cm", dpi=300, bg="white")
+
+```
+
+
+# Heat map of all candidate genes
+
+```{r, fig.width=30, fig.height=12}
+data_vst<- read.csv("../../Data/analysis_code/data_filtering/data_VST_all_ReplicatesRemoved_antisense_V2.csv")
+#data_vst<- data
+
+data_vst$X<- plyr::revalue(data_vst$X, replace = c("LOC113993669"="CYP19A1","LOC113983511"="OXT","LOC113983498"="AVP", "LOC113982601"="AVPR2"))
+#rownames(data_vst)<- plyr::revalue(rownames(data_vst), replace = c("LOC113993669"="CYP19A1","LOC113983511"="OXT","LOC113983498"="AVP"))
+
+candidates<- c("AR", "SRD5A2", "CYP19A1", "ESR1", "ESR2", "PGR","GNRH1", "PRL","PRLR","VIP", "VIPR1", "VIPR2","OXT", "OXTR", "AVP", "AVPR1A", "AVPR1B","AVPR2")
+
+rownames(data_vst)<- data_vst$X
+data_vst$X<- NULL
+all_candidates <- data_vst[rownames(data_vst) %in% candidates,]
+outlier<- "PFT2_POM_run1"
+all_candidates<- all_candidates[,!colnames(all_candidates) %in% outlier,]
+cand2<- candidates[candidates %in% rownames(all_candidates)]
+theorder<- match(cand2, rownames(all_candidates))
+all_candidates<- all_candidates[theorder,]
+#terr<- key_behav[key_behav$Status=="territorial",]
+#all_candidates_terr<- all_candidates[,colnames(all_candidates) %in% rownames(terr)]
+colnames(all_candidates)<- paste0(word(colnames(all_candidates), 2, sep="_"),"_",word(colnames(all_candidates), 1, sep="_"))
+all_candidates<- all_candidates[,order(colnames(all_candidates))]
+
+
+#columns<- colnames(all_candidates)
+#columns<- word(columns,1,sep="_")
+#theorder<- match(columns, levels(key_behav$Tissue))
+#all_candidates<- all_candidates[,theorder]
+
+#df <- as.data.frame(key_behav[,c("Status","Batch", "mean_T")])
+#df<- df[!rownames(df) %in% outlier,]
+#rownames(df)<- paste0(word(rownames(df), 2, sep="_"),"_",word(rownames(df), 1, sep="_"))
+
+color=colorRampPalette(brewer.pal(n = 7, name =
+  "YlOrRd"))(100)
+
+
+my_heatmap<- pheatmap(all_candidates, cluster_rows=FALSE, show_rownames=TRUE,
+         cluster_cols=FALSE, scale="row",color=blueWhiteRed(200))
+
+
+save_pheatmap_png(my_heatmap, "../Candidate_gene_results/candidate_heatmap.png",width=3800, height=1400, res = 150)
+```
+
+
+
+```{r}
+sessionInfo()
+```
+
+
+
+
+
+
+
+
+
+

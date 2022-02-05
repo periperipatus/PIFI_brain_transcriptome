@@ -1,0 +1,1963 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Peri Bolton" />
+
+
+<title>Volcano Plots and Overlap Analyses</title>
+
+<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    background-color: #ffffff;
+    color: #a0a0a0;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+div.sourceCode
+  { color: #1f1c1b; background-color: #ffffff; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span { color: #1f1c1b; } /* Normal */
+code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+code span.an { color: #ca60ca; } /* Annotation */
+code span.at { color: #0057ae; } /* Attribute */
+code span.bn { color: #b08000; } /* BaseN */
+code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #924c9d; } /* Char */
+code span.cn { color: #aa5500; } /* Constant */
+code span.co { color: #898887; } /* Comment */
+code span.cv { color: #0095ff; } /* CommentVar */
+code span.do { color: #607880; } /* Documentation */
+code span.dt { color: #0057ae; } /* DataType */
+code span.dv { color: #b08000; } /* DecVal */
+code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+code span.fl { color: #b08000; } /* Float */
+code span.fu { color: #644a9b; } /* Function */
+code span.im { color: #ff5500; } /* Import */
+code span.in { color: #b08000; } /* Information */
+code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+code span.op { color: #1f1c1b; } /* Operator */
+code span.ot { color: #006e28; } /* Other */
+code span.pp { color: #006e28; } /* Preprocessor */
+code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+code span.sc { color: #3daee9; } /* SpecialChar */
+code span.ss { color: #ff5500; } /* SpecialString */
+code span.st { color: #bf0303; } /* String */
+code span.va { color: #0057ae; } /* Variable */
+code span.vs { color: #bf0303; } /* VerbatimString */
+code span.wa { color: #bf0303; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">PIFI neurogenomics</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Analysis
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="./candidate_gene_analysis.html">Candidate Genes</a>
+    </li>
+    <li>
+      <a href="./test.html">Test</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="./contact.html">Contact</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/periperipatus/PIFI_brain_transcriptome">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Volcano Plots and Overlap Analyses</h1>
+<h3 class="subtitle">For manuscript: Neurogenomic landscape of male cooperative behavior in a wild bird</h3>
+<h4 class="author">Peri Bolton</h4>
+<h4 class="date">Last Knit “2022-02-04”</h4>
+
+</div>
+
+
+<p>This code is summarizing the results from the DESeq2 within tissues experiment, and calculating genes that have similar expression patterns across tissue types. The document is broken up by interest variable, as the data read in for the volcano plots forms a scaffold for the rest.</p>
+<div id="social-status" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Social Status</h1>
+<div id="volcano-plots" class="section level2" number="1.1">
+<h2><span class="header-section-number">1.1</span> Volcano Plots</h2>
+<p>We do not show the volcano plots here, but they are in the supplementary material Section 3.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list=</span> <span class="fu">ls</span>()[<span class="sc">!</span>(<span class="fu">ls</span>() <span class="sc">%in%</span> keep)])</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">&quot;../DE_results/&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>files<span class="ot">&lt;-</span> <span class="fu">list.files</span>(<span class="at">pattern=</span><span class="st">&quot;results_[a-zA-Z]+_Status.csv&quot;</span>, <span class="at">ignore.case=</span><span class="cn">TRUE</span>)</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>status_results<span class="ot">&lt;-</span> <span class="fu">lapply</span>(files, read.csv)</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(status_results)<span class="ot">&lt;-</span> <span class="fu">word</span>(files, <span class="dv">2</span>, <span class="at">sep=</span><span class="st">&quot;_&quot;</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a>output<span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>plots<span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>directionalp<span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>pos_neg<span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> tissue_order){</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>  tissue<span class="ot">&lt;-</span> status_results[[i]]</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>  tissue<span class="ot">&lt;-</span> tissue[<span class="sc">!</span><span class="fu">is.na</span>(tissue<span class="sc">$</span>pvalue),]</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>  <span class="do">## counts of positive and negative genes</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>  pos_out<span class="ot">&lt;-</span> tissue</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a>  pos_out<span class="sc">$</span>neg_sig<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(pos_out<span class="sc">$</span>padj<span class="sc">&lt;</span><span class="fl">0.1</span> <span class="sc">&amp;</span> pos_out<span class="sc">$</span>log2FoldChange<span class="sc">&lt;</span><span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span>)</span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>  pos_out<span class="sc">$</span>neg_marg<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(pos_out<span class="sc">$</span>pvalue<span class="sc">&lt;</span><span class="fl">0.05</span> <span class="sc">&amp;</span> pos_out<span class="sc">$</span>padj<span class="sc">&gt;</span><span class="fl">0.1</span> <span class="sc">&amp;</span> pos_out<span class="sc">$</span>log2FoldChange<span class="sc">&lt;</span><span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span>)</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>  pos_out<span class="sc">$</span>pos_sig<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(pos_out<span class="sc">$</span>padj<span class="sc">&lt;</span><span class="fl">0.1</span> <span class="sc">&amp;</span> pos_out<span class="sc">$</span>log2FoldChange<span class="sc">&gt;</span><span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a>  pos_out<span class="sc">$</span>pos_marg<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(pos_out<span class="sc">$</span>pvalue<span class="sc">&lt;</span><span class="fl">0.05</span> <span class="sc">&amp;</span> pos_out<span class="sc">$</span>padj<span class="sc">&gt;</span><span class="fl">0.1</span> <span class="sc">&amp;</span> pos_out<span class="sc">$</span>log2FoldChange<span class="sc">&gt;</span><span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">0</span>)</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>  pos_neg[[i]]<span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">tissue=</span>i, <span class="at">res=</span><span class="fu">c</span>(<span class="sc">-</span><span class="fu">sum</span>(pos_out<span class="sc">$</span>neg_sig, <span class="at">na.rm=</span><span class="cn">TRUE</span>), <span class="sc">-</span><span class="fu">sum</span>(pos_out<span class="sc">$</span>neg_marg, <span class="at">na.rm=</span><span class="cn">TRUE</span>), <span class="fu">sum</span>(pos_out<span class="sc">$</span>pos_sig, <span class="at">na.rm=</span><span class="cn">TRUE</span>), <span class="fu">sum</span>(pos_out<span class="sc">$</span>pos_marg, <span class="at">na.rm=</span><span class="cn">TRUE</span>)), <span class="at">type=</span><span class="fu">c</span>(<span class="st">&quot;negative significant&quot;</span>, <span class="st">&quot;negative marginal&quot;</span>, <span class="st">&quot;positive significant&quot;</span>,<span class="st">&quot;positive marginal&quot;</span>))</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a>  <span class="do">##plots</span></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>  tissue<span class="sc">$</span>gene<span class="ot">&lt;-</span> plyr<span class="sc">::</span><span class="fu">revalue</span>(tissue<span class="sc">$</span>gene, <span class="fu">c</span>(<span class="st">&quot;LOC113993669&quot;</span><span class="ot">=</span><span class="st">&quot;CYP19A1&quot;</span>,<span class="st">&quot;LOC113983511&quot;</span><span class="ot">=</span><span class="st">&quot;OXT&quot;</span>, <span class="st">&quot;LOC113983498&quot;</span><span class="ot">=</span><span class="st">&quot;AVP&quot;</span>, <span class="st">&quot;LOC113982601&quot;</span><span class="ot">=</span><span class="st">&quot;AVPR2&quot;</span>))</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>  tissue<span class="sc">$</span>sig<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(tissue<span class="sc">$</span>padj<span class="sc">&lt;</span><span class="fl">0.1</span>,<span class="st">&quot;Q&lt;0.1&quot;</span>,<span class="fu">ifelse</span>(tissue<span class="sc">$</span>pvalue<span class="sc">&lt;</span><span class="fl">0.05</span>,<span class="st">&quot;P&lt;0.05&quot;</span>,<span class="st">&quot;NS&quot;</span>))</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>  tissue<span class="ot">&lt;-</span> tissue[<span class="fu">order</span>(tissue<span class="sc">$</span>padj),]</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>  <span class="fu">rownames</span>(tissue)<span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(tissue)</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>  </span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>tissue<span class="sc">$</span>interesting_genes<span class="ot">&lt;-</span> <span class="fu">ifelse</span>((tissue<span class="sc">$</span>gene <span class="sc">%in%</span> candidates <span class="sc">&amp;</span> tissue<span class="sc">$</span>pvalue<span class="sc">&lt;</span><span class="fl">0.05</span>) <span class="sc">|</span> <span class="fu">rownames</span>(tissue) <span class="sc">%in%</span> topgenes, <span class="fu">as.character</span>(tissue<span class="sc">$</span>gene), <span class="st">&quot;&quot;</span>)</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>tissue<span class="sc">$</span>is_interesting<span class="ot">&lt;-</span> tissue<span class="sc">$</span>interesting_genes<span class="sc">==</span><span class="st">&quot;&quot;</span></span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a>plots[[i]]<span class="ot">&lt;-</span> <span class="fu">ggplot</span>(tissue, <span class="fu">aes</span>(<span class="at">x=</span>log2FoldChange, <span class="at">y=</span><span class="sc">-</span><span class="fu">log10</span>(padj), <span class="at">color=</span>sig)) <span class="sc">+</span> <span class="fu">geom_point</span>(<span class="at">size=</span><span class="dv">4</span>) <span class="sc">+</span> <span class="fu">geom_hline</span>(<span class="at">yintercept=</span><span class="sc">-</span><span class="fu">log10</span>(<span class="fl">0.1</span>), <span class="at">linetype=</span><span class="st">&quot;dashed&quot;</span>, <span class="at">color =</span> <span class="st">&quot;grey70&quot;</span>, <span class="at">size=</span><span class="dv">1</span>) <span class="sc">+</span> <span class="fu">geom_text_repel</span>(<span class="fu">aes</span>(<span class="at">label=</span>interesting_genes), <span class="at">color=</span><span class="st">&quot;grey40&quot;</span>,<span class="at">size=</span><span class="dv">8</span>, <span class="at">label.padding=</span><span class="dv">1</span>, <span class="at">force_pull=</span><span class="dv">0</span>, <span class="at">force=</span><span class="dv">6</span>) <span class="sc">+</span> peri_theme <span class="sc">+</span> <span class="fu">geom_point</span>(<span class="at">data=</span>tissue[tissue<span class="sc">$</span>interesting_genes<span class="sc">!=</span><span class="st">&quot;&quot;</span>,], <span class="fu">aes</span>(<span class="at">fill=</span>sig), <span class="at">pch=</span><span class="dv">21</span>,<span class="at">color=</span><span class="st">&quot;grey40&quot;</span>, <span class="at">show.legend=</span><span class="cn">FALSE</span>, <span class="at">size=</span><span class="dv">5</span>) <span class="sc">+</span> <span class="fu">scale_color_manual</span>(<span class="at">values=</span>tissue_cols[[i]]) <span class="sc">+</span> <span class="fu">scale_fill_manual</span>(<span class="at">values=</span>tissue_cols[[i]][<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>]) <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">title=</span>i,<span class="at">subtitle=</span><span class="fu">paste0</span>(<span class="fu">nrow</span>(tissue),<span class="st">&quot;/&quot;</span>,<span class="fu">nrow</span>(tissue[<span class="fu">which</span>(tissue<span class="sc">$</span>pvalue<span class="sc">&lt;</span><span class="fl">0.05</span>),]),<span class="st">&quot;/&quot;</span>,<span class="fu">nrow</span>(tissue[<span class="fu">which</span>(tissue<span class="sc">$</span>padj<span class="sc">&lt;</span><span class="fl">0.1</span>),])),<span class="at">x=</span><span class="st">&quot;&quot;</span>, <span class="at">y=</span><span class="st">&quot;&quot;</span>) <span class="sc">+</span> <span class="fu">scale_x_continuous</span>(<span class="at">limits=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">4</span>,<span class="dv">4</span>), <span class="at">breaks=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">4</span>,<span class="sc">-</span><span class="dv">3</span>,<span class="sc">-</span><span class="dv">2</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="dv">0</span>,<span class="dv">1</span>,<span class="dv">2</span>,<span class="dv">3</span>,<span class="dv">4</span>)) <span class="sc">+</span> <span class="fu">scale_y_continuous</span>(<span class="at">limits=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">5</span>))</span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-40"><a href="#cb1-40" aria-hidden="true" tabindex="-1"></a>tissue<span class="sc">$</span>X<span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb1-41"><a href="#cb1-41" aria-hidden="true" tabindex="-1"></a>tissue<span class="sc">$</span>pvalue<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(tissue<span class="sc">$</span>padj), <span class="cn">NA</span>, <span class="fu">as.numeric</span>(tissue<span class="sc">$</span>pvalue))</span>
+<span id="cb1-42"><a href="#cb1-42" aria-hidden="true" tabindex="-1"></a>sub<span class="ot">&lt;-</span> <span class="fu">subset</span>(tissue, <span class="at">select=</span><span class="fu">c</span>(<span class="st">&quot;gene&quot;</span>,<span class="st">&quot;log2FoldChange&quot;</span>,<span class="st">&quot;pvalue&quot;</span>))</span>
+<span id="cb1-43"><a href="#cb1-43" aria-hidden="true" tabindex="-1"></a>tissue<span class="ot">&lt;-</span> <span class="fu">subset</span>(tissue, <span class="at">select=</span><span class="fu">c</span>(<span class="st">&quot;gene&quot;</span>,<span class="st">&quot;pvalue&quot;</span>))</span>
+<span id="cb1-44"><a href="#cb1-44" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(tissue)[<span class="fu">colnames</span>(tissue)<span class="sc">==</span><span class="st">&quot;pvalue&quot;</span>] <span class="ot">&lt;-</span> i</span>
+<span id="cb1-45"><a href="#cb1-45" aria-hidden="true" tabindex="-1"></a>output[[i]]<span class="ot">&lt;-</span> tissue</span>
+<span id="cb1-46"><a href="#cb1-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" aria-hidden="true" tabindex="-1"></a>sub<span class="sc">$</span>logP<span class="ot">&lt;-</span> <span class="sc">-</span><span class="fu">log</span>(sub<span class="sc">$</span>pvalue, <span class="dv">10</span>)</span>
+<span id="cb1-48"><a href="#cb1-48" aria-hidden="true" tabindex="-1"></a>sub<span class="sc">$</span>logP<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(sub<span class="sc">$</span>log2FoldChange<span class="sc">&lt;</span><span class="dv">0</span>, <span class="sc">-</span>(sub<span class="sc">$</span>logP), sub<span class="sc">$</span>logP)</span>
+<span id="cb1-49"><a href="#cb1-49" aria-hidden="true" tabindex="-1"></a>sub<span class="ot">&lt;-</span> <span class="fu">subset</span>(sub, <span class="at">select=</span><span class="fu">c</span>(<span class="st">&quot;gene&quot;</span>, <span class="st">&quot;logP&quot;</span>))</span>
+<span id="cb1-50"><a href="#cb1-50" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(sub)[<span class="fu">colnames</span>(sub)<span class="sc">==</span><span class="st">&quot;logP&quot;</span>] <span class="ot">&lt;-</span> i</span>
+<span id="cb1-51"><a href="#cb1-51" aria-hidden="true" tabindex="-1"></a>directionalp[[i]]<span class="ot">&lt;-</span> sub</span>
+<span id="cb1-52"><a href="#cb1-52" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-53"><a href="#cb1-53" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-54"><a href="#cb1-54" aria-hidden="true" tabindex="-1"></a>g<span class="ot">&lt;-</span> <span class="fu">ggarrange</span>(<span class="at">plotlist=</span>plots,<span class="at">ncol=</span><span class="dv">3</span>, <span class="at">nrow=</span><span class="dv">4</span>, <span class="at">common.legend =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb1-55"><a href="#cb1-55" aria-hidden="true" tabindex="-1"></a>g<span class="ot">&lt;-</span> <span class="fu">annotate_figure</span>(g, <span class="at">top=</span><span class="fu">textGrob</span>(<span class="st">&quot;Volcano plots by Status per tissue&quot;</span>,<span class="at">gp=</span><span class="fu">gpar</span>(<span class="at">fontsize=</span><span class="dv">22</span>)), <span class="at">bottom=</span><span class="fu">textGrob</span>(<span class="st">&quot;LogFoldChange&quot;</span>,<span class="at">gp=</span><span class="fu">gpar</span>(<span class="at">fontsize=</span><span class="dv">20</span>)), <span class="at">left=</span><span class="fu">textGrob</span>(<span class="st">&quot;-log10(p-adjusted)&quot;</span>,<span class="at">gp=</span><span class="fu">gpar</span>(<span class="at">fontsize=</span><span class="dv">20</span>), <span class="at">rot =</span> <span class="dv">90</span>))</span>
+<span id="cb1-56"><a href="#cb1-56" aria-hidden="true" tabindex="-1"></a>g</span></code></pre></div>
+<p><img src="tissue_summary_similarity_files/figure-html/status%20volcano%20plots-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggexport</span>(g, <span class="at">filename =</span> <span class="st">&quot;figure_volcanoes_status.png&quot;</span>, <span class="at">width =</span> <span class="dv">1500</span>,<span class="at">height =</span> <span class="dv">1500</span>, <span class="at">pointsize=</span><span class="dv">32</span>)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="fu">setwd</span>(<span class="st">&quot;C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/analysis&quot;</span>)</span></code></pre></div>
+<p><img src="tissue_summary_similarity_files/figure-html/Status%20summary%20plot%20for%20Figure-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="pairwise-tissue-similarities" class="section level2" number="1.2">
+<h2><span class="header-section-number">1.2</span> Pairwise Tissue Similarities</h2>
+<p>Pulling out the p-value data.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(output[[<span class="dv">1</span>]],output[[<span class="dv">2</span>]],<span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, output[[<span class="dv">3</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, output[[<span class="dv">4</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, output[[<span class="dv">5</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, output[[<span class="dv">6</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-6"><a href="#cb3-6" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, output[[<span class="dv">7</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-7"><a href="#cb3-7" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, output[[<span class="dv">8</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-8"><a href="#cb3-8" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, output[[<span class="dv">9</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-9"><a href="#cb3-9" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, output[[<span class="dv">10</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-10"><a href="#cb3-10" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, output[[<span class="dv">11</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-11"><a href="#cb3-11" aria-hidden="true" tabindex="-1"></a>pvalue_data<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, output[[<span class="dv">12</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-12"><a href="#cb3-12" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(pvalue_data)<span class="ot">&lt;-</span> pvalue_data<span class="sc">$</span>gene</span>
+<span id="cb3-13"><a href="#cb3-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" aria-hidden="true" tabindex="-1"></a>pvalue_data<span class="sc">$</span>gene<span class="ot">&lt;-</span> <span class="cn">NULL</span></span></code></pre></div>
+<p>and the directional log-transformed p-values:</p>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(directionalp[[<span class="dv">1</span>]],directionalp[[<span class="dv">2</span>]],<span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, directionalp[[<span class="dv">3</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, directionalp[[<span class="dv">4</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, directionalp[[<span class="dv">5</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, directionalp[[<span class="dv">6</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb4-6"><a href="#cb4-6" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, directionalp[[<span class="dv">7</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb4-7"><a href="#cb4-7" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, directionalp[[<span class="dv">8</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb4-8"><a href="#cb4-8" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, directionalp[[<span class="dv">9</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb4-9"><a href="#cb4-9" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, directionalp[[<span class="dv">10</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb4-10"><a href="#cb4-10" aria-hidden="true" tabindex="-1"></a>temp<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, directionalp[[<span class="dv">11</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb4-11"><a href="#cb4-11" aria-hidden="true" tabindex="-1"></a>logpvalue_data<span class="ot">&lt;-</span> <span class="fu">merge</span>(temp, directionalp[[<span class="dv">12</span>]], <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all=</span><span class="cn">TRUE</span>)</span>
+<span id="cb4-12"><a href="#cb4-12" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(logpvalue_data)<span class="ot">&lt;-</span> logpvalue_data<span class="sc">$</span>gene</span>
+<span id="cb4-13"><a href="#cb4-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-14"><a href="#cb4-14" aria-hidden="true" tabindex="-1"></a>logpvalue_data<span class="sc">$</span>gene<span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb4-15"><a href="#cb4-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-16"><a href="#cb4-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-17"><a href="#cb4-17" aria-hidden="true" tabindex="-1"></a>pvalue_cor<span class="ot">&lt;-</span> <span class="fu">cor</span>(logpvalue_data, <span class="at">use=</span> <span class="st">&quot;pairwise.complete.obs&quot;</span>, <span class="at">method=</span><span class="st">&quot;pearson&quot;</span>)</span>
+<span id="cb4-18"><a href="#cb4-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-19"><a href="#cb4-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-20"><a href="#cb4-20" aria-hidden="true" tabindex="-1"></a>ps<span class="ot">&lt;-</span><span class="fu">colorRampPalette</span>(<span class="fu">brewer.pal</span>(<span class="at">n =</span> <span class="dv">7</span>, <span class="at">name =</span></span>
+<span id="cb4-21"><a href="#cb4-21" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;Purples&quot;</span>))(<span class="dv">100</span>)</span>
+<span id="cb4-22"><a href="#cb4-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-23"><a href="#cb4-23" aria-hidden="true" tabindex="-1"></a>color<span class="ot">=</span><span class="fu">colorRampPalette</span>(<span class="fu">brewer.pal</span>(<span class="at">n =</span> <span class="dv">7</span>, <span class="at">name =</span></span>
+<span id="cb4-24"><a href="#cb4-24" aria-hidden="true" tabindex="-1"></a>  <span class="st">&quot;YlOrRd&quot;</span>))(<span class="dv">100</span>)</span>
+<span id="cb4-25"><a href="#cb4-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-26"><a href="#cb4-26" aria-hidden="true" tabindex="-1"></a>exp<span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">row.names=</span><span class="fu">colnames</span>(logpvalue_data),<span class="at">mean_logP=</span><span class="fu">apply</span>(<span class="sc">-</span><span class="fu">log10</span>(pvalue_data),<span class="dv">2</span>, mean,<span class="at">na.rm=</span><span class="cn">TRUE</span>)) <span class="co">#using the raw p-value data here because taking the average of directional p-values would be silly.</span></span>
+<span id="cb4-27"><a href="#cb4-27" aria-hidden="true" tabindex="-1"></a>exp<span class="sc">$</span>tissue<span class="ot">&lt;-</span> tissue_order</span>
+<span id="cb4-28"><a href="#cb4-28" aria-hidden="true" tabindex="-1"></a>ann_cols<span class="ot">&lt;-</span> <span class="fu">list</span>(<span class="at">tissue=</span>tissue_colors, <span class="at">mean_logP=</span>ps[<span class="dv">1</span><span class="sc">:</span><span class="dv">52</span>]) <span class="co">#Max mean_log pvalue is 0.52</span></span>
+<span id="cb4-29"><a href="#cb4-29" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-30"><a href="#cb4-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-31"><a href="#cb4-31" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-32"><a href="#cb4-32" aria-hidden="true" tabindex="-1"></a><span class="fu">pheatmap</span>(pvalue_cor, <span class="at">color=</span>color, <span class="at">annotation_row=</span>exp, <span class="at">border_color =</span> <span class="cn">NA</span>, <span class="at">display_numbers =</span> <span class="fu">signif</span>(pvalue_cor,<span class="dv">2</span>), <span class="at">annotation_colors =</span> ann_cols, <span class="at">clustering_distance_cols =</span> <span class="st">&quot;correlation&quot;</span>, <span class="at">clustering_distance_rows =</span> <span class="st">&quot;correlation&quot;</span>, <span class="at">clustering_method=</span><span class="st">&quot;complete&quot;</span>)</span></code></pre></div>
+<p><img src="tissue_summary_similarity_files/figure-html/status%20tissue%20similarity2-1.png" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode" id="cb5"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a>result <span class="ot">&lt;-</span> <span class="fu">pvclust</span>(pvalue_cor, <span class="at">method.dist=</span><span class="st">&quot;cor&quot;</span>, <span class="at">method.hclust=</span><span class="st">&quot;complete&quot;</span>, <span class="at">nboot=</span><span class="dv">1000</span>, <span class="at">parallel=</span><span class="cn">TRUE</span>)</span></code></pre></div>
+<pre><code>FALSE Creating a temporary cluster...done:
+FALSE socket cluster with 7 nodes on host &#39;localhost&#39;
+FALSE Multiscale bootstrap... Done.</code></pre>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">plot</span>(result)</span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">pvrect</span>(result, <span class="at">alpha=</span><span class="fl">0.90</span>)</span></code></pre></div>
+<p><img src="tissue_summary_similarity_files/figure-html/status%20tissue%20similarity2-2.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="rrho2" class="section level2" number="1.3">
+<h2><span class="header-section-number">1.3</span> RRHO2</h2>
+<p>This approach uses package ‘RRHO2’ and compares rank ordered gene lists against each-other and uses a hypergeometric test to compare the similarity of gene names in shorter segments along the length gene list.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a>RRHO_objects<span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>comparisons<span class="ot">&lt;-</span> <span class="fu">combn</span>(tissue_order, <span class="dv">2</span>)</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>RRHO_objects<span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(comparisons)){</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>  comparison<span class="ot">&lt;-</span> comparisons[,i]</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>  p1_name<span class="ot">&lt;-</span> comparison[<span class="dv">1</span>]</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>  p2_name<span class="ot">&lt;-</span> comparison[<span class="dv">2</span>]</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>  p1<span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">gene=</span><span class="fu">row.names</span>(logpvalue_data), <span class="at">logP_1=</span>logpvalue_data[,p1_name])</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>  p2<span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">gene=</span><span class="fu">row.names</span>(logpvalue_data), <span class="at">logP_2=</span>logpvalue_data[,p2_name])</span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>  comb<span class="ot">&lt;-</span> <span class="fu">merge</span>(p1,p2)</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>  comb<span class="ot">&lt;-</span> comb[<span class="fu">complete.cases</span>(comb),]</span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>  p11<span class="ot">&lt;-</span> comb[, <span class="fu">c</span>(<span class="st">&quot;gene&quot;</span>,<span class="st">&quot;logP_1&quot;</span>)]</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a>  p11<span class="ot">&lt;-</span> p11[<span class="fu">order</span>(p11<span class="sc">$</span>logP_1, <span class="at">decreasing=</span><span class="cn">TRUE</span>),]</span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a>  p22<span class="ot">&lt;-</span> comb[,<span class="fu">c</span>(<span class="st">&quot;gene&quot;</span>,<span class="st">&quot;logP_2&quot;</span>)]</span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a>  p22<span class="ot">&lt;-</span> p22[<span class="fu">order</span>(p22<span class="sc">$</span>logP_2, <span class="at">decreasing=</span><span class="cn">TRUE</span>),]</span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a>  p1_p2<span class="ot">&lt;-</span> <span class="fu">paste</span>(p1_name,p2_name, <span class="at">sep=</span><span class="st">&quot;_&quot;</span>)</span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>  RRHO_objects[[p1_p2]]<span class="ot">&lt;-</span> <span class="fu">RRHO2_initialize</span>(p11, p22, <span class="at">labels =</span> <span class="fu">c</span>(p1_name, p2_name), <span class="at">log10.ind=</span><span class="cn">TRUE</span>, <span class="at">boundary=</span><span class="fl">0.01</span>)</span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>  <span class="co">#jpeg(filename=paste0(&quot;RRHO2_status&quot;,p1_p2,&quot;.jpg&quot;))</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>  <span class="co">#RRHO2_heatmap(RRHO_objects[[p1_p2]])</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>  <span class="co">#dev.off()</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a><span class="fu">save</span>(RRHO_objects,<span class="at">file=</span><span class="st">&quot;../DE_results/RRHO2/RRHO2_Status.RData&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="fu">load</span>(<span class="st">&quot;../DE_results/RRHO2/RRHO2_Status.RData&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a>maxp<span class="ot">&lt;-</span> <span class="fu">vector</span>(<span class="at">mode=</span><span class="st">&quot;numeric&quot;</span>)</span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="fu">names</span>(RRHO_objects)){</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>  sub<span class="ot">&lt;-</span> RRHO_objects[[i]]<span class="sc">$</span>hypermat</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>  maxp[i]<span class="ot">&lt;-</span> <span class="fu">max</span>(sub, <span class="at">na.rm=</span><span class="cn">TRUE</span>)</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>maxp<span class="ot">&lt;-</span> <span class="fu">max</span>(maxp)</span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>plots_scaled<span class="ot">&lt;-</span> <span class="fu">list</span>() <span class="co"># for the plots on the same scale</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a>plots<span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb9-14"><a href="#cb9-14" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="fu">names</span>(RRHO_objects)){</span>
+<span id="cb9-15"><a href="#cb9-15" aria-hidden="true" tabindex="-1"></a>  sub<span class="ot">&lt;-</span> RRHO_objects[[i]]<span class="sc">$</span>hypermat</span>
+<span id="cb9-16"><a href="#cb9-16" aria-hidden="true" tabindex="-1"></a>  sub<span class="ot">&lt;-</span> <span class="fu">melt</span>(sub, <span class="at">na.rm=</span><span class="cn">TRUE</span>)</span>
+<span id="cb9-17"><a href="#cb9-17" aria-hidden="true" tabindex="-1"></a>  x<span class="ot">&lt;-</span> <span class="fu">word</span>(i,<span class="dv">1</span>,<span class="dv">1</span>,<span class="at">sep=</span><span class="st">&quot;_&quot;</span>)</span>
+<span id="cb9-18"><a href="#cb9-18" aria-hidden="true" tabindex="-1"></a>  y<span class="ot">&lt;-</span> <span class="fu">word</span>(i,<span class="dv">2</span>,<span class="dv">2</span>,<span class="at">sep=</span><span class="st">&quot;_&quot;</span>)</span>
+<span id="cb9-19"><a href="#cb9-19" aria-hidden="true" tabindex="-1"></a>  plots_scaled[[i]]<span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data=</span>sub, <span class="fu">aes</span>(Var1, Var2, <span class="at">fill=</span>value)) <span class="sc">+</span> <span class="fu">geom_tile</span>() <span class="sc">+</span> peri_theme <span class="sc">+</span> <span class="fu">scale_y_continuous</span>(<span class="at">expand=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>)) <span class="sc">+</span> <span class="fu">scale_x_continuous</span>(<span class="at">expand=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>)) <span class="sc">+</span> <span class="fu">scale_fill_viridis</span>(<span class="at">limits=</span><span class="fu">c</span>(<span class="dv">0</span>,maxp)) <span class="sc">+</span> <span class="fu">theme</span>(<span class="at">axis.text.x=</span><span class="fu">element_blank</span>(),<span class="at">axis.text.y=</span><span class="fu">element_blank</span>(), <span class="at">axis.ticks=</span><span class="fu">element_blank</span>(), <span class="at">legend.position=</span><span class="st">&quot;none&quot;</span>) <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">x=</span>x, <span class="at">y=</span>y)</span>
+<span id="cb9-20"><a href="#cb9-20" aria-hidden="true" tabindex="-1"></a>  plots[[i]]<span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data=</span>sub, <span class="fu">aes</span>(Var1, Var2, <span class="at">fill=</span>value)) <span class="sc">+</span> <span class="fu">geom_tile</span>() <span class="sc">+</span> <span class="fu">scale_y_continuous</span>(<span class="at">expand=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>)) <span class="sc">+</span> <span class="fu">scale_x_continuous</span>(<span class="at">expand=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>)) <span class="sc">+</span> <span class="fu">scale_fill_viridis</span>() <span class="sc">+</span> <span class="fu">theme</span>(<span class="at">axis.text.x=</span><span class="fu">element_blank</span>(),<span class="at">axis.text.y=</span><span class="fu">element_blank</span>(), <span class="at">axis.ticks=</span><span class="fu">element_blank</span>()) <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">x=</span>x, <span class="at">y=</span>y)</span>
+<span id="cb9-21"><a href="#cb9-21" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb9-22"><a href="#cb9-22" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-23"><a href="#cb9-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-24"><a href="#cb9-24" aria-hidden="true" tabindex="-1"></a>m <span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="cn">NA</span>, <span class="dv">11</span>, <span class="dv">11</span>)</span>
+<span id="cb9-25"><a href="#cb9-25" aria-hidden="true" tabindex="-1"></a>m[<span class="fu">lower.tri</span>(m, <span class="at">diag =</span> T)] <span class="ot">&lt;-</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">66</span></span>
+<span id="cb9-26"><a href="#cb9-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-27"><a href="#cb9-27" aria-hidden="true" tabindex="-1"></a><span class="do">## This plot is just to farm the legend. </span></span>
+<span id="cb9-28"><a href="#cb9-28" aria-hidden="true" tabindex="-1"></a>p<span class="ot">&lt;-</span> <span class="fu">ggplot</span>(<span class="at">data=</span>sub, <span class="fu">aes</span>(Var1, Var2, <span class="at">fill=</span>value)) <span class="sc">+</span> <span class="fu">geom_tile</span>() <span class="sc">+</span> peri_theme <span class="sc">+</span> <span class="fu">scale_y_continuous</span>(<span class="at">expand=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>)) <span class="sc">+</span> <span class="fu">scale_x_continuous</span>(<span class="at">expand=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>)) <span class="sc">+</span> <span class="fu">scale_fill_viridis</span>(<span class="at">limits=</span><span class="fu">c</span>(<span class="dv">0</span>,maxp)) <span class="sc">+</span> <span class="fu">theme</span>(<span class="at">axis.text.x=</span><span class="fu">element_blank</span>(),<span class="at">axis.text.y=</span><span class="fu">element_blank</span>(), <span class="at">axis.ticks=</span><span class="fu">element_blank</span>()) <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">x=</span>x, <span class="at">y=</span>y)</span>
+<span id="cb9-29"><a href="#cb9-29" aria-hidden="true" tabindex="-1"></a>leg<span class="ot">&lt;-</span> <span class="fu">get_legend</span>(p)</span>
+<span id="cb9-30"><a href="#cb9-30" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-31"><a href="#cb9-31" aria-hidden="true" tabindex="-1"></a>m1<span class="ot">&lt;-</span> m</span>
+<span id="cb9-32"><a href="#cb9-32" aria-hidden="true" tabindex="-1"></a>m1[<span class="dv">1</span>,<span class="dv">11</span>]<span class="ot">&lt;-</span> <span class="dv">67</span></span>
+<span id="cb9-33"><a href="#cb9-33" aria-hidden="true" tabindex="-1"></a>plots_scaled[[<span class="st">&quot;legend&quot;</span>]]<span class="ot">&lt;-</span> leg</span>
+<span id="cb9-34"><a href="#cb9-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-35"><a href="#cb9-35" aria-hidden="true" tabindex="-1"></a>g<span class="ot">&lt;-</span><span class="fu">arrangeGrob</span>(<span class="at">grobs=</span> plots_scaled, <span class="at">layout_matrix =</span> m1)</span>
+<span id="cb9-36"><a href="#cb9-36" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-37"><a href="#cb9-37" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">file=</span><span class="st">&quot;../DE_results/RRHO2/figure_RRHO_status_scaled.pdf&quot;</span>, g, <span class="at">units=</span><span class="st">&quot;in&quot;</span>, <span class="at">width=</span><span class="dv">20</span>, <span class="at">height=</span><span class="dv">20</span>)</span>
+<span id="cb9-38"><a href="#cb9-38" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-39"><a href="#cb9-39" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-40"><a href="#cb9-40" aria-hidden="true" tabindex="-1"></a>g<span class="ot">&lt;-</span><span class="fu">grid.arrange</span>(<span class="at">grobs=</span> plots, <span class="at">layout_matrix =</span> m)</span></code></pre></div>
+<p><img src="tissue_summary_similarity_files/figure-html/unnamed-chunk-1-1.png" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">file=</span><span class="st">&quot;../DE_results/RRHO2/figure_RRHO_status_unscaled.pdf&quot;</span>, g, <span class="at">units=</span><span class="st">&quot;in&quot;</span>, <span class="at">width=</span><span class="dv">25</span>, <span class="at">height=</span><span class="dv">10</span>)</span></code></pre></div>
+<p>To view pdf versions of the p-value scaled (featured here), and raw unscaled data please visit the main branch of the github repository under “DE_results/RRHO2”. ## Overall brain patterns</p>
+<p>Here I am taking just the brain tissues and taking the median p-value of each gene in the rank-ordered gene list. This will give an idea for similar gene expression patterns across the entire brain.</p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a>brain<span class="ot">&lt;-</span> logpvalue_data[,<span class="sc">-</span><span class="fu">c</span>(<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>)]</span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>brain<span class="sc">$</span>p_combo<span class="ot">&lt;-</span> <span class="fu">apply</span>(brain,<span class="dv">1</span>, median)</span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>brain<span class="ot">&lt;-</span> brain[<span class="fu">complete.cases</span>(brain),]</span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>brain<span class="sc">$</span>gene<span class="ot">&lt;-</span> <span class="fu">rownames</span>(brain)</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>brain_go<span class="ot">&lt;-</span> <span class="fu">merge</span>(brain, go_terms, <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all.x=</span><span class="cn">TRUE</span>)</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>brain_go<span class="ot">&lt;-</span> brain_go[<span class="fu">order</span>(brain_go<span class="sc">$</span>p_combo, <span class="at">decreasing=</span><span class="cn">TRUE</span>),]</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(brain,<span class="st">&quot;../DE_results/results_brain_status.csv&quot;</span>, <span class="at">row.names=</span><span class="cn">FALSE</span>)</span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>geneList<span class="ot">&lt;-</span> brain_go<span class="sc">$</span>p_combo</span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a><span class="fu">names</span>(geneList)<span class="ot">&lt;-</span> brain_go<span class="sc">$</span>gene</span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a><span class="co">#subsets&lt;- brain[brain$p_combo&gt;=1.3,]</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>y<span class="ot">&lt;-</span> <span class="fu">enricher</span>(brain<span class="sc">$</span>gene[<span class="fu">which</span>(<span class="fu">abs</span>(brain<span class="sc">$</span>p_combo)<span class="sc">&gt;</span><span class="fl">1.3</span>)], <span class="at">universe=</span>brain<span class="sc">$</span>gene, <span class="at">TERM2GENE =</span> go2gene_bp, <span class="at">TERM2NAME =</span> go2name_bp)</span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="co">#ridgeplot(y)</span></span>
+<span id="cb11-16"><a href="#cb11-16" aria-hidden="true" tabindex="-1"></a>ego2<span class="ot">&lt;-</span> y<span class="sc">@</span>result</span>
+<span id="cb11-17"><a href="#cb11-17" aria-hidden="true" tabindex="-1"></a>ego2<span class="sc">$</span>GeneRatio2<span class="ot">&lt;-</span> <span class="fu">word</span>(ego2<span class="sc">$</span>GeneRatio, <span class="dv">1</span>,<span class="dv">1</span>, <span class="at">sep=</span><span class="st">&quot;/&quot;</span>)</span>
+<span id="cb11-18"><a href="#cb11-18" aria-hidden="true" tabindex="-1"></a>ego2<span class="sc">$</span>GeneRatio2<span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(ego2<span class="sc">$</span>GeneRatio2)</span>
+<span id="cb11-19"><a href="#cb11-19" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb11-20"><a href="#cb11-20" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(ego2[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>,], <span class="fu">aes</span>(<span class="at">x=</span>Description, <span class="at">y=</span>GeneRatio2, <span class="at">fill=</span><span class="sc">-</span>qvalue)) <span class="sc">+</span> <span class="fu">geom_bar</span>(<span class="at">stat=</span><span class="st">&quot;identity&quot;</span>) <span class="sc">+</span> <span class="fu">theme</span>(<span class="at">axis.text.x=</span><span class="fu">element_text</span>(<span class="at">angle=</span><span class="dv">90</span>, <span class="at">vjust=</span><span class="fl">0.5</span>, <span class="at">hjust=</span><span class="dv">1</span>)) <span class="sc">+</span> <span class="fu">coord_flip</span>() <span class="sc">+</span> peri_theme <span class="sc">+</span> <span class="fu">scale_y_continuous</span>(<span class="at">expand=</span><span class="fu">c</span>(<span class="dv">0</span>,<span class="dv">0</span>)) <span class="sc">+</span> <span class="fu">xlab</span>(<span class="st">&quot;&quot;</span>) <span class="sc">+</span> <span class="fu">ylab</span>(<span class="st">&quot;No genes enriched&quot;</span>) <span class="sc">+</span> <span class="fu">scale_fill_viridis</span>()</span></code></pre></div>
+<p><img src="tissue_summary_similarity_files/figure-html/Status%20brain-1.png" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(y<span class="sc">@</span>result[<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>,], <span class="at">caption=</span><span class="st">&quot;BP enriched GO terms in the median p in the brain&quot;</span>, <span class="at">row.names =</span> <span class="cn">FALSE</span>) <span class="sc">%&gt;%</span> <span class="fu">kable_styling</span>()</span></code></pre></div>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+BP enriched GO terms in the median p in the brain
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+ID
+</th>
+<th style="text-align:left;">
+Description
+</th>
+<th style="text-align:left;">
+GeneRatio
+</th>
+<th style="text-align:left;">
+BgRatio
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+p.adjust
+</th>
+<th style="text-align:right;">
+qvalue
+</th>
+<th style="text-align:left;">
+geneID
+</th>
+<th style="text-align:right;">
+Count
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0010951" class="uri">GO:0010951</a>
+</td>
+<td style="text-align:left;">
+negative regulation of endopeptidase activity
+</td>
+<td style="text-align:left;">
+3/44
+</td>
+<td style="text-align:left;">
+59/11060
+</td>
+<td style="text-align:right;">
+0.0016350
+</td>
+<td style="text-align:right;">
+0.2486386
+</td>
+<td style="text-align:right;">
+0.2336829
+</td>
+<td style="text-align:left;">
+ITIH5/LOC113991485/LOC113992168
+</td>
+<td style="text-align:right;">
+3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0043085" class="uri">GO:0043085</a>
+</td>
+<td style="text-align:left;">
+positive regulation of catalytic activity
+</td>
+<td style="text-align:left;">
+2/44
+</td>
+<td style="text-align:left;">
+22/11060
+</td>
+<td style="text-align:right;">
+0.0033970
+</td>
+<td style="text-align:right;">
+0.2486386
+</td>
+<td style="text-align:right;">
+0.2336829
+</td>
+<td style="text-align:left;">
+FGFR4/SLC5A3
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0045540" class="uri">GO:0045540</a>
+</td>
+<td style="text-align:left;">
+regulation of cholesterol biosynthetic process
+</td>
+<td style="text-align:left;">
+2/44
+</td>
+<td style="text-align:left;">
+33/11060
+</td>
+<td style="text-align:right;">
+0.0075523
+</td>
+<td style="text-align:right;">
+0.2486386
+</td>
+<td style="text-align:right;">
+0.2336829
+</td>
+<td style="text-align:left;">
+GGPS1/SC5D
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0009636" class="uri">GO:0009636</a>
+</td>
+<td style="text-align:left;">
+response to toxic substance
+</td>
+<td style="text-align:left;">
+2/44
+</td>
+<td style="text-align:left;">
+54/11060
+</td>
+<td style="text-align:right;">
+0.0194180
+</td>
+<td style="text-align:right;">
+0.2486386
+</td>
+<td style="text-align:right;">
+0.2336829
+</td>
+<td style="text-align:left;">
+LOC114001565/RAD51
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0006936" class="uri">GO:0006936</a>
+</td>
+<td style="text-align:left;">
+muscle contraction
+</td>
+<td style="text-align:left;">
+2/44
+</td>
+<td style="text-align:left;">
+61/11060
+</td>
+<td style="text-align:right;">
+0.0244016
+</td>
+<td style="text-align:right;">
+0.2486386
+</td>
+<td style="text-align:right;">
+0.2336829
+</td>
+<td style="text-align:left;">
+GAMT/ITGA1
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0030334" class="uri">GO:0030334</a>
+</td>
+<td style="text-align:left;">
+regulation of cell migration
+</td>
+<td style="text-align:left;">
+2/44
+</td>
+<td style="text-align:left;">
+66/11060
+</td>
+<td style="text-align:right;">
+0.0282472
+</td>
+<td style="text-align:right;">
+0.2486386
+</td>
+<td style="text-align:right;">
+0.2336829
+</td>
+<td style="text-align:left;">
+MEAK7/ROBO4
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0000731" class="uri">GO:0000731</a>
+</td>
+<td style="text-align:left;">
+DNA synthesis involved in DNA repair
+</td>
+<td style="text-align:left;">
+1/44
+</td>
+<td style="text-align:left;">
+10/11060
+</td>
+<td style="text-align:right;">
+0.0390939
+</td>
+<td style="text-align:right;">
+0.2486386
+</td>
+<td style="text-align:right;">
+0.2336829
+</td>
+<td style="text-align:left;">
+LOC114000574
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0007602" class="uri">GO:0007602</a>
+</td>
+<td style="text-align:left;">
+phototransduction
+</td>
+<td style="text-align:left;">
+1/44
+</td>
+<td style="text-align:left;">
+10/11060
+</td>
+<td style="text-align:right;">
+0.0390939
+</td>
+<td style="text-align:right;">
+0.2486386
+</td>
+<td style="text-align:right;">
+0.2336829
+</td>
+<td style="text-align:left;">
+PLEKHB1
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0034356" class="uri">GO:0034356</a>
+</td>
+<td style="text-align:left;">
+NAD biosynthesis via nicotinamide riboside salvage pathway
+</td>
+<td style="text-align:left;">
+1/44
+</td>
+<td style="text-align:left;">
+10/11060
+</td>
+<td style="text-align:right;">
+0.0390939
+</td>
+<td style="text-align:right;">
+0.2486386
+</td>
+<td style="text-align:right;">
+0.2336829
+</td>
+<td style="text-align:left;">
+LOC113994416
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0045651" class="uri">GO:0045651</a>
+</td>
+<td style="text-align:left;">
+positive regulation of macrophage differentiation
+</td>
+<td style="text-align:left;">
+1/44
+</td>
+<td style="text-align:left;">
+10/11060
+</td>
+<td style="text-align:right;">
+0.0390939
+</td>
+<td style="text-align:right;">
+0.2486386
+</td>
+<td style="text-align:right;">
+0.2336829
+</td>
+<td style="text-align:left;">
+IL34
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+</tbody>
+</table>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">write.csv</span>(y<span class="sc">@</span>result,<span class="st">&quot;../DE_results/GO_status_brain.csv&quot;</span>, <span class="at">row.names=</span><span class="cn">FALSE</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a><span class="co">#y&lt;- GSEA(geneList, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)</span></span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a><span class="co">#ridgeplot(y)</span></span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a><span class="co">#write.csv(y@result,&quot;GSEA_status_brain.csv&quot;, row.names=FALSE)</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>                   </span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>ego2<span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(y<span class="sc">@</span>result<span class="sc">$</span>ID)</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a><span class="fu">colnames</span>(ego2)<span class="ot">&lt;-</span> <span class="st">&quot;ID&quot;</span></span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>ego2<span class="sc">$</span>p.adjust<span class="ot">&lt;-</span> y<span class="sc">@</span>result<span class="sc">$</span>p.adjust</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>simMatrix <span class="ot">&lt;-</span> <span class="fu">calculateSimMatrix</span>(ego2<span class="sc">$</span>ID,</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>                                <span class="at">orgdb=</span><span class="st">&quot;org.Hs.eg.db&quot;</span>,</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>                                <span class="at">ont=</span><span class="st">&quot;BP&quot;</span>,</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>                                <span class="at">method=</span><span class="st">&quot;Rel&quot;</span>)</span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>scores <span class="ot">&lt;-</span> <span class="fu">setNames</span>(<span class="sc">-</span><span class="fu">log10</span>(ego2<span class="sc">$</span>p.adjust), ego2<span class="sc">$</span>ID)</span>
+<span id="cb13-19"><a href="#cb13-19" aria-hidden="true" tabindex="-1"></a>reducedTerms <span class="ot">&lt;-</span> <span class="fu">reduceSimMatrix</span>(simMatrix,</span>
+<span id="cb13-20"><a href="#cb13-20" aria-hidden="true" tabindex="-1"></a>                                scores,</span>
+<span id="cb13-21"><a href="#cb13-21" aria-hidden="true" tabindex="-1"></a>                                <span class="at">threshold=</span><span class="fl">0.7</span>,</span>
+<span id="cb13-22"><a href="#cb13-22" aria-hidden="true" tabindex="-1"></a>                                <span class="at">orgdb=</span><span class="st">&quot;org.Hs.eg.db&quot;</span>)</span>
+<span id="cb13-23"><a href="#cb13-23" aria-hidden="true" tabindex="-1"></a><span class="fu">treemapPlot</span>(reducedTerms)</span></code></pre></div>
+<p><img src="tissue_summary_similarity_files/figure-html/Status%20brain-2.png" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode" id="cb14"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a>tophits<span class="ot">&lt;-</span> brain</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>tophits<span class="sc">$</span>p_combo<span class="ot">&lt;-</span> <span class="fu">abs</span>(tophits<span class="sc">$</span>p_combo)</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>tophits<span class="ot">&lt;-</span> tophits[<span class="fu">order</span>(tophits<span class="sc">$</span>p_combo, <span class="at">decreasing=</span><span class="cn">TRUE</span>),]</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>tophits<span class="ot">&lt;-</span> tophits<span class="sc">$</span>gene[<span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>]</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>out<span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a><span class="co">#i=&quot;POM&quot;</span></span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> tissue_order){</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>  tissue<span class="ot">&lt;-</span> status_results[[i]]</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>  tissue<span class="ot">&lt;-</span> tissue[<span class="sc">!</span><span class="fu">is.na</span>(tissue<span class="sc">$</span>pvalue),]</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>  sub<span class="ot">&lt;-</span> tissue[tissue<span class="sc">$</span>gene <span class="sc">%in%</span> tophits,]</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>  out[[i]]<span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">gene=</span>sub<span class="sc">$</span>gene, <span class="at">lfc=</span>sub<span class="sc">$</span>log2FoldChange, <span class="at">p=</span>sub<span class="sc">$</span>pvalue, <span class="at">padj=</span>sub<span class="sc">$</span>padj, <span class="at">Tissue=</span>i)</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>status_results_tophits<span class="ot">&lt;-</span> <span class="fu">do.call</span>(<span class="st">&quot;rbind&quot;</span>, out)</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>status_results_tophits<span class="ot">&lt;-</span> status_results_tophits[status_results_tophits<span class="sc">$</span>Tissue<span class="sc">!=</span><span class="st">&quot;GON&quot;</span> <span class="sc">&amp;</span> status_results_tophits<span class="sc">$</span>Tissue<span class="sc">!=</span><span class="st">&quot;PIT&quot;</span>,]</span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a>outliers<span class="ot">=</span><span class="fu">c</span>(<span class="st">&quot;PFT2_POM_run1&quot;</span>)</span>
+<span id="cb14-18"><a href="#cb14-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-19"><a href="#cb14-19" aria-hidden="true" tabindex="-1"></a>brain_behav<span class="ot">&lt;-</span> <span class="fu">subset</span>(key_behav, Tissue<span class="sc">!=</span><span class="st">&quot;GON&quot;</span>)</span>
+<span id="cb14-20"><a href="#cb14-20" aria-hidden="true" tabindex="-1"></a>brain_behav<span class="ot">&lt;-</span> <span class="fu">subset</span>(brain_behav, Tissue<span class="sc">!=</span><span class="st">&quot;PIT&quot;</span>)</span>
+<span id="cb14-21"><a href="#cb14-21" aria-hidden="true" tabindex="-1"></a>brain_behav<span class="ot">&lt;-</span> brain_behav[<span class="sc">!</span><span class="fu">rownames</span>(brain_behav) <span class="sc">%in%</span> outliers,]</span>
+<span id="cb14-22"><a href="#cb14-22" aria-hidden="true" tabindex="-1"></a>brain_behav<span class="ot">&lt;-</span> <span class="fu">droplevels</span>(brain_behav)</span>
+<span id="cb14-23"><a href="#cb14-23" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-24"><a href="#cb14-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-25"><a href="#cb14-25" aria-hidden="true" tabindex="-1"></a>brain_data<span class="ot">&lt;-</span> data[,<span class="fu">colnames</span>(data) <span class="sc">%in%</span> <span class="fu">rownames</span>(brain_behav)]</span>
+<span id="cb14-26"><a href="#cb14-26" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-27"><a href="#cb14-27" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-28"><a href="#cb14-28" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-29"><a href="#cb14-29" aria-hidden="true" tabindex="-1"></a>start<span class="ot">&lt;-</span> <span class="fu">nrow</span>(brain_data)</span>
+<span id="cb14-30"><a href="#cb14-30" aria-hidden="true" tabindex="-1"></a><span class="co">#remove genes with avg read counts &lt;20</span></span>
+<span id="cb14-31"><a href="#cb14-31" aria-hidden="true" tabindex="-1"></a>brain_data<span class="sc">$</span>avg_count<span class="ot">&lt;-</span> <span class="fu">apply</span>(brain_data, <span class="dv">1</span>, mean)</span>
+<span id="cb14-32"><a href="#cb14-32" aria-hidden="true" tabindex="-1"></a>brain_data<span class="ot">&lt;-</span> brain_data[brain_data<span class="sc">$</span>avg_count<span class="sc">&gt;</span><span class="dv">20</span>,]</span>
+<span id="cb14-33"><a href="#cb14-33" aria-hidden="true" tabindex="-1"></a>brain_data<span class="sc">$</span>avg_count<span class="ot">&lt;-</span><span class="cn">NULL</span></span>
+<span id="cb14-34"><a href="#cb14-34" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-35"><a href="#cb14-35" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-36"><a href="#cb14-36" aria-hidden="true" tabindex="-1"></a><span class="co">#remove genes where &gt;50% of samples have 0 gene expression</span></span>
+<span id="cb14-37"><a href="#cb14-37" aria-hidden="true" tabindex="-1"></a>brain_data<span class="sc">$</span>percent_0<span class="ot">&lt;-</span> <span class="fu">apply</span>(brain_data, <span class="dv">1</span>, <span class="cf">function</span>(x)<span class="fu">length</span>(x[x<span class="sc">==</span><span class="dv">0</span>]))</span>
+<span id="cb14-38"><a href="#cb14-38" aria-hidden="true" tabindex="-1"></a>thresh<span class="ot">&lt;-</span> <span class="fu">ncol</span>(brain_data)<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb14-39"><a href="#cb14-39" aria-hidden="true" tabindex="-1"></a>brain_data<span class="ot">&lt;-</span> brain_data[brain_data<span class="sc">$</span>percent_0<span class="sc">&lt;=</span>thresh,]</span>
+<span id="cb14-40"><a href="#cb14-40" aria-hidden="true" tabindex="-1"></a>brain_data<span class="sc">$</span>percent_0<span class="ot">&lt;-</span><span class="cn">NULL</span></span>
+<span id="cb14-41"><a href="#cb14-41" aria-hidden="true" tabindex="-1"></a><span class="co">#13652 genes.</span></span>
+<span id="cb14-42"><a href="#cb14-42" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-43"><a href="#cb14-43" aria-hidden="true" tabindex="-1"></a>dd<span class="ot">&lt;-</span> <span class="fu">DESeqDataSetFromMatrix</span>(<span class="at">countData=</span>brain_data, <span class="at">colData=</span>brain_behav, <span class="at">design=</span> <span class="sc">~</span> Tissue <span class="sc">+</span>  Status)</span>
+<span id="cb14-44"><a href="#cb14-44" aria-hidden="true" tabindex="-1"></a>dd<span class="ot">&lt;-</span> <span class="fu">DESeq</span>(dd)</span>
+<span id="cb14-45"><a href="#cb14-45" aria-hidden="true" tabindex="-1"></a>dd<span class="ot">&lt;-</span> dd[<span class="fu">which</span>(<span class="fu">mcols</span>(dd)<span class="sc">$</span>betaConv),] <span class="co">#remove any genes that didn&#39;t converge. </span></span>
+<span id="cb14-46"><a href="#cb14-46" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-47"><a href="#cb14-47" aria-hidden="true" tabindex="-1"></a>res<span class="ot">&lt;-</span> <span class="fu">results</span>(dd, <span class="at">alpha=</span><span class="fl">0.1</span>)</span>
+<span id="cb14-48"><a href="#cb14-48" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-49"><a href="#cb14-49" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-50"><a href="#cb14-50" aria-hidden="true" tabindex="-1"></a>gone<span class="ot">&lt;-</span> <span class="fu">plotCounts</span>(dd, <span class="at">gene=</span><span class="fu">row.names</span>(res[tophits[<span class="dv">1</span>],]), <span class="at">intgroup=</span><span class="fu">c</span>(<span class="st">&quot;Tissue&quot;</span>,<span class="st">&quot;Status&quot;</span>), <span class="at">returnData=</span><span class="cn">TRUE</span>)</span>
+<span id="cb14-51"><a href="#cb14-51" aria-hidden="true" tabindex="-1"></a>gtwo<span class="ot">&lt;-</span> <span class="fu">plotCounts</span>(dd, <span class="at">gene=</span><span class="fu">row.names</span>(res[tophits[<span class="dv">2</span>],]), <span class="at">intgroup=</span><span class="fu">c</span>(<span class="st">&quot;Tissue&quot;</span>,<span class="st">&quot;Status&quot;</span>), <span class="at">returnData=</span><span class="cn">TRUE</span>)</span>
+<span id="cb14-52"><a href="#cb14-52" aria-hidden="true" tabindex="-1"></a>gthree<span class="ot">&lt;-</span>  <span class="fu">plotCounts</span>(dd, <span class="at">gene=</span><span class="fu">row.names</span>(res[tophits[<span class="dv">3</span>],]), <span class="at">intgroup=</span><span class="fu">c</span>(<span class="st">&quot;Tissue&quot;</span>,<span class="st">&quot;Status&quot;</span>), <span class="at">returnData=</span><span class="cn">TRUE</span>)</span>
+<span id="cb14-53"><a href="#cb14-53" aria-hidden="true" tabindex="-1"></a>gfour<span class="ot">&lt;-</span>  <span class="fu">plotCounts</span>(dd, <span class="at">gene=</span><span class="fu">row.names</span>(res[tophits[<span class="dv">4</span>],]), <span class="at">intgroup=</span><span class="fu">c</span>(<span class="st">&quot;Tissue&quot;</span>,<span class="st">&quot;Status&quot;</span>), <span class="at">returnData=</span><span class="cn">TRUE</span>)</span>
+<span id="cb14-54"><a href="#cb14-54" aria-hidden="true" tabindex="-1"></a>gfive<span class="ot">&lt;-</span>  <span class="fu">plotCounts</span>(dd, <span class="at">gene=</span><span class="fu">row.names</span>(res[tophits[<span class="dv">5</span>],]), <span class="at">intgroup=</span><span class="fu">c</span>(<span class="st">&quot;Tissue&quot;</span>,<span class="st">&quot;Status&quot;</span>), <span class="at">returnData=</span><span class="cn">TRUE</span>)</span>
+<span id="cb14-55"><a href="#cb14-55" aria-hidden="true" tabindex="-1"></a>gsix<span class="ot">&lt;-</span>  <span class="fu">plotCounts</span>(dd, <span class="at">gene=</span><span class="fu">row.names</span>(res[tophits[<span class="dv">6</span>],]), <span class="at">intgroup=</span><span class="fu">c</span>(<span class="st">&quot;Tissue&quot;</span>,<span class="st">&quot;Status&quot;</span>), <span class="at">returnData=</span><span class="cn">TRUE</span>)</span>
+<span id="cb14-56"><a href="#cb14-56" aria-hidden="true" tabindex="-1"></a>vars<span class="ot">&lt;-</span> <span class="fu">list</span>(gone,gtwo,gthree,gfour,gfive,gsix)</span>
+<span id="cb14-57"><a href="#cb14-57" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-58"><a href="#cb14-58" aria-hidden="true" tabindex="-1"></a>plots<span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb14-59"><a href="#cb14-59" aria-hidden="true" tabindex="-1"></a><span class="co">#i=2</span></span>
+<span id="cb14-60"><a href="#cb14-60" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="dv">6</span>){</span>
+<span id="cb14-61"><a href="#cb14-61" aria-hidden="true" tabindex="-1"></a>  dat<span class="ot">&lt;-</span> vars[[i]]</span>
+<span id="cb14-62"><a href="#cb14-62" aria-hidden="true" tabindex="-1"></a>  name<span class="ot">&lt;-</span> tophits[i]</span>
+<span id="cb14-63"><a href="#cb14-63" aria-hidden="true" tabindex="-1"></a>  result<span class="ot">&lt;-</span> status_results_tophits[status_results_tophits<span class="sc">$</span>gene<span class="sc">==</span>name,]</span>
+<span id="cb14-64"><a href="#cb14-64" aria-hidden="true" tabindex="-1"></a>  result<span class="sc">$</span>label<span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;LFC=&quot;</span>,<span class="fu">signif</span>(result<span class="sc">$</span>lfc,<span class="dv">2</span>), <span class="st">&quot;</span><span class="sc">\n</span><span class="st">p(raw)=&quot;</span>, <span class="fu">formatC</span>(result<span class="sc">$</span>p,<span class="dv">2</span>,<span class="at">format=</span><span class="st">&quot;e&quot;</span>))</span>
+<span id="cb14-65"><a href="#cb14-65" aria-hidden="true" tabindex="-1"></a>  result<span class="sc">$</span>x<span class="ot">&lt;-</span> <span class="fl">1.5</span></span>
+<span id="cb14-66"><a href="#cb14-66" aria-hidden="true" tabindex="-1"></a>  result<span class="sc">$</span>y<span class="ot">&lt;-</span> <span class="fu">max</span>(dat<span class="sc">$</span>count)<span class="sc">-</span><span class="dv">30</span></span>
+<span id="cb14-67"><a href="#cb14-67" aria-hidden="true" tabindex="-1"></a>  plots[[i]]<span class="ot">&lt;-</span>  <span class="fu">ggplot</span>(dat, <span class="fu">aes</span>(<span class="at">x=</span>Status, <span class="at">y=</span>count)) <span class="sc">+</span> <span class="fu">geom_point</span>(<span class="at">size=</span><span class="dv">2</span>, <span class="at">position=</span>dodge, <span class="fu">aes</span>(<span class="at">color=</span>Status)) <span class="sc">+</span> <span class="fu">geom_boxplot</span>(<span class="at">fill=</span><span class="cn">NA</span>, <span class="at">position=</span>dodge, <span class="fu">aes</span>(<span class="at">color=</span>Status)) <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">title=</span><span class="fu">paste0</span>(name, <span class="st">&quot; p(median)=&quot;</span>, <span class="fu">formatC</span>(<span class="dv">10</span><span class="sc">^-</span><span class="fu">abs</span>(brain_go<span class="sc">$</span>p_combo[brain_go<span class="sc">$</span>gene<span class="sc">==</span>name]),<span class="dv">2</span>, <span class="at">format=</span><span class="st">&quot;e&quot;</span>)),<span class="at">x=</span><span class="st">&quot;&quot;</span>, <span class="at">y=</span><span class="st">&quot;Normalised Counts&quot;</span>) <span class="sc">+</span> peri_theme <span class="sc">+</span> <span class="fu">scale_colour_manual</span>(<span class="at">values=</span>status_cols[<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>]) <span class="sc">+</span> <span class="fu">facet_wrap</span>(. <span class="sc">~</span>Tissue, <span class="at">ncol=</span><span class="dv">5</span>) <span class="sc">+</span> <span class="fu">geom_text</span>(<span class="at">data=</span>result, <span class="fu">aes</span>(<span class="at">x=</span>x, <span class="at">y=</span>y, <span class="at">label=</span>label))</span>
+<span id="cb14-68"><a href="#cb14-68" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb14-69"><a href="#cb14-69" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-70"><a href="#cb14-70" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb14-71"><a href="#cb14-71" aria-hidden="true" tabindex="-1"></a>g<span class="ot">&lt;-</span> <span class="fu">ggarrange</span>(<span class="at">plotlist=</span>plots[<span class="dv">1</span><span class="sc">:</span><span class="dv">2</span>],<span class="at">ncol=</span><span class="dv">1</span>, <span class="at">nrow=</span><span class="dv">2</span>, <span class="at">common.legend =</span> <span class="cn">TRUE</span>, <span class="at">labels=</span><span class="fu">c</span>(<span class="st">&quot;A&quot;</span>,<span class="st">&quot;B&quot;</span>))</span>
+<span id="cb14-72"><a href="#cb14-72" aria-hidden="true" tabindex="-1"></a>g<span class="ot">&lt;-</span> <span class="fu">annotate_figure</span>(g, <span class="at">top=</span><span class="fu">textGrob</span>(<span class="st">&quot;Top two genes consistently DE in brain with social status&quot;</span>,<span class="at">gp=</span><span class="fu">gpar</span>(<span class="at">fontsize=</span><span class="dv">22</span>)), <span class="at">bottom=</span><span class="fu">textGrob</span>(<span class="st">&quot;social status&quot;</span>,<span class="at">gp=</span><span class="fu">gpar</span>(<span class="at">fontsize=</span><span class="dv">18</span>)))</span>
+<span id="cb14-73"><a href="#cb14-73" aria-hidden="true" tabindex="-1"></a>g</span></code></pre></div>
+<p><img src="tissue_summary_similarity_files/figure-html/status%20brain%20gene%20plotting-1.png" width="672" style="display: block; margin: auto;" /></p>
+<div class="sourceCode" id="cb15"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggexport</span>(g, <span class="at">filename =</span> <span class="st">&quot;../DE_results/figure_braintop_status.png&quot;</span>, <span class="at">width =</span> <span class="dv">700</span>,<span class="at">height =</span> <span class="dv">900</span>)</span></code></pre></div>
+</div>
+</div>
+<div id="mean-testosterone-phenotype" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Mean testosterone phenotype</h1>
+<div id="volcano-plots-1" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> Volcano Plots</h2>
+<p><img src="tissue_summary_similarity_files/figure-html/mean%20T%20volcanoes-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p><img src="tissue_summary_similarity_files/figure-html/mean%20T%20summary-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="pairwise-tissue-similarity" class="section level2" number="2.2">
+<h2><span class="header-section-number">2.2</span> Pairwise Tissue Similarity</h2>
+<p><img src="tissue_summary_similarity_files/figure-html/mean%20T%20similarity%20directional%20p-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre><code>FALSE Creating a temporary cluster...done:
+FALSE socket cluster with 7 nodes on host &#39;localhost&#39;
+FALSE Multiscale bootstrap... Done.</code></pre>
+<p><img src="tissue_summary_similarity_files/figure-html/mean%20T%20similarity%20directional%20p-2.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="rrho2-1" class="section level2" number="2.3">
+<h2><span class="header-section-number">2.3</span> RRHO2</h2>
+<p>This approach uses package ‘RRHO2’ and compares rank ordered gene lists against each-other and uses a hypergeometric test to compare the similarity of gene names in shorter segments along the length gene list.</p>
+<p><img src="tissue_summary_similarity_files/figure-html/unnamed-chunk-2-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>To view pdf versions of the p-value scaled (featured here), and raw unscaled data please visit the main branch of the github repository under “DE_results/RRHO2”.</p>
+</div>
+<div id="overall-brain-patterns" class="section level2" number="2.4">
+<h2><span class="header-section-number">2.4</span> Overall brain patterns</h2>
+<p>Here I am taking just the brain tissues and taking the median p-value of each gene in the rank-ordered gene list. This will give an idea for similar gene expression patterns across the entire brain.</p>
+<img src="tissue_summary_similarity_files/figure-html/mean%20T%20brain-1.png" width="672" style="display: block; margin: auto;" />
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+BP enriched GO terms in the median p in the brain for mean T
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+ID
+</th>
+<th style="text-align:left;">
+Description
+</th>
+<th style="text-align:left;">
+GeneRatio
+</th>
+<th style="text-align:left;">
+BgRatio
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+p.adjust
+</th>
+<th style="text-align:right;">
+qvalue
+</th>
+<th style="text-align:left;">
+geneID
+</th>
+<th style="text-align:right;">
+Count
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0006958" class="uri">GO:0006958</a>
+</td>
+<td style="text-align:left;">
+complement activation, classical pathway
+</td>
+<td style="text-align:left;">
+3/49
+</td>
+<td style="text-align:left;">
+17/11439
+</td>
+<td style="text-align:right;">
+0.0000482
+</td>
+<td style="text-align:right;">
+0.0093367
+</td>
+<td style="text-align:right;">
+0.0079353
+</td>
+<td style="text-align:left;">
+C3/LOC113984271/LOC113992168
+</td>
+<td style="text-align:right;">
+3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0006805" class="uri">GO:0006805</a>
+</td>
+<td style="text-align:left;">
+xenobiotic metabolic process
+</td>
+<td style="text-align:left;">
+4/49
+</td>
+<td style="text-align:left;">
+52/11439
+</td>
+<td style="text-align:right;">
+0.0000692
+</td>
+<td style="text-align:right;">
+0.0093367
+</td>
+<td style="text-align:right;">
+0.0079353
+</td>
+<td style="text-align:left;">
+LOC113990605/LOC113990807/LOC113990865/LOC113991532
+</td>
+<td style="text-align:right;">
+4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0006749" class="uri">GO:0006749</a>
+</td>
+<td style="text-align:left;">
+glutathione metabolic process
+</td>
+<td style="text-align:left;">
+3/49
+</td>
+<td style="text-align:left;">
+33/11439
+</td>
+<td style="text-align:right;">
+0.0003682
+</td>
+<td style="text-align:right;">
+0.0331370
+</td>
+<td style="text-align:right;">
+0.0281632
+</td>
+<td style="text-align:left;">
+LOC113990605/LOC113990807/LOC113990865
+</td>
+<td style="text-align:right;">
+3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0006469" class="uri">GO:0006469</a>
+</td>
+<td style="text-align:left;">
+negative regulation of protein kinase activity
+</td>
+<td style="text-align:left;">
+3/49
+</td>
+<td style="text-align:left;">
+61/11439
+</td>
+<td style="text-align:right;">
+0.0022328
+</td>
+<td style="text-align:right;">
+0.0888467
+</td>
+<td style="text-align:right;">
+0.0755110
+</td>
+<td style="text-align:left;">
+EPHA1/LOC114002160/TESC
+</td>
+<td style="text-align:right;">
+3
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0006956" class="uri">GO:0006956</a>
+</td>
+<td style="text-align:left;">
+complement activation
+</td>
+<td style="text-align:left;">
+2/49
+</td>
+<td style="text-align:left;">
+17/11439
+</td>
+<td style="text-align:right;">
+0.0023464
+</td>
+<td style="text-align:right;">
+0.0888467
+</td>
+<td style="text-align:right;">
+0.0755110
+</td>
+<td style="text-align:left;">
+C3/LOC113992168
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0033628" class="uri">GO:0033628</a>
+</td>
+<td style="text-align:left;">
+regulation of cell adhesion mediated by integrin
+</td>
+<td style="text-align:left;">
+2/49
+</td>
+<td style="text-align:left;">
+17/11439
+</td>
+<td style="text-align:right;">
+0.0023464
+</td>
+<td style="text-align:right;">
+0.0888467
+</td>
+<td style="text-align:right;">
+0.0755110
+</td>
+<td style="text-align:left;">
+LOC114002160/TESC
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0051604" class="uri">GO:0051604</a>
+</td>
+<td style="text-align:left;">
+protein maturation
+</td>
+<td style="text-align:left;">
+2/49
+</td>
+<td style="text-align:left;">
+17/11439
+</td>
+<td style="text-align:right;">
+0.0023464
+</td>
+<td style="text-align:right;">
+0.0888467
+</td>
+<td style="text-align:right;">
+0.0755110
+</td>
+<td style="text-align:left;">
+LOC114002160/TESC
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:1901687" class="uri">GO:1901687</a>
+</td>
+<td style="text-align:left;">
+glutathione derivative biosynthetic process
+</td>
+<td style="text-align:left;">
+2/49
+</td>
+<td style="text-align:left;">
+18/11439
+</td>
+<td style="text-align:right;">
+0.0026325
+</td>
+<td style="text-align:right;">
+0.0888467
+</td>
+<td style="text-align:right;">
+0.0755110
+</td>
+<td style="text-align:left;">
+LOC113990807/LOC113990865
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0007131" class="uri">GO:0007131</a>
+</td>
+<td style="text-align:left;">
+reciprocal meiotic recombination
+</td>
+<td style="text-align:left;">
+2/49
+</td>
+<td style="text-align:left;">
+23/11439
+</td>
+<td style="text-align:right;">
+0.0042941
+</td>
+<td style="text-align:right;">
+0.1288222
+</td>
+<td style="text-align:right;">
+0.1094863
+</td>
+<td style="text-align:left;">
+RAD51D/SYCE3
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0030449" class="uri">GO:0030449</a>
+</td>
+<td style="text-align:left;">
+regulation of complement activation
+</td>
+<td style="text-align:left;">
+2/49
+</td>
+<td style="text-align:left;">
+27/11439
+</td>
+<td style="text-align:right;">
+0.0058928
+</td>
+<td style="text-align:right;">
+0.1591051
+</td>
+<td style="text-align:right;">
+0.1352238
+</td>
+<td style="text-align:left;">
+C3/LOC113992168
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+</tbody>
+</table>
+<p><img src="tissue_summary_similarity_files/figure-html/mean%20T%20brain-2.png" width="672" style="display: block; margin: auto;" /></p>
+<p><img src="tissue_summary_similarity_files/figure-html/unnamed-chunk-3-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="social-network-strength-cooperative-tendency" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Social network strength (Cooperative tendency)</h1>
+<div id="volcanoes" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Volcanoes</h2>
+<p><img src="tissue_summary_similarity_files/figure-html/unnamed-chunk-4-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p><img src="tissue_summary_similarity_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="pairwise-tissue-similarity-1" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> Pairwise Tissue Similarity</h2>
+<p><img src="tissue_summary_similarity_files/figure-html/unnamed-chunk-7-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre><code>FALSE Creating a temporary cluster...done:
+FALSE socket cluster with 7 nodes on host &#39;localhost&#39;
+FALSE Multiscale bootstrap... Done.</code></pre>
+<p><img src="tissue_summary_similarity_files/figure-html/unnamed-chunk-7-2.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="rrho2-2" class="section level2" number="3.3">
+<h2><span class="header-section-number">3.3</span> RRHO2</h2>
+<pre><code>FALSE TableGrob (11 x 11) &quot;arrange&quot;: 67 grobs
+FALSE           z         cells    name              grob
+FALSE GON_PIT   1 ( 1- 1, 1- 1) arrange    gtable[layout]
+FALSE GON_VMH   2 ( 2- 2, 1- 1) arrange    gtable[layout]
+FALSE GON_AH    3 ( 3- 3, 1- 1) arrange    gtable[layout]
+FALSE GON_PVN   4 ( 4- 4, 1- 1) arrange    gtable[layout]
+FALSE GON_POM   5 ( 5- 5, 1- 1) arrange    gtable[layout]
+FALSE GON_ICO   6 ( 6- 6, 1- 1) arrange    gtable[layout]
+FALSE GON_GCT   7 ( 7- 7, 1- 1) arrange    gtable[layout]
+FALSE GON_TNA   8 ( 8- 8, 1- 1) arrange    gtable[layout]
+FALSE GON_AI    9 ( 9- 9, 1- 1) arrange    gtable[layout]
+FALSE GON_LS   10 (10-10, 1- 1) arrange    gtable[layout]
+FALSE GON_BSTm 11 (11-11, 1- 1) arrange    gtable[layout]
+FALSE PIT_VMH  12 ( 2- 2, 2- 2) arrange    gtable[layout]
+FALSE PIT_AH   13 ( 3- 3, 2- 2) arrange    gtable[layout]
+FALSE PIT_PVN  14 ( 4- 4, 2- 2) arrange    gtable[layout]
+FALSE PIT_POM  15 ( 5- 5, 2- 2) arrange    gtable[layout]
+FALSE PIT_ICO  16 ( 6- 6, 2- 2) arrange    gtable[layout]
+FALSE PIT_GCT  17 ( 7- 7, 2- 2) arrange    gtable[layout]
+FALSE PIT_TNA  18 ( 8- 8, 2- 2) arrange    gtable[layout]
+FALSE PIT_AI   19 ( 9- 9, 2- 2) arrange    gtable[layout]
+FALSE PIT_LS   20 (10-10, 2- 2) arrange    gtable[layout]
+FALSE PIT_BSTm 21 (11-11, 2- 2) arrange    gtable[layout]
+FALSE VMH_AH   22 ( 3- 3, 3- 3) arrange    gtable[layout]
+FALSE VMH_PVN  23 ( 4- 4, 3- 3) arrange    gtable[layout]
+FALSE VMH_POM  24 ( 5- 5, 3- 3) arrange    gtable[layout]
+FALSE VMH_ICO  25 ( 6- 6, 3- 3) arrange    gtable[layout]
+FALSE VMH_GCT  26 ( 7- 7, 3- 3) arrange    gtable[layout]
+FALSE VMH_TNA  27 ( 8- 8, 3- 3) arrange    gtable[layout]
+FALSE VMH_AI   28 ( 9- 9, 3- 3) arrange    gtable[layout]
+FALSE VMH_LS   29 (10-10, 3- 3) arrange    gtable[layout]
+FALSE VMH_BSTm 30 (11-11, 3- 3) arrange    gtable[layout]
+FALSE AH_PVN   31 ( 4- 4, 4- 4) arrange    gtable[layout]
+FALSE AH_POM   32 ( 5- 5, 4- 4) arrange    gtable[layout]
+FALSE AH_ICO   33 ( 6- 6, 4- 4) arrange    gtable[layout]
+FALSE AH_GCT   34 ( 7- 7, 4- 4) arrange    gtable[layout]
+FALSE AH_TNA   35 ( 8- 8, 4- 4) arrange    gtable[layout]
+FALSE AH_AI    36 ( 9- 9, 4- 4) arrange    gtable[layout]
+FALSE AH_LS    37 (10-10, 4- 4) arrange    gtable[layout]
+FALSE AH_BSTm  38 (11-11, 4- 4) arrange    gtable[layout]
+FALSE PVN_POM  39 ( 5- 5, 5- 5) arrange    gtable[layout]
+FALSE PVN_ICO  40 ( 6- 6, 5- 5) arrange    gtable[layout]
+FALSE PVN_GCT  41 ( 7- 7, 5- 5) arrange    gtable[layout]
+FALSE PVN_TNA  42 ( 8- 8, 5- 5) arrange    gtable[layout]
+FALSE PVN_AI   43 ( 9- 9, 5- 5) arrange    gtable[layout]
+FALSE PVN_LS   44 (10-10, 5- 5) arrange    gtable[layout]
+FALSE PVN_BSTm 45 (11-11, 5- 5) arrange    gtable[layout]
+FALSE POM_ICO  46 ( 6- 6, 6- 6) arrange    gtable[layout]
+FALSE POM_GCT  47 ( 7- 7, 6- 6) arrange    gtable[layout]
+FALSE POM_TNA  48 ( 8- 8, 6- 6) arrange    gtable[layout]
+FALSE POM_AI   49 ( 9- 9, 6- 6) arrange    gtable[layout]
+FALSE POM_LS   50 (10-10, 6- 6) arrange    gtable[layout]
+FALSE POM_BSTm 51 (11-11, 6- 6) arrange    gtable[layout]
+FALSE ICO_GCT  52 ( 7- 7, 7- 7) arrange    gtable[layout]
+FALSE ICO_TNA  53 ( 8- 8, 7- 7) arrange    gtable[layout]
+FALSE ICO_AI   54 ( 9- 9, 7- 7) arrange    gtable[layout]
+FALSE ICO_LS   55 (10-10, 7- 7) arrange    gtable[layout]
+FALSE ICO_BSTm 56 (11-11, 7- 7) arrange    gtable[layout]
+FALSE GCT_TNA  57 ( 8- 8, 8- 8) arrange    gtable[layout]
+FALSE GCT_AI   58 ( 9- 9, 8- 8) arrange    gtable[layout]
+FALSE GCT_LS   59 (10-10, 8- 8) arrange    gtable[layout]
+FALSE GCT_BSTm 60 (11-11, 8- 8) arrange    gtable[layout]
+FALSE TNA_AI   61 ( 9- 9, 9- 9) arrange    gtable[layout]
+FALSE TNA_LS   62 (10-10, 9- 9) arrange    gtable[layout]
+FALSE TNA_BSTm 63 (11-11, 9- 9) arrange    gtable[layout]
+FALSE AI_LS    64 (10-10,10-10) arrange    gtable[layout]
+FALSE AI_BSTm  65 (11-11,10-10) arrange    gtable[layout]
+FALSE LS_BSTm  66 (11-11,11-11) arrange    gtable[layout]
+FALSE legend   67 ( 1- 1,11-11) arrange gtable[guide-box]</code></pre>
+<p><img src="tissue_summary_similarity_files/figure-html/unnamed-chunk-8-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="overall-brain-patterns-1" class="section level2" number="3.4">
+<h2><span class="header-section-number">3.4</span> Overall brain patterns</h2>
+<img src="tissue_summary_similarity_files/figure-html/unnamed-chunk-9-1.png" width="672" style="display: block; margin: auto;" />
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+BP enriched GO terms in the median p in the brain for strength
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+ID
+</th>
+<th style="text-align:left;">
+Description
+</th>
+<th style="text-align:left;">
+GeneRatio
+</th>
+<th style="text-align:left;">
+BgRatio
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+p.adjust
+</th>
+<th style="text-align:right;">
+qvalue
+</th>
+<th style="text-align:left;">
+geneID
+</th>
+<th style="text-align:right;">
+Count
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0006954" class="uri">GO:0006954</a>
+</td>
+<td style="text-align:left;">
+inflammatory response
+</td>
+<td style="text-align:left;">
+2/15
+</td>
+<td style="text-align:left;">
+61/7093
+</td>
+<td style="text-align:right;">
+0.0071085
+</td>
+<td style="text-align:right;">
+0.1224083
+</td>
+<td style="text-align:right;">
+0.0821657
+</td>
+<td style="text-align:left;">
+CDO1/CSF1R
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0070374" class="uri">GO:0070374</a>
+</td>
+<td style="text-align:left;">
+positive regulation of ERK1 and ERK2 cascade
+</td>
+<td style="text-align:left;">
+2/15
+</td>
+<td style="text-align:left;">
+64/7093
+</td>
+<td style="text-align:right;">
+0.0078024
+</td>
+<td style="text-align:right;">
+0.1224083
+</td>
+<td style="text-align:right;">
+0.0821657
+</td>
+<td style="text-align:left;">
+CSF1R/PRXL2C
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0006488" class="uri">GO:0006488</a>
+</td>
+<td style="text-align:left;">
+dolichol-linked oligosaccharide biosynthetic process
+</td>
+<td style="text-align:left;">
+1/15
+</td>
+<td style="text-align:left;">
+10/7093
+</td>
+<td style="text-align:right;">
+0.0209607
+</td>
+<td style="text-align:right;">
+0.1224083
+</td>
+<td style="text-align:right;">
+0.0821657
+</td>
+<td style="text-align:left;">
+ALG1
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0000266" class="uri">GO:0000266</a>
+</td>
+<td style="text-align:left;">
+mitochondrial fission
+</td>
+<td style="text-align:left;">
+1/15
+</td>
+<td style="text-align:left;">
+11/7093
+</td>
+<td style="text-align:right;">
+0.0230340
+</td>
+<td style="text-align:right;">
+0.1224083
+</td>
+<td style="text-align:right;">
+0.0821657
+</td>
+<td style="text-align:left;">
+MTFR1
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0006998" class="uri">GO:0006998</a>
+</td>
+<td style="text-align:left;">
+nuclear envelope organization
+</td>
+<td style="text-align:left;">
+1/15
+</td>
+<td style="text-align:left;">
+11/7093
+</td>
+<td style="text-align:right;">
+0.0230340
+</td>
+<td style="text-align:right;">
+0.1224083
+</td>
+<td style="text-align:right;">
+0.0821657
+</td>
+<td style="text-align:left;">
+SUN1
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:2000249" class="uri">GO:2000249</a>
+</td>
+<td style="text-align:left;">
+regulation of actin cytoskeleton reorganization
+</td>
+<td style="text-align:left;">
+1/15
+</td>
+<td style="text-align:left;">
+11/7093
+</td>
+<td style="text-align:right;">
+0.0230340
+</td>
+<td style="text-align:right;">
+0.1224083
+</td>
+<td style="text-align:right;">
+0.0821657
+</td>
+<td style="text-align:left;">
+CSF1R
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0008589" class="uri">GO:0008589</a>
+</td>
+<td style="text-align:left;">
+regulation of smoothened signaling pathway
+</td>
+<td style="text-align:left;">
+1/15
+</td>
+<td style="text-align:left;">
+12/7093
+</td>
+<td style="text-align:right;">
+0.0251033
+</td>
+<td style="text-align:right;">
+0.1224083
+</td>
+<td style="text-align:right;">
+0.0821657
+</td>
+<td style="text-align:left;">
+C2CD3
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0071539" class="uri">GO:0071539</a>
+</td>
+<td style="text-align:left;">
+protein localization to centrosome
+</td>
+<td style="text-align:left;">
+1/15
+</td>
+<td style="text-align:left;">
+12/7093
+</td>
+<td style="text-align:right;">
+0.0251033
+</td>
+<td style="text-align:right;">
+0.1224083
+</td>
+<td style="text-align:right;">
+0.0821657
+</td>
+<td style="text-align:left;">
+C2CD3
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0021915" class="uri">GO:0021915</a>
+</td>
+<td style="text-align:left;">
+neural tube development
+</td>
+<td style="text-align:left;">
+1/15
+</td>
+<td style="text-align:left;">
+14/7093
+</td>
+<td style="text-align:right;">
+0.0292295
+</td>
+<td style="text-align:right;">
+0.1224083
+</td>
+<td style="text-align:right;">
+0.0821657
+</td>
+<td style="text-align:left;">
+C2CD3
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+<a href="GO:0030316" class="uri">GO:0030316</a>
+</td>
+<td style="text-align:left;">
+osteoclast differentiation
+</td>
+<td style="text-align:left;">
+1/15
+</td>
+<td style="text-align:left;">
+14/7093
+</td>
+<td style="text-align:right;">
+0.0292295
+</td>
+<td style="text-align:right;">
+0.1224083
+</td>
+<td style="text-align:right;">
+0.0821657
+</td>
+<td style="text-align:left;">
+CSF1R
+</td>
+<td style="text-align:right;">
+1
+</td>
+</tr>
+</tbody>
+</table>
+<p><img src="tissue_summary_similarity_files/figure-html/unnamed-chunk-9-2.png" width="672" style="display: block; margin: auto;" /></p>
+<p><img src="tissue_summary_similarity_files/figure-html/unnamed-chunk-10-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="interaction-between-status-mean-testosterone" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Interaction between Status * mean testosterone</h1>
+<p>This is just for plotting the volcano plots - I did not do the other analyses here.</p>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
