@@ -8,7 +8,7 @@ DE_results/
 GO_annotations/
 Overlap_results/
 WGCNA_results/
-
+*.Rmd
 #except:
 
 ### Website Files
