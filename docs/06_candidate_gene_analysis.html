@@ -11,42 +11,67 @@
 
 <meta name="author" content="Peri Bolton" />
 
-<meta name="date" content="2022-01-13" />
+<meta name="date" content="2022-02-06" />
 
 <title>Candidate Gene Analysis</title>
 
-<script src="site_libs/jquery-1.11.3/jquery.min.js"></script>
+<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<link href="site_libs/bootstrap-3.3.5/css/spacelab.min.css" rel="stylesheet" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
 <script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
 <script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
 <script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
 <link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
 <script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
 <script src="site_libs/navigation-1.1/tabsets.js"></script>
-<script src="site_libs/accessible-code-block-0.0.1/empty-anchor.js"></script>
 <script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
 <link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
 <link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
 <link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
 
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
 
-<style type="text/css">code{white-space: pre;}</style>
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
 <style type="text/css" data-origin="pandoc">
-code.sourceCode > span { display: inline-block; line-height: 1.25; }
-code.sourceCode > span { color: inherit; text-decoration: inherit; }
-code.sourceCode > span:empty { height: 1.2em; }
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
 .sourceCode { overflow: visible; }
-code.sourceCode { white-space: pre; position: relative; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
 div.sourceCode { margin: 1em 0; }
 pre.sourceCode { margin: 0; }
 @media screen {
 div.sourceCode { overflow: auto; }
 }
 @media print {
-code.sourceCode { white-space: pre-wrap; }
-code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
 }
 pre.numberSource code
   { counter-reset: source-line 0; }
@@ -60,42 +85,46 @@ pre.numberSource code > span > a:first-child::before
     -khtml-user-select: none; -moz-user-select: none;
     -ms-user-select: none; user-select: none;
     padding: 0 4px; width: 4em;
+    background-color: #ffffff;
+    color: #a0a0a0;
   }
-pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
 div.sourceCode
-  { color: #cccccc; background-color: #303030; }
+  { color: #1f1c1b; background-color: #ffffff; }
 @media screen {
-code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
 }
-code span.al { color: #ffcfaf; } /* Alert */
-code span.an { color: #7f9f7f; font-weight: bold; } /* Annotation */
-code span.at { } /* Attribute */
-code span.bn { color: #dca3a3; } /* BaseN */
-code span.bu { } /* BuiltIn */
-code span.cf { color: #f0dfaf; } /* ControlFlow */
-code span.ch { color: #dca3a3; } /* Char */
-code span.cn { color: #dca3a3; font-weight: bold; } /* Constant */
-code span.co { color: #7f9f7f; } /* Comment */
-code span.cv { color: #7f9f7f; font-weight: bold; } /* CommentVar */
-code span.do { color: #7f9f7f; } /* Documentation */
-code span.dt { color: #dfdfbf; } /* DataType */
-code span.dv { color: #dcdccc; } /* DecVal */
-code span.er { color: #c3bf9f; } /* Error */
-code span.ex { } /* Extension */
-code span.fl { color: #c0bed1; } /* Float */
-code span.fu { color: #efef8f; } /* Function */
-code span.im { } /* Import */
-code span.in { color: #7f9f7f; font-weight: bold; } /* Information */
-code span.kw { color: #f0dfaf; } /* Keyword */
-code span.op { color: #f0efd0; } /* Operator */
-code span.ot { color: #efef8f; } /* Other */
-code span.pp { color: #ffcfaf; font-weight: bold; } /* Preprocessor */
-code span.sc { color: #dca3a3; } /* SpecialChar */
-code span.ss { color: #cc9393; } /* SpecialString */
-code span.st { color: #cc9393; } /* String */
-code span.va { } /* Variable */
-code span.vs { color: #cc9393; } /* VerbatimString */
-code span.wa { color: #7f9f7f; font-weight: bold; } /* Warning */
+code span { color: #1f1c1b; } /* Normal */
+code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+code span.an { color: #ca60ca; } /* Annotation */
+code span.at { color: #0057ae; } /* Attribute */
+code span.bn { color: #b08000; } /* BaseN */
+code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #924c9d; } /* Char */
+code span.cn { color: #aa5500; } /* Constant */
+code span.co { color: #898887; } /* Comment */
+code span.cv { color: #0095ff; } /* CommentVar */
+code span.do { color: #607880; } /* Documentation */
+code span.dt { color: #0057ae; } /* DataType */
+code span.dv { color: #b08000; } /* DecVal */
+code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+code span.fl { color: #b08000; } /* Float */
+code span.fu { color: #644a9b; } /* Function */
+code span.im { color: #ff5500; } /* Import */
+code span.in { color: #b08000; } /* Information */
+code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+code span.op { color: #1f1c1b; } /* Operator */
+code span.ot { color: #006e28; } /* Other */
+code span.pp { color: #006e28; } /* Preprocessor */
+code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+code span.sc { color: #3daee9; } /* SpecialChar */
+code span.ss { color: #ff5500; } /* SpecialString */
+code span.st { color: #bf0303; } /* String */
+code span.va { color: #0057ae; } /* Variable */
+code span.vs { color: #bf0303; } /* VerbatimString */
+code span.wa { color: #bf0303; } /* Warning */
 
 </style>
 <script>
@@ -119,39 +148,9 @@ code span.wa { color: #7f9f7f; font-weight: bold; } /* Warning */
   }
 })();
 </script>
-<style type="text/css">
-  pre:not([class]) {
-    background-color: white;
-  }
-</style>
 
 
-<style type="text/css">
-h1 {
-  font-size: 34px;
-}
-h1.title {
-  font-size: 38px;
-}
-h2 {
-  font-size: 30px;
-}
-h3 {
-  font-size: 24px;
-}
-h4 {
-  font-size: 18px;
-}
-h5 {
-  font-size: 16px;
-}
-h6 {
-  font-size: 12px;
-}
-.table th:not([align]) {
-  text-align: left;
-}
-</style>
+
 
 
 
@@ -161,10 +160,6 @@ h6 {
   max-width: 940px;
   margin-left: auto;
   margin-right: auto;
-}
-code {
-  color: inherit;
-  background-color: rgba(0, 0, 0, 0.04);
 }
 img {
   max-width:100%;
@@ -181,40 +176,13 @@ button.code-folding-btn:focus {
 summary {
   display: list-item;
 }
+pre code {
+  padding: 0;
+}
 </style>
 
 
 <style type="text/css">
-/* padding for bootstrap navbar */
-body {
-  padding-top: 52px;
-  padding-bottom: 40px;
-}
-/* offset scroll position for anchor links (for fixed navbar)  */
-.section h1 {
-  padding-top: 57px;
-  margin-top: -57px;
-}
-.section h2 {
-  padding-top: 57px;
-  margin-top: -57px;
-}
-.section h3 {
-  padding-top: 57px;
-  margin-top: -57px;
-}
-.section h4 {
-  padding-top: 57px;
-  margin-top: -57px;
-}
-.section h5 {
-  padding-top: 57px;
-  margin-top: -57px;
-}
-.section h6 {
-  padding-top: 57px;
-  margin-top: -57px;
-}
 .dropdown-submenu {
   position: relative;
 }
@@ -242,7 +210,7 @@ body {
   margin-right: -10px;
 }
 .dropdown-submenu:hover>a:after {
-  border-left-color: #ffffff;
+  border-left-color: #adb5bd;
 }
 .dropdown-submenu.pull-left {
   float: none;
@@ -254,7 +222,7 @@ body {
 }
 </style>
 
-<script>
+<script type="text/javascript">
 // manage active state of menu based on current page
 $(document).ready(function () {
   // active menu anchor
@@ -265,10 +233,23 @@ $(document).ready(function () {
   var menuAnchor = $('a[href="' + href + '"]');
 
   // mark it active
-  menuAnchor.parent().addClass('active');
+  menuAnchor.tab('show');
 
   // if it's got a parent navbar menu mark it active as well
   menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
 });
 </script>
 
@@ -280,7 +261,6 @@ $(document).ready(function () {
   max-height: 500px;
   min-height: 44px;
   overflow-y: auto;
-  background: white;
   border: 1px solid #ddd;
   border-radius: 4px;
 }
@@ -406,7 +386,7 @@ div.tocify {
 
 
 <!-- setup 3col/9col grid for toc_float and main content  -->
-<div class="row-fluid">
+<div class="row">
 <div class="col-xs-12 col-sm-4 col-md-3">
 <div id="TOC" class="tocify">
 </div>
@@ -460,75 +440,86 @@ div.tocify {
   </div><!--/.container -->
 </div><!--/.navbar -->
 
-<div class="fluid-row" id="header">
+<div id="header">
 
 
 
 <h1 class="title toc-ignore">Candidate Gene Analysis</h1>
 <h3 class="subtitle">For manuscript: Neurogenomic landscape of male cooperative behavior in a wild bird</h3>
 <h4 class="author">Peri Bolton</h4>
-<h4 class="date">2022-01-13</h4>
+<h4 class="date">2022-02-06</h4>
 
 </div>
 
 
-<p>This document contains the differential expression results from DESeq2 for our candidate genes. These candidates are: <code>AR, SRD5A2, LOC113993669, ESR1, ESR2, PGR, GNRH1, PRL, PRLR, VIP, VIPR1, VIPR2, LOC113983511, OXTR, LOC113983498, AVPR1A, AVPR1B, LOC113982601</code>. LOC113983511 is OXT (Mesotocin), LOC113993669 is CYP19A1 (Aromatase), and LOC113983498 is vasotocin-neurophysin (AVP or Arginine-Vasotocin). Originally I was correcting for multiple comparisons using the raw p-values for the number of genes expressed in a tissue (using Benjamini-Hochberg). However, these were more conservative than the corrected p-values from DESeq2. Therefore, i only present the corrected p-values from DESeq2 based on the number of genes expressed in that tissue.</p>
-<div id="logfoldchange-heatmaps" class="section level1">
-<h1>LogfoldChange heatmaps</h1>
-<p>Another way to present the candidate gene data. White squares with NA indicate that the candidate gene is not expressed in that tissue. Coloured squares with NA indicate that either DESeq2 decided to exclude that gene in its automatic filtering - or I excluded it because it was giving spurious results - which are shown below in the individual gene plots.</p>
-<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1"></a>results_data_status&lt;-<span class="st"> </span>results_data[<span class="kw">grepl</span>(<span class="st">&quot;status&quot;</span>, results_data<span class="op">$</span>Test,<span class="dt">ignore.case =</span> <span class="ot">TRUE</span>),]</span>
-<span id="cb1-2"><a href="#cb1-2"></a></span>
-<span id="cb1-3"><a href="#cb1-3"></a>results_data_status<span class="op">$</span>gene&lt;-<span class="st"> </span><span class="kw">factor</span>(results_data_status<span class="op">$</span>gene, <span class="dt">levels=</span><span class="kw">c</span>(<span class="st">&quot;AR&quot;</span>, <span class="st">&quot;SRD5A2&quot;</span>, <span class="st">&quot;LOC113993669&quot;</span>, <span class="st">&quot;ESR1&quot;</span>, <span class="st">&quot;ESR2&quot;</span>, <span class="st">&quot;PGR&quot;</span>,<span class="st">&quot;GNRH1&quot;</span>, <span class="st">&quot;PRL&quot;</span>,<span class="st">&quot;PRLR&quot;</span>,<span class="st">&quot;VIP&quot;</span>, <span class="st">&quot;VIPR1&quot;</span>, <span class="st">&quot;VIPR2&quot;</span>,<span class="st">&quot;LOC113983511&quot;</span>, <span class="st">&quot;OXTR&quot;</span>, <span class="st">&quot;LOC113983498&quot;</span>, <span class="st">&quot;AVPR1A&quot;</span>, <span class="st">&quot;AVPR1B&quot;</span>, <span class="st">&quot;LOC113982601&quot;</span>))</span>
-<span id="cb1-4"><a href="#cb1-4"></a>results_data_status<span class="op">$</span>gene&lt;-<span class="st"> </span>plyr<span class="op">::</span><span class="kw">revalue</span>(results_data_status<span class="op">$</span>gene, <span class="dt">replace=</span><span class="kw">c</span>(<span class="st">&quot;LOC113993669&quot;</span>=<span class="st">&quot;CYP19A1&quot;</span>,<span class="st">&quot;LOC113983511&quot;</span>=<span class="st">&quot;OXT&quot;</span>, <span class="st">&quot;LOC113983498&quot;</span>=<span class="st">&quot;AVP&quot;</span>, <span class="st">&quot;LOC113982601&quot;</span>=<span class="st">&quot;AVPR2&quot;</span>))</span>
-<span id="cb1-5"><a href="#cb1-5"></a>res_data_status&lt;-<span class="st"> </span>results_data_status[,<span class="kw">c</span>(<span class="st">&quot;log2FoldChange&quot;</span>, <span class="st">&quot;gene&quot;</span>,<span class="st">&quot;Tissue&quot;</span>)]</span>
-<span id="cb1-6"><a href="#cb1-6"></a>res_data_status&lt;-<span class="st"> </span><span class="kw">dcast</span>(res_data_status, gene <span class="op">~</span>Tissue, <span class="dt">value.var=</span><span class="st">&quot;log2FoldChange&quot;</span>)</span>
-<span id="cb1-7"><a href="#cb1-7"></a><span class="kw">rownames</span>(res_data_status)&lt;-<span class="st"> </span>res_data_status<span class="op">$</span>gene</span>
-<span id="cb1-8"><a href="#cb1-8"></a>res_data_status<span class="op">$</span>gene&lt;-<span class="st"> </span><span class="ot">NULL</span></span>
-<span id="cb1-9"><a href="#cb1-9"></a>res_data_status&lt;-<span class="st"> </span><span class="kw">as.matrix</span>(res_data_status)</span>
-<span id="cb1-10"><a href="#cb1-10"></a></span>
-<span id="cb1-11"><a href="#cb1-11"></a></span>
-<span id="cb1-12"><a href="#cb1-12"></a></span>
-<span id="cb1-13"><a href="#cb1-13"></a>res_int&lt;-<span class="st"> </span>results_int[,<span class="kw">c</span>(<span class="st">&quot;log2FoldChange&quot;</span>, <span class="st">&quot;gene&quot;</span>,<span class="st">&quot;Tissue&quot;</span>)]</span>
-<span id="cb1-14"><a href="#cb1-14"></a>res_int&lt;-<span class="st"> </span><span class="kw">dcast</span>(res_int, gene <span class="op">~</span>Tissue, <span class="dt">value.var=</span><span class="st">&quot;log2FoldChange&quot;</span>)</span>
-<span id="cb1-15"><a href="#cb1-15"></a><span class="kw">rownames</span>(res_int)&lt;-<span class="st"> </span>res_int<span class="op">$</span>gene</span>
-<span id="cb1-16"><a href="#cb1-16"></a>res_int<span class="op">$</span>gene&lt;-<span class="st"> </span><span class="ot">NULL</span></span>
-<span id="cb1-17"><a href="#cb1-17"></a>res_int&lt;-<span class="st"> </span><span class="kw">as.matrix</span>(res_int)</span>
-<span id="cb1-18"><a href="#cb1-18"></a></span>
-<span id="cb1-19"><a href="#cb1-19"></a>p_data_status&lt;-<span class="st"> </span>results_data_status[,<span class="kw">c</span>(<span class="st">&quot;pvalue&quot;</span>, <span class="st">&quot;gene&quot;</span>,<span class="st">&quot;Tissue&quot;</span>)]</span>
-<span id="cb1-20"><a href="#cb1-20"></a>p_data_status&lt;-<span class="st"> </span><span class="kw">dcast</span>(p_data_status, gene <span class="op">~</span>Tissue, <span class="dt">value.var=</span><span class="st">&quot;pvalue&quot;</span>)</span>
-<span id="cb1-21"><a href="#cb1-21"></a><span class="kw">rownames</span>(p_data_status)&lt;-<span class="st"> </span>p_data_status<span class="op">$</span>gene</span>
-<span id="cb1-22"><a href="#cb1-22"></a>p_data_status<span class="op">$</span>gene&lt;-<span class="st"> </span><span class="ot">NULL</span></span>
-<span id="cb1-23"><a href="#cb1-23"></a>p_data_status&lt;-<span class="st"> </span><span class="kw">as.matrix</span>(p_data_status)</span>
-<span id="cb1-24"><a href="#cb1-24"></a><span class="co">#p_data_status&lt;- formatC(p_data_status,format = &quot;e&quot;,digits = 2)</span></span>
-<span id="cb1-25"><a href="#cb1-25"></a></span>
-<span id="cb1-26"><a href="#cb1-26"></a><span class="co">#pheatmap(res_data_status, na_col = &quot;white&quot;, cluster_rows=FALSE, cluster_cols=FALSE, scale=&quot;column&quot;, border=NA, display_numbers = p_data_status, main=&quot;Log2FoldChange in Gene Expression according to Status&quot;, color=blueWhiteRed(200))</span></span>
-<span id="cb1-27"><a href="#cb1-27"></a></span>
-<span id="cb1-28"><a href="#cb1-28"></a></span>
-<span id="cb1-29"><a href="#cb1-29"></a></span>
-<span id="cb1-30"><a href="#cb1-30"></a>sig&lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="st">&quot;&quot;</span>, <span class="dt">nrow=</span><span class="kw">nrow</span>(p_data_status),<span class="dt">ncol=</span><span class="kw">ncol</span>(p_data_status))</span>
-<span id="cb1-31"><a href="#cb1-31"></a>res&lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="st">&quot;&quot;</span>, <span class="dt">nrow=</span><span class="kw">nrow</span>(p_data_status),<span class="dt">ncol=</span><span class="kw">ncol</span>(p_data_status))</span>
-<span id="cb1-32"><a href="#cb1-32"></a>logsig&lt;-<span class="st"> </span><span class="kw">matrix</span>(<span class="st">&quot;&quot;</span>, <span class="dt">nrow=</span><span class="kw">nrow</span>(p_data_status),<span class="dt">ncol=</span><span class="kw">ncol</span>(p_data_status))</span>
-<span id="cb1-33"><a href="#cb1-33"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">nrow</span>(p_data_status)){</span>
-<span id="cb1-34"><a href="#cb1-34"></a>  <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="op">:</span><span class="kw">ncol</span>(p_data_status)){</span>
-<span id="cb1-35"><a href="#cb1-35"></a>    sig[i,j]&lt;-<span class="st"> </span><span class="kw">as.numeric</span>(<span class="kw">ifelse</span>(p_data_status[i,j]<span class="op">&lt;</span><span class="fl">0.05</span>, <span class="kw">signif</span>(p_data_status[i,j],<span class="dv">1</span>),<span class="st">&quot;&quot;</span>))</span>
-<span id="cb1-36"><a href="#cb1-36"></a>    <span class="co">#res[i,j]&lt;- as.numeric(ifelse(p_data_status[i,j]&lt;0.05 &amp; res_data_status[i,j]&lt;0,-1,ifelse(p_data_status[i,j]&lt;0.05 &amp; res_data_status[i,j]&gt;0,1,NA)))</span></span>
-<span id="cb1-37"><a href="#cb1-37"></a>  }</span>
-<span id="cb1-38"><a href="#cb1-38"></a>}</span>
-<span id="cb1-39"><a href="#cb1-39"></a>res&lt;-<span class="st"> </span><span class="kw">ifelse</span>(res_data_status<span class="op">&lt;</span><span class="dv">0</span> <span class="op">&amp;</span><span class="st"> </span>sig<span class="op">!=</span><span class="st">&quot;&quot;</span>,<span class="op">-</span><span class="dv">1</span>,<span class="kw">ifelse</span>(res_data_status<span class="op">&gt;</span><span class="dv">0</span> <span class="op">&amp;</span><span class="st"> </span>sig<span class="op">!=</span><span class="st">&quot;&quot;</span>,<span class="dv">1</span>,<span class="ot">NA</span>))</span>
-<span id="cb1-40"><a href="#cb1-40"></a>logsig&lt;-<span class="st"> </span><span class="kw">ifelse</span>(res<span class="op">==-</span><span class="dv">1</span>,<span class="op">-</span>(<span class="op">-</span><span class="kw">log10</span>(p_data_status)), <span class="kw">ifelse</span>(res<span class="op">==</span><span class="dv">1</span>, <span class="op">-</span><span class="kw">log10</span>(p_data_status),<span class="ot">NA</span>))</span>
-<span id="cb1-41"><a href="#cb1-41"></a>sig&lt;-<span class="st"> </span><span class="kw">ifelse</span>(<span class="kw">is.na</span>(sig),<span class="st">&quot;&quot;</span>, <span class="kw">as.character</span>(sig))</span>
-<span id="cb1-42"><a href="#cb1-42"></a><span class="co">#drop OXT and AVP because of their weird expression</span></span>
-<span id="cb1-43"><a href="#cb1-43"></a><span class="co">#res&lt;- res[-c(13,15),]</span></span>
-<span id="cb1-44"><a href="#cb1-44"></a><span class="co">#sig&lt;- sig[-c(13,15),]</span></span>
-<span id="cb1-45"><a href="#cb1-45"></a><span class="co">#logsig&lt;- logsig[-c(13,15),]</span></span>
-<span id="cb1-46"><a href="#cb1-46"></a><span class="kw">pheatmap</span>(res, <span class="dt">na_col =</span> <span class="st">&quot;white&quot;</span>, <span class="dt">cluster_rows=</span><span class="ot">FALSE</span>, <span class="dt">cluster_cols=</span><span class="ot">FALSE</span>, <span class="dt">scale=</span><span class="st">&quot;none&quot;</span>, <span class="dt">border=</span><span class="ot">NA</span>, <span class="dt">display_numbers =</span> sig, <span class="dt">main=</span><span class="st">&quot;&quot;</span>, <span class="dt">color=</span><span class="kw">blueWhiteRed</span>(<span class="dv">20</span>), <span class="dt">border_color =</span> <span class="st">&quot;grey90&quot;</span>, <span class="dt">legend=</span><span class="ot">FALSE</span>)</span></code></pre></div>
-<p><img src="candidate_gene_analysis_files/figure-html/Status-1.png" width="1152" /></p>
-<p><img src="candidate_gene_analysis_files/figure-html/mean%20T-1.png" width="1152" /></p>
-<p><img src="candidate_gene_analysis_files/figure-html/status%20by%20mean%20T-1.png" width="1152" /></p>
-<p><img src="candidate_gene_analysis_files/figure-html/strength-1.png" width="1152" /></p>
+<p>This document contains the differential expression results from DESeq2 for our candidate genes. These candidates are: <code>AR, SRD5A2, LOC113993669, ESR1, ESR2, PGR, GNRH1, PRL, PRLR, VIP, VIPR1, VIPR2, LOC113983511, OXTR, LOC113983498, AVPR1A, AVPR1B, LOC113982601</code>.</p>
+<ul>
+<li><p>LOC113983511 is OXT (Mesotocin)</p></li>
+<li><p>LOC113993669 is CYP19A1 (Aromatase)</p></li>
+<li><p>LOC113983498 is vasotocin-neurophysin (AVP precursor)</p></li>
+<li><p>LOC113982601 is AVPR2.</p></li>
+</ul>
+<p>Originally I was correcting for multiple comparisons using the raw p-values for the number of genes expressed in a tissue (using Benjamini-Hochberg). However, these were more conservative than the corrected p-values from DESeq2. Therefore, i only present the corrected p-values from DESeq2 based on the number of genes expressed in that tissue.</p>
+<div id="logfoldchange-heatmaps" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> LogfoldChange heatmaps</h1>
+<p>A simple way to present the candidate gene data is through this grid. These are the raw results that went into the publication - but some results will have been subsequently manually excluded on the basis of R^2 and strongly influential individuals.</p>
+<div id="social-status" class="section level2" number="1.1">
+<h2><span class="header-section-number">1.1</span> Social Status</h2>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a>results_data_status<span class="ot">&lt;-</span> results_data[<span class="fu">grepl</span>(<span class="st">&quot;status&quot;</span>, results_data<span class="sc">$</span>Test,<span class="at">ignore.case =</span> <span class="cn">TRUE</span>),]</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>results_data_status<span class="sc">$</span>gene<span class="ot">&lt;-</span> <span class="fu">factor</span>(results_data_status<span class="sc">$</span>gene, <span class="at">levels=</span><span class="fu">c</span>(<span class="st">&quot;AR&quot;</span>, <span class="st">&quot;SRD5A2&quot;</span>, <span class="st">&quot;LOC113993669&quot;</span>, <span class="st">&quot;ESR1&quot;</span>, <span class="st">&quot;ESR2&quot;</span>, <span class="st">&quot;PGR&quot;</span>,<span class="st">&quot;GNRH1&quot;</span>, <span class="st">&quot;PRL&quot;</span>,<span class="st">&quot;PRLR&quot;</span>,<span class="st">&quot;VIP&quot;</span>, <span class="st">&quot;VIPR1&quot;</span>, <span class="st">&quot;VIPR2&quot;</span>,<span class="st">&quot;LOC113983511&quot;</span>, <span class="st">&quot;OXTR&quot;</span>, <span class="st">&quot;LOC113983498&quot;</span>, <span class="st">&quot;AVPR1A&quot;</span>, <span class="st">&quot;AVPR1B&quot;</span>, <span class="st">&quot;LOC113982601&quot;</span>))</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>results_data_status<span class="sc">$</span>gene<span class="ot">&lt;-</span> plyr<span class="sc">::</span><span class="fu">revalue</span>(results_data_status<span class="sc">$</span>gene, <span class="at">replace=</span><span class="fu">c</span>(<span class="st">&quot;LOC113993669&quot;</span><span class="ot">=</span><span class="st">&quot;CYP19A1&quot;</span>,<span class="st">&quot;LOC113983511&quot;</span><span class="ot">=</span><span class="st">&quot;OXT&quot;</span>, <span class="st">&quot;LOC113983498&quot;</span><span class="ot">=</span><span class="st">&quot;AVP&quot;</span>, <span class="st">&quot;LOC113982601&quot;</span><span class="ot">=</span><span class="st">&quot;AVPR2&quot;</span>))</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>res_data_status<span class="ot">&lt;-</span> results_data_status[,<span class="fu">c</span>(<span class="st">&quot;log2FoldChange&quot;</span>, <span class="st">&quot;gene&quot;</span>,<span class="st">&quot;Tissue&quot;</span>)]</span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a>res_data_status<span class="ot">&lt;-</span> <span class="fu">dcast</span>(res_data_status, gene <span class="sc">~</span>Tissue, <span class="at">value.var=</span><span class="st">&quot;log2FoldChange&quot;</span>)</span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(res_data_status)<span class="ot">&lt;-</span> res_data_status<span class="sc">$</span>gene</span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a>res_data_status<span class="sc">$</span>gene<span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a>res_data_status<span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(res_data_status)</span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a>res_int<span class="ot">&lt;-</span> results_int[,<span class="fu">c</span>(<span class="st">&quot;log2FoldChange&quot;</span>, <span class="st">&quot;gene&quot;</span>,<span class="st">&quot;Tissue&quot;</span>)]</span>
+<span id="cb1-14"><a href="#cb1-14" aria-hidden="true" tabindex="-1"></a>res_int<span class="ot">&lt;-</span> <span class="fu">dcast</span>(res_int, gene <span class="sc">~</span>Tissue, <span class="at">value.var=</span><span class="st">&quot;log2FoldChange&quot;</span>)</span>
+<span id="cb1-15"><a href="#cb1-15" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(res_int)<span class="ot">&lt;-</span> res_int<span class="sc">$</span>gene</span>
+<span id="cb1-16"><a href="#cb1-16" aria-hidden="true" tabindex="-1"></a>res_int<span class="sc">$</span>gene<span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb1-17"><a href="#cb1-17" aria-hidden="true" tabindex="-1"></a>res_int<span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(res_int)</span>
+<span id="cb1-18"><a href="#cb1-18" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" aria-hidden="true" tabindex="-1"></a>p_data_status<span class="ot">&lt;-</span> results_data_status[,<span class="fu">c</span>(<span class="st">&quot;pvalue&quot;</span>, <span class="st">&quot;gene&quot;</span>,<span class="st">&quot;Tissue&quot;</span>)]</span>
+<span id="cb1-20"><a href="#cb1-20" aria-hidden="true" tabindex="-1"></a>p_data_status<span class="ot">&lt;-</span> <span class="fu">dcast</span>(p_data_status, gene <span class="sc">~</span>Tissue, <span class="at">value.var=</span><span class="st">&quot;pvalue&quot;</span>)</span>
+<span id="cb1-21"><a href="#cb1-21" aria-hidden="true" tabindex="-1"></a><span class="fu">rownames</span>(p_data_status)<span class="ot">&lt;-</span> p_data_status<span class="sc">$</span>gene</span>
+<span id="cb1-22"><a href="#cb1-22" aria-hidden="true" tabindex="-1"></a>p_data_status<span class="sc">$</span>gene<span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb1-23"><a href="#cb1-23" aria-hidden="true" tabindex="-1"></a>p_data_status<span class="ot">&lt;-</span> <span class="fu">as.matrix</span>(p_data_status)</span>
+<span id="cb1-24"><a href="#cb1-24" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-25"><a href="#cb1-25" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" aria-hidden="true" tabindex="-1"></a>sig<span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="st">&quot;&quot;</span>, <span class="at">nrow=</span><span class="fu">nrow</span>(p_data_status),<span class="at">ncol=</span><span class="fu">ncol</span>(p_data_status))</span>
+<span id="cb1-27"><a href="#cb1-27" aria-hidden="true" tabindex="-1"></a>res<span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="st">&quot;&quot;</span>, <span class="at">nrow=</span><span class="fu">nrow</span>(p_data_status),<span class="at">ncol=</span><span class="fu">ncol</span>(p_data_status))</span>
+<span id="cb1-28"><a href="#cb1-28" aria-hidden="true" tabindex="-1"></a>logsig<span class="ot">&lt;-</span> <span class="fu">matrix</span>(<span class="st">&quot;&quot;</span>, <span class="at">nrow=</span><span class="fu">nrow</span>(p_data_status),<span class="at">ncol=</span><span class="fu">ncol</span>(p_data_status))</span>
+<span id="cb1-29"><a href="#cb1-29" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">nrow</span>(p_data_status)){</span>
+<span id="cb1-30"><a href="#cb1-30" aria-hidden="true" tabindex="-1"></a>  <span class="cf">for</span>(j <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(p_data_status)){</span>
+<span id="cb1-31"><a href="#cb1-31" aria-hidden="true" tabindex="-1"></a>    sig[i,j]<span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">ifelse</span>(p_data_status[i,j]<span class="sc">&lt;</span><span class="fl">0.05</span>, <span class="fu">signif</span>(p_data_status[i,j],<span class="dv">1</span>),<span class="st">&quot;&quot;</span>))</span>
+<span id="cb1-32"><a href="#cb1-32" aria-hidden="true" tabindex="-1"></a>  }</span>
+<span id="cb1-33"><a href="#cb1-33" aria-hidden="true" tabindex="-1"></a>}</span>
+<span id="cb1-34"><a href="#cb1-34" aria-hidden="true" tabindex="-1"></a>res<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(res_data_status<span class="sc">&lt;</span><span class="dv">0</span> <span class="sc">&amp;</span> sig<span class="sc">!=</span><span class="st">&quot;&quot;</span>,<span class="sc">-</span><span class="dv">1</span>,<span class="fu">ifelse</span>(res_data_status<span class="sc">&gt;</span><span class="dv">0</span> <span class="sc">&amp;</span> sig<span class="sc">!=</span><span class="st">&quot;&quot;</span>,<span class="dv">1</span>,<span class="cn">NA</span>))</span>
+<span id="cb1-35"><a href="#cb1-35" aria-hidden="true" tabindex="-1"></a>logsig<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(res<span class="sc">==-</span><span class="dv">1</span>,<span class="sc">-</span>(<span class="sc">-</span><span class="fu">log10</span>(p_data_status)), <span class="fu">ifelse</span>(res<span class="sc">==</span><span class="dv">1</span>, <span class="sc">-</span><span class="fu">log10</span>(p_data_status),<span class="cn">NA</span>))</span>
+<span id="cb1-36"><a href="#cb1-36" aria-hidden="true" tabindex="-1"></a>sig<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">is.na</span>(sig),<span class="st">&quot;&quot;</span>, <span class="fu">as.character</span>(sig))</span>
+<span id="cb1-37"><a href="#cb1-37" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" aria-hidden="true" tabindex="-1"></a><span class="fu">pheatmap</span>(res, <span class="at">na_col =</span> <span class="st">&quot;white&quot;</span>, <span class="at">cluster_rows=</span><span class="cn">FALSE</span>, <span class="at">cluster_cols=</span><span class="cn">FALSE</span>, <span class="at">scale=</span><span class="st">&quot;none&quot;</span>, <span class="at">border=</span><span class="cn">NA</span>, <span class="at">display_numbers =</span> sig, <span class="at">color=</span><span class="fu">blueWhiteRed</span>(<span class="dv">20</span>), <span class="at">border_color =</span> <span class="st">&quot;grey90&quot;</span>, <span class="at">legend=</span><span class="cn">FALSE</span>, <span class="at">main=</span><span class="st">&quot;Raw candidate gene results from social status&quot;</span>)</span></code></pre></div>
+<p><img src="06_candidate_gene_analysis_files/figure-html/Status-1.png" width="672" style="display: block; margin: auto;" /></p>
 </div>
-<div id="gonads" class="section level1">
-<h1>Gonads</h1>
+<div id="mean-testosterone-phenotype" class="section level2" number="1.2">
+<h2><span class="header-section-number">1.2</span> mean testosterone phenotype</h2>
+<p><img src="06_candidate_gene_analysis_files/figure-html/mean%20T-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="status-by-mean-t-interaction" class="section level2" number="1.3">
+<h2><span class="header-section-number">1.3</span> Status by mean T interaction</h2>
+<p><img src="06_candidate_gene_analysis_files/figure-html/status%20by%20mean%20T-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="cooperative-tendency-social-network-strength" class="section level2" number="1.4">
+<h2><span class="header-section-number">1.4</span> Cooperative tendency (Social network strength)</h2>
+<p><img src="06_candidate_gene_analysis_files/figure-html/strength-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="gonads" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Gonads</h1>
 <p>The next sections are scatter plots for each of the tissues showing what each of the genes are doing for manual validation.</p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
@@ -644,26 +635,26 @@ VIPR1
 </tbody>
 </table>
 <p>Here only the data with continuous variables were at all significant so these will be plotted with the extracted Normalized data.</p>
-<p><img src="candidate_gene_analysis_files/figure-html/GON%20candidate%20gene%20plots-1.png" width="960" /></p>
-<div id="status-specific-gene-expression-in-the-gonads" class="section level2">
-<h2>Status specific gene expression in the Gonads</h2>
+<p><img src="06_candidate_gene_analysis_files/figure-html/GON%20candidate%20gene%20plots-1.png" width="960" style="display: block; margin: auto;" /></p>
+<div id="status-specific-gene-expression-in-the-gonads" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> Status specific gene expression in the Gonads</h2>
 <p>If not already identified as a possible interaction from multiple incidences in the single trait comparison, I also used DESeq2 to extract possible interactions.</p>
 <p>Then, I am going to use AIC on simple linear models to decide amongst models to decide whether interaction effects or single term models better explain the data.</p>
 <p>Note that the DESeq2 model for Status only is actually GeneExp ~ Batch + Status, and includes 4 additional samples. However, the linear models here don’t differ in biological interpretation.</p>
-<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1"></a>VIPR_GON_lm_Status&lt;-<span class="st"> </span><span class="kw">lm</span>(VIPR2 <span class="op">~</span><span class="st"> </span>Year <span class="op">+</span><span class="st"> </span>Status, <span class="dt">data=</span>VIPR2)</span>
-<span id="cb2-2"><a href="#cb2-2"></a>VIPR_GON_lm_meanT&lt;-<span class="st"> </span><span class="kw">lm</span>(VIPR2 <span class="op">~</span><span class="st"> </span>Year <span class="op">+</span><span class="st"> </span>mean_T, <span class="dt">data=</span>VIPR2)</span>
-<span id="cb2-3"><a href="#cb2-3"></a>VIPR_GON_lm_int&lt;-<span class="st"> </span><span class="kw">lm</span>(VIPR2 <span class="op">~</span><span class="st"> </span>Year <span class="op">+</span><span class="st"> </span>Status<span class="op">*</span>mean_T, <span class="dt">data=</span>VIPR2)</span>
-<span id="cb2-4"><a href="#cb2-4"></a><span class="co">#against the NULL model</span></span>
-<span id="cb2-5"><a href="#cb2-5"></a>VIPR_GON_lm_null&lt;-<span class="st"> </span><span class="kw">lm</span>(VIPR2 <span class="op">~</span><span class="st"> </span>Year, <span class="dt">data=</span>VIPR2)</span>
-<span id="cb2-6"><a href="#cb2-6"></a></span>
-<span id="cb2-7"><a href="#cb2-7"></a>model=<span class="kw">c</span>(<span class="st">&quot;VIPR2 ~ Year&quot;</span>, <span class="st">&quot;VIPR2 ~ Year + Status&quot;</span>, <span class="st">&quot;VIPR2 ~ Year + mean T&quot;</span>,<span class="st">&quot;VIPR2 ~ Year + Status * mean T&quot;</span>)</span>
-<span id="cb2-8"><a href="#cb2-8"></a>AIC=<span class="kw">c</span>(<span class="kw">AIC</span>(VIPR_GON_lm_null), <span class="kw">AIC</span>(VIPR_GON_lm_Status),<span class="kw">AIC</span>(VIPR_GON_lm_meanT),<span class="kw">AIC</span>(VIPR_GON_lm_int))</span>
-<span id="cb2-9"><a href="#cb2-9"></a>deltaAIC&lt;-<span class="st"> </span><span class="kw">c</span>(<span class="ot">NA</span>, AIC[<span class="dv">1</span>]<span class="op">-</span>AIC[<span class="dv">2</span>], AIC[<span class="dv">1</span>]<span class="op">-</span>AIC[<span class="dv">3</span>], AIC[<span class="dv">1</span>]<span class="op">-</span>AIC[<span class="dv">4</span>])</span>
-<span id="cb2-10"><a href="#cb2-10"></a>lm_p&lt;-<span class="st"> </span><span class="kw">c</span>(<span class="kw">anova</span>(VIPR_GON_lm_null)<span class="op">$</span><span class="st">&#39;Pr(&gt;F)&#39;</span>[<span class="dv">1</span>],<span class="kw">anova</span>(VIPR_GON_lm_Status)<span class="op">$</span><span class="st">&#39;Pr(&gt;F)&#39;</span>[<span class="dv">2</span>],<span class="kw">anova</span>(VIPR_GON_lm_meanT)<span class="op">$</span><span class="st">&#39;Pr(&gt;F)&#39;</span>[<span class="dv">2</span>], <span class="kw">anova</span>(VIPR_GON_lm_int)<span class="op">$</span><span class="st">&#39;Pr(&gt;F)&#39;</span>[<span class="dv">4</span>])</span>
-<span id="cb2-11"><a href="#cb2-11"></a></span>
-<span id="cb2-12"><a href="#cb2-12"></a>DESeq2_raw_p=<span class="kw">c</span>(<span class="ot">NA</span>,results_gon<span class="op">$</span>pvalue[results_gon<span class="op">$</span>gene<span class="op">==</span><span class="st">&quot;VIPR2&quot;</span> <span class="op">&amp;</span><span class="st"> </span>results_gon<span class="op">$</span>Test<span class="op">==</span><span class="st">&quot;Status&quot;</span>], results_gon<span class="op">$</span>pvalue[results_gon<span class="op">$</span>gene<span class="op">==</span><span class="st">&quot;VIPR2&quot;</span> <span class="op">&amp;</span><span class="st"> </span>results_gon<span class="op">$</span>Test<span class="op">==</span><span class="st">&quot;mean T&quot;</span>], results_int<span class="op">$</span>pvalue[results_int<span class="op">$</span>gene<span class="op">==</span><span class="st">&quot;VIPR2&quot;</span> <span class="op">&amp;</span><span class="st"> </span>results_int<span class="op">$</span>Tissue<span class="op">==</span><span class="st">&quot;GON&quot;</span>])</span>
-<span id="cb2-13"><a href="#cb2-13"></a></span>
-<span id="cb2-14"><a href="#cb2-14"></a>knitr<span class="op">::</span><span class="kw">kable</span>(<span class="kw">data.frame</span>(model, AIC, deltaAIC, lm_p, DESeq2_raw_p),<span class="dt">row.names=</span><span class="ot">FALSE</span>, <span class="dt">padding=</span><span class="dv">20</span>, <span class="dt">caption=</span><span class="st">&quot;Model comparisons in the Gonads for VIPR2&quot;</span>) <span class="op">%&gt;%</span><span class="st"> </span><span class="kw">kable_styling</span>()</span></code></pre></div>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a>VIPR_GON_lm_Status<span class="ot">&lt;-</span> <span class="fu">lm</span>(VIPR2 <span class="sc">~</span> Year <span class="sc">+</span> Status, <span class="at">data=</span>VIPR2)</span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a>VIPR_GON_lm_meanT<span class="ot">&lt;-</span> <span class="fu">lm</span>(VIPR2 <span class="sc">~</span> Year <span class="sc">+</span> mean_T, <span class="at">data=</span>VIPR2)</span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a>VIPR_GON_lm_int<span class="ot">&lt;-</span> <span class="fu">lm</span>(VIPR2 <span class="sc">~</span> Year <span class="sc">+</span> Status<span class="sc">*</span>mean_T, <span class="at">data=</span>VIPR2)</span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co">#against the NULL model</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a>VIPR_GON_lm_null<span class="ot">&lt;-</span> <span class="fu">lm</span>(VIPR2 <span class="sc">~</span> Year, <span class="at">data=</span>VIPR2)</span>
+<span id="cb2-6"><a href="#cb2-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-7"><a href="#cb2-7" aria-hidden="true" tabindex="-1"></a>model<span class="ot">=</span><span class="fu">c</span>(<span class="st">&quot;VIPR2 ~ Year&quot;</span>, <span class="st">&quot;VIPR2 ~ Year + Status&quot;</span>, <span class="st">&quot;VIPR2 ~ Year + mean T&quot;</span>,<span class="st">&quot;VIPR2 ~ Year + Status * mean T&quot;</span>)</span>
+<span id="cb2-8"><a href="#cb2-8" aria-hidden="true" tabindex="-1"></a>AIC<span class="ot">=</span><span class="fu">c</span>(<span class="fu">AIC</span>(VIPR_GON_lm_null), <span class="fu">AIC</span>(VIPR_GON_lm_Status),<span class="fu">AIC</span>(VIPR_GON_lm_meanT),<span class="fu">AIC</span>(VIPR_GON_lm_int))</span>
+<span id="cb2-9"><a href="#cb2-9" aria-hidden="true" tabindex="-1"></a>deltaAIC<span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="cn">NA</span>, AIC[<span class="dv">1</span>]<span class="sc">-</span>AIC[<span class="dv">2</span>], AIC[<span class="dv">1</span>]<span class="sc">-</span>AIC[<span class="dv">3</span>], AIC[<span class="dv">1</span>]<span class="sc">-</span>AIC[<span class="dv">4</span>])</span>
+<span id="cb2-10"><a href="#cb2-10" aria-hidden="true" tabindex="-1"></a>lm_p<span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="fu">anova</span>(VIPR_GON_lm_null)<span class="sc">$</span><span class="st">&#39;Pr(&gt;F)&#39;</span>[<span class="dv">1</span>],<span class="fu">anova</span>(VIPR_GON_lm_Status)<span class="sc">$</span><span class="st">&#39;Pr(&gt;F)&#39;</span>[<span class="dv">2</span>],<span class="fu">anova</span>(VIPR_GON_lm_meanT)<span class="sc">$</span><span class="st">&#39;Pr(&gt;F)&#39;</span>[<span class="dv">2</span>], <span class="fu">anova</span>(VIPR_GON_lm_int)<span class="sc">$</span><span class="st">&#39;Pr(&gt;F)&#39;</span>[<span class="dv">4</span>])</span>
+<span id="cb2-11"><a href="#cb2-11" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-12"><a href="#cb2-12" aria-hidden="true" tabindex="-1"></a>DESeq2_raw_p<span class="ot">=</span><span class="fu">c</span>(<span class="cn">NA</span>,results_gon<span class="sc">$</span>pvalue[results_gon<span class="sc">$</span>gene<span class="sc">==</span><span class="st">&quot;VIPR2&quot;</span> <span class="sc">&amp;</span> results_gon<span class="sc">$</span>Test<span class="sc">==</span><span class="st">&quot;Status&quot;</span>], results_gon<span class="sc">$</span>pvalue[results_gon<span class="sc">$</span>gene<span class="sc">==</span><span class="st">&quot;VIPR2&quot;</span> <span class="sc">&amp;</span> results_gon<span class="sc">$</span>Test<span class="sc">==</span><span class="st">&quot;mean T&quot;</span>], results_int<span class="sc">$</span>pvalue[results_int<span class="sc">$</span>gene<span class="sc">==</span><span class="st">&quot;VIPR2&quot;</span> <span class="sc">&amp;</span> results_int<span class="sc">$</span>Tissue<span class="sc">==</span><span class="st">&quot;GON&quot;</span>])</span>
+<span id="cb2-13"><a href="#cb2-13" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-14"><a href="#cb2-14" aria-hidden="true" tabindex="-1"></a>knitr<span class="sc">::</span><span class="fu">kable</span>(<span class="fu">data.frame</span>(model, AIC, deltaAIC, lm_p, DESeq2_raw_p),<span class="at">row.names=</span><span class="cn">FALSE</span>, <span class="at">padding=</span><span class="dv">20</span>, <span class="at">caption=</span><span class="st">&quot;Model comparisons in the Gonads for VIPR2&quot;</span>) <span class="sc">%&gt;%</span> <span class="fu">kable_styling</span>()</span></code></pre></div>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model comparisons in the Gonads for VIPR2
@@ -758,15 +749,15 @@ VIPR2 ~ Year + Status * mean T
 </tr>
 </tbody>
 </table>
-<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1"></a>b&lt;-<span class="st"> </span><span class="kw">ggtexttable</span>(<span class="kw">data.frame</span>(<span class="dt">model=</span>model, <span class="dt">AIC=</span><span class="kw">signif</span>(AIC,<span class="dv">4</span>), <span class="dt">deltaAIC=</span><span class="kw">signif</span>(deltaAIC,<span class="dv">1</span>), <span class="dt">lm_p=</span><span class="kw">signif</span>(lm_p,<span class="dv">1</span>), <span class="dt">DESeq_raw_p=</span><span class="kw">signif</span>(DESeq2_raw_p,<span class="dv">1</span>)), <span class="dt">rows=</span><span class="ot">NULL</span>)</span>
-<span id="cb3-2"><a href="#cb3-2"></a></span>
-<span id="cb3-3"><a href="#cb3-3"></a></span>
-<span id="cb3-4"><a href="#cb3-4"></a>figure&lt;-<span class="st"> </span><span class="kw">ggarrange</span>(a,b, <span class="dt">labels=</span><span class="kw">c</span>(<span class="st">&quot;A&quot;</span>,<span class="st">&quot;B&quot;</span>), <span class="dt">nrow=</span><span class="dv">2</span>)</span>
-<span id="cb3-5"><a href="#cb3-5"></a><span class="kw">ggsave</span>(<span class="dt">filename=</span><span class="st">&quot;../Candidate_gene_results/GON_interaction.png&quot;</span>, figure,<span class="dt">device=</span><span class="st">&quot;png&quot;</span>, <span class="dt">width=</span><span class="dv">15</span>, <span class="dt">height=</span><span class="dv">20</span>, <span class="dt">units=</span><span class="st">&quot;cm&quot;</span>, <span class="dt">dpi=</span><span class="dv">300</span>, <span class="dt">bg=</span><span class="st">&quot;white&quot;</span>)</span></code></pre></div>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a>b<span class="ot">&lt;-</span> <span class="fu">ggtexttable</span>(<span class="fu">data.frame</span>(<span class="at">model=</span>model, <span class="at">AIC=</span><span class="fu">signif</span>(AIC,<span class="dv">4</span>), <span class="at">deltaAIC=</span><span class="fu">signif</span>(deltaAIC,<span class="dv">1</span>), <span class="at">lm_p=</span><span class="fu">signif</span>(lm_p,<span class="dv">1</span>), <span class="at">DESeq_raw_p=</span><span class="fu">signif</span>(DESeq2_raw_p,<span class="dv">1</span>)), <span class="at">rows=</span><span class="cn">NULL</span>)</span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a>figure<span class="ot">&lt;-</span> <span class="fu">ggarrange</span>(a,b, <span class="at">labels=</span><span class="fu">c</span>(<span class="st">&quot;A&quot;</span>,<span class="st">&quot;B&quot;</span>), <span class="at">nrow=</span><span class="dv">2</span>)</span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="co">#ggsave(filename=&quot;../Candidate_gene_results/GON_interaction.png&quot;, figure,device=&quot;png&quot;, width=15, height=20, units=&quot;cm&quot;, dpi=300, bg=&quot;white&quot;)</span></span></code></pre></div>
 </div>
 </div>
-<div id="pituitary" class="section level1">
-<h1>Pituitary</h1>
+<div id="pituitary" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Pituitary</h1>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Significant results from DESeq2 before FDR correction in the Pituitary (PIT). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).
@@ -1062,11 +1053,11 @@ VIPR2
 </tr>
 </tbody>
 </table>
-<p><img src="candidate_gene_analysis_files/figure-html/pit%20candidate%20gene%20plots-1.png" width="960" /></p>
-<div id="status-specific-gene-expression-in-the-pituitary" class="section level2">
-<h2>Status specific gene expression in the Pituitary</h2>
+<p><img src="06_candidate_gene_analysis_files/figure-html/pit%20candidate%20gene%20plots-1.png" width="960" style="display: block; margin: auto;" /></p>
+<div id="status-specific-gene-expression-in-the-pituitary" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Status specific gene expression in the Pituitary</h2>
 <p>I am excluding AVP and OXT because the expression patterns are odd.</p>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-4-1.png" width="672" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model validation in the pituitary (pit) for how AVPR1A expression is related to our interest variables
@@ -1163,8 +1154,8 @@ AVPR1A ~ Batch + Status * mean T
 </table>
 </div>
 </div>
-<div id="ventromedial-hypothalamus" class="section level1">
-<h1>Ventromedial Hypothalamus</h1>
+<div id="ventromedial-hypothalamus" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Ventromedial Hypothalamus</h1>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Significant results from DESeq2 before FDR correction in the Ventromedial Hypothalamus (VMH). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).
@@ -1356,29 +1347,29 @@ LOC113983511
 </tr>
 </tbody>
 </table>
-<p><img src="candidate_gene_analysis_files/figure-html/VMH%20candidate%20gene%20plots-1.png" width="960" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/VMH%20candidate%20gene%20plots-1.png" width="960" style="display: block; margin: auto;" /></p>
 <p>Nothing convincingly significant after FDR correction!</p>
-<div id="status-specific-gene-expression-in-the-vmh" class="section level2">
-<h2>Status specific gene expression in the VMH</h2>
-<div id="pgr" class="section level3">
-<h3>PGR</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<div id="status-specific-gene-expression-in-the-vmh" class="section level2" number="4.1">
+<h2><span class="header-section-number">4.1</span> Status specific gene expression in the VMH</h2>
+<div id="pgr" class="section level3" number="4.1.1">
+<h3><span class="header-section-number">4.1.1</span> PGR</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;" /></p>
 <p>Rubbish.</p>
 </div>
-<div id="gnrh1" class="section level3">
-<h3>GNRH1</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<div id="gnrh1" class="section level3" number="4.1.2">
+<h3><span class="header-section-number">4.1.2</span> GNRH1</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-7-1.png" width="672" style="display: block; margin: auto;" /></p>
 <p>Also Rubbish.</p>
 </div>
-<div id="avpr1a" class="section level3">
-<h3>AVPR1A</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<div id="avpr1a" class="section level3" number="4.1.3">
+<h3><span class="header-section-number">4.1.3</span> AVPR1A</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-8-1.png" width="672" style="display: block; margin: auto;" /></p>
 <p>Also Rubbish.</p>
 </div>
 </div>
 </div>
-<div id="anterior-hypothalamus" class="section level1">
-<h1>Anterior Hypothalamus</h1>
+<div id="anterior-hypothalamus" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> Anterior Hypothalamus</h1>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Significant results from DESeq2 before FDR correction in the Anterior Hypothalamus (AH). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model)
@@ -1419,8 +1410,8 @@ padj
 <p>No candidate genes significant in the AH</p>
 <p>No interaction effects</p>
 </div>
-<div id="paraventricular-nucleus" class="section level1">
-<h1>Paraventricular Nucleus</h1>
+<div id="paraventricular-nucleus" class="section level1" number="6">
+<h1><span class="header-section-number">6</span> Paraventricular Nucleus</h1>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Significant results from DESeq2 before FDR correction in the Paraventricular Nucleus (PVN). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).
@@ -1638,12 +1629,12 @@ VIPR1
 </tr>
 </tbody>
 </table>
-<p><img src="candidate_gene_analysis_files/figure-html/PVN%20candidate%20gene%20plots-1.png" width="1920" /></p>
-<div id="interaction-in-the-paraventricular-nucleus" class="section level2">
-<h2>Interaction in the Paraventricular Nucleus</h2>
-<div id="ar" class="section level3">
-<h3>AR</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/PVN%20candidate%20gene%20plots-1.png" width="960" style="display: block; margin: auto;" /></p>
+<div id="interaction-in-the-paraventricular-nucleus" class="section level2" number="6.1">
+<h2><span class="header-section-number">6.1</span> Interaction in the Paraventricular Nucleus</h2>
+<div id="ar" class="section level3" number="6.1.1">
+<h3><span class="header-section-number">6.1.1</span> AR</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-9-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model comparisons in the Paraventricular Nucleus for Androgen Receptor
@@ -1758,8 +1749,8 @@ AR ~ Status * mean T
 </div>
 </div>
 </div>
-<div id="medial-preoptic-area-pom" class="section level1">
-<h1>Medial Preoptic Area (POM)</h1>
+<div id="medial-preoptic-area-pom" class="section level1" number="7">
+<h1><span class="header-section-number">7</span> Medial Preoptic Area (POM)</h1>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Significant results from DESeq2 before FDR correction in the Medial Preoptic Area (POM). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).
@@ -1977,11 +1968,12 @@ PRLR
 </tr>
 </tbody>
 </table>
-<p><img src="candidate_gene_analysis_files/figure-html/POM%20candidate%20gene%20plots-1.png" width="1920" /></p>
-<div id="interaction-in-the-medial-preoptic-area" class="section level2">
-<h2>Interaction in the Medial Preoptic Area</h2>
-<p>###VIP</p>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/POM%20candidate%20gene%20plots-1.png" width="960" style="display: block; margin: auto;" /></p>
+<div id="interaction-in-the-medial-preoptic-area" class="section level2" number="7.1">
+<h2><span class="header-section-number">7.1</span> Interaction in the Medial Preoptic Area</h2>
+<div id="vip" class="section level3" number="7.1.1">
+<h3><span class="header-section-number">7.1.1</span> VIP</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-11-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model validation in the medial preoptic areaea (POM) for how VIP expression is related to mean T and Status
@@ -2092,11 +2084,12 @@ VIP ~ Status * mean T
 </tbody>
 </table>
 </div>
-<div id="checking-other-multiple-hits-in-the-pom" class="section level2">
-<h2>Checking other multiple hits in the POM</h2>
-<div id="ar-1" class="section level3">
-<h3>AR</h3>
-<img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-13-1.png" width="672" />
+</div>
+<div id="checking-other-multiple-hits-in-the-pom" class="section level2" number="7.2">
+<h2><span class="header-section-number">7.2</span> Checking other multiple hits in the POM</h2>
+<div id="ar-1" class="section level3" number="7.2.1">
+<h3><span class="header-section-number">7.2.1</span> AR</h3>
+<img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-13-1.png" width="672" style="display: block; margin: auto;" />
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model validation in the medial preoptic area (POM) for how AR expression is related to mean T and Status
@@ -2192,9 +2185,9 @@ AR ~ Status * mean T
 </tbody>
 </table>
 </div>
-<div id="prlr" class="section level3">
-<h3>PRLR</h3>
-<img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-14-1.png" width="672" />
+<div id="prlr" class="section level3" number="7.2.2">
+<h3><span class="header-section-number">7.2.2</span> PRLR</h3>
+<img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-14-1.png" width="672" style="display: block; margin: auto;" />
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -2286,12 +2279,11 @@ PRLR ~ Status * mean T
 </tr>
 </tbody>
 </table>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-14-2.png" width="672" /></p>
 </div>
 </div>
 </div>
-<div id="dorsomedial-intercollicular-nucleus-ico" class="section level1">
-<h1>Dorsomedial Intercollicular Nucleus (ICo)</h1>
+<div id="dorsomedial-intercollicular-nucleus-ico" class="section level1" number="8">
+<h1><span class="header-section-number">8</span> Dorsomedial Intercollicular Nucleus (ICo)</h1>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Significant results from DESeq2 before FDR correction in the Dorsomedial Intercollicular Nucleus (ICo). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).
@@ -2379,12 +2371,12 @@ VIPR2
 </tr>
 </tbody>
 </table>
-<p><img src="candidate_gene_analysis_files/figure-html/ICO%20candidate%20gene%20plots-1.png" width="480" /></p>
-<div id="interaction-in-the-ico" class="section level2">
-<h2>Interaction in the Ico</h2>
-<div id="avpr1a-1" class="section level3">
-<h3>AVPR1A</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/ICO%20candidate%20gene%20plots-1.png" width="960" style="display: block; margin: auto;" /></p>
+<div id="interaction-in-the-ico" class="section level2" number="8.1">
+<h2><span class="header-section-number">8.1</span> Interaction in the Ico</h2>
+<div id="avpr1a-1" class="section level3" number="8.1.1">
+<h3><span class="header-section-number">8.1.1</span> AVPR1A</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-15-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model validation in the dorsomedial intercollicular nucleus (ICo) for how AVPR1A expression, status and mean T influences social behavior
@@ -2480,7 +2472,7 @@ AVPR1A ~ Batch + Year + Status * mean T
 </tbody>
 </table>
 <p>###AVP</p>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-17-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model validation in the dorsomedial intercollicular nucleus (ICo) for how Arginine Vasotocin (AVP) expression
@@ -2576,7 +2568,7 @@ AVP ~ Batch + Year + Status * mean T
 </tbody>
 </table>
 <p>###OXTR</p>
-<img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-19-1.png" width="672" />
+<img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-19-1.png" width="672" style="display: block; margin: auto;" />
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model validation in the dorsomedial intercollicular nucleus (ICo) for how Arginine Vasotocin (AVP) expression
@@ -2674,8 +2666,8 @@ OXTR ~ Batch + Year + Status * mean T
 </div>
 </div>
 </div>
-<div id="midbrain-central-gray-gct" class="section level1">
-<h1>Midbrain Central Gray (GCT)</h1>
+<div id="midbrain-central-gray-gct" class="section level1" number="9">
+<h1><span class="header-section-number">9</span> Midbrain Central Gray (GCT)</h1>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Significant results from DESeq2 before FDR correction in the Midbrain Central Grey (GCt). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).
@@ -2919,12 +2911,12 @@ VIP
 </tr>
 </tbody>
 </table>
-<p><img src="candidate_gene_analysis_files/figure-html/GCT%20candidate%20gene%20plots-1.png" width="1920" /></p>
-<div id="interaction-in-the-midbrain-central-gray" class="section level2">
-<h2>Interaction in the midbrain central gray</h2>
-<div id="vip" class="section level3">
-<h3>VIP</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-20-1.png" width="672" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/GCT%20candidate%20gene%20plots-1.png" width="960" style="display: block; margin: auto;" /></p>
+<div id="interaction-in-the-midbrain-central-gray" class="section level2" number="9.1">
+<h2><span class="header-section-number">9.1</span> Interaction in the midbrain central gray</h2>
+<div id="vip-1" class="section level3" number="9.1.1">
+<h3><span class="header-section-number">9.1.1</span> VIP</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-20-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model validation in the midbrain central grey (GCt) for how VIP expression is related to our interest variables
@@ -3037,9 +3029,9 @@ VIP ~ Batch + Status * mean T
 </tbody>
 </table>
 </div>
-<div id="pgr-1" class="section level3">
-<h3>PGR</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-22-1.png" width="672" /></p>
+<div id="pgr-1" class="section level3" number="9.1.2">
+<h3><span class="header-section-number">9.1.2</span> PGR</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-22-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model validation in the midbrain central grey (GCt) for how Progesterone (PGR) expression is related to our interest variables
@@ -3152,9 +3144,9 @@ PGR ~ Batch + Status * mean T
 </tbody>
 </table>
 </div>
-<div id="esr1" class="section level3">
-<h3>ESR1</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-24-1.png" width="672" /></p>
+<div id="esr1" class="section level3" number="9.1.3">
+<h3><span class="header-section-number">9.1.3</span> ESR1</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-24-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -3247,7 +3239,7 @@ ESR1 ~ Batch + Status * mean T
 </tbody>
 </table>
 <p>###PRLR</p>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-26-1.png" width="672" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-26-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -3342,8 +3334,8 @@ PRLR ~ Batch + Status * mean T
 </div>
 </div>
 </div>
-<div id="nucleus-taenia-tna" class="section level1">
-<h1>Nucleus Taenia (TnA)</h1>
+<div id="nucleus-taenia-tna" class="section level1" number="10">
+<h1><span class="header-section-number">10</span> Nucleus Taenia (TnA)</h1>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Significant results from DESeq2 before FDR correction in the Nucleus Taenia (TnA). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).
@@ -3535,12 +3527,12 @@ PGR
 </tr>
 </tbody>
 </table>
-<p><img src="candidate_gene_analysis_files/figure-html/TNA%20candidate%20gene%20plots-1.png" width="960" /></p>
-<div id="interaction-in-the-nucleus-taenia" class="section level2">
-<h2>Interaction in the Nucleus Taenia</h2>
-<div id="cyp19a1" class="section level3">
-<h3>CYP19A1</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-28-1.png" width="672" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/TNA%20candidate%20gene%20plots-1.png" width="960" style="display: block; margin: auto;" /></p>
+<div id="interaction-in-the-nucleus-taenia" class="section level2" number="10.1">
+<h2><span class="header-section-number">10.1</span> Interaction in the Nucleus Taenia</h2>
+<div id="cyp19a1" class="section level3" number="10.1.1">
+<h3><span class="header-section-number">10.1.1</span> CYP19A1</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-28-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -3633,9 +3625,9 @@ CYP19A1 ~ Batch + Status * mean T
 </tbody>
 </table>
 </div>
-<div id="prlr-1" class="section level3">
-<h3>PRLR</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-30-1.png" width="672" /></p>
+<div id="prlr-1" class="section level3" number="10.1.2">
+<h3><span class="header-section-number">10.1.2</span> PRLR</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-30-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -3728,9 +3720,9 @@ PRLR ~ Batch + Status * mean T
 </tbody>
 </table>
 </div>
-<div id="vip-1" class="section level3">
-<h3>VIP</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-32-1.png" width="672" /></p>
+<div id="vip-2" class="section level3" number="10.1.3">
+<h3><span class="header-section-number">10.1.3</span> VIP</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-32-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -3824,9 +3816,9 @@ VIP ~ Batch + Status * mean T
 </table>
 <p>nothing compelling.</p>
 </div>
-<div id="vipr1" class="section level3">
-<h3>VIPR1</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-34-1.png" width="672" /></p>
+<div id="vipr1" class="section level3" number="10.1.4">
+<h3><span class="header-section-number">10.1.4</span> VIPR1</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-34-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -3921,8 +3913,8 @@ VIPR1 ~ Batch + Status * mean T
 </div>
 </div>
 </div>
-<div id="arcopallium-intermedium-ai" class="section level1">
-<h1>Arcopallium Intermedium (Ai)</h1>
+<div id="arcopallium-intermedium-ai" class="section level1" number="11">
+<h1><span class="header-section-number">11</span> Arcopallium Intermedium (Ai)</h1>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Significant results from DESeq2 before FDR correction in the Arcopallium Intermedium (Ai). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).
@@ -4062,12 +4054,12 @@ VIP
 </tr>
 </tbody>
 </table>
-<p><img src="candidate_gene_analysis_files/figure-html/AI%20candidate%20gene%20plots-1.png" width="960" /></p>
-<div id="interaction-in-the-arcopallium-intermedium" class="section level2">
-<h2>Interaction in the Arcopallium Intermedium</h2>
-<div id="avp" class="section level3">
-<h3>AVP</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-36-1.png" width="672" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/AI%20candidate%20gene%20plots-1.png" width="960" style="display: block; margin: auto;" /></p>
+<div id="interaction-in-the-arcopallium-intermedium" class="section level2" number="11.1">
+<h2><span class="header-section-number">11.1</span> Interaction in the Arcopallium Intermedium</h2>
+<div id="avp" class="section level3" number="11.1.1">
+<h3><span class="header-section-number">11.1.1</span> AVP</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-36-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model validation in the arcopallium intermedium (ai) for how AVP expression is related to our interest variables
@@ -4164,9 +4156,9 @@ AVP ~Status * mean T
 </table>
 <p>Looks like the parameterised model is worse than the null model.</p>
 </div>
-<div id="avpr1a-2" class="section level3">
-<h3>AVPR1A</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-38-1.png" width="672" /></p>
+<div id="avpr1a-2" class="section level3" number="11.1.2">
+<h3><span class="header-section-number">11.1.2</span> AVPR1A</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-38-1.png" width="672" style="display: block; margin: auto;" /></p>
 <p>Not very convincing</p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
@@ -4249,7 +4241,7 @@ AVPR1A ~Status * mean T
 </table>
 <p>And indeed this model does not appear to be bette either</p>
 <p>###VIPR1</p>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-40-1.png" width="672" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-40-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model validation in the arcopallium intermedium (ai) for how VIPR1 expression is related to our interest variables
@@ -4346,11 +4338,11 @@ VIPR1 ~Status * mean T
 </table>
 </div>
 </div>
-<div id="checking-other-multiple-hits-in-the-ai" class="section level2">
-<h2>Checking other multiple hits in the AI</h2>
-<div id="vip-2" class="section level3">
-<h3>VIP</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-42-1.png" width="672" /></p>
+<div id="checking-other-multiple-hits-in-the-ai" class="section level2" number="11.2">
+<h2><span class="header-section-number">11.2</span> Checking other multiple hits in the AI</h2>
+<div id="vip-3" class="section level3" number="11.2.1">
+<h3><span class="header-section-number">11.2.1</span> VIP</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-42-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Model validation in the Arcopallium Intermedium (AI) for how VIP expression, status and mean T influences social behavior
@@ -4467,8 +4459,8 @@ VIP ~ Status * mean T
 </div>
 </div>
 </div>
-<div id="lateral-septum-ls" class="section level1">
-<h1>Lateral Septum (LS)</h1>
+<div id="lateral-septum-ls" class="section level1" number="12">
+<h1><span class="header-section-number">12</span> Lateral Septum (LS)</h1>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
 Significant results from DESeq2 before FDR correction in the Lateral Septum (LS). Where pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected p-value (for the number of genes in the sample per model).
@@ -4608,12 +4600,12 @@ NA
 </tr>
 </tbody>
 </table>
-<p><img src="candidate_gene_analysis_files/figure-html/LS%20candidate%20gene%20plots-1.png" width="960" /></p>
-<div id="interactions-in-the-lateral-septum" class="section level2">
-<h2>Interactions in the Lateral Septum</h2>
-<div id="ar-2" class="section level3">
-<h3>AR</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-44-1.png" width="672" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/LS%20candidate%20gene%20plots-1.png" width="960" style="display: block; margin: auto;" /></p>
+<div id="interactions-in-the-lateral-septum" class="section level2" number="12.1">
+<h2><span class="header-section-number">12.1</span> Interactions in the Lateral Septum</h2>
+<div id="ar-2" class="section level3" number="12.1.1">
+<h3><span class="header-section-number">12.1.1</span> AR</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-44-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -4708,8 +4700,8 @@ AR ~ Status * mean T
 </div>
 </div>
 </div>
-<div id="bed-nucleus-of-the-stria-terminalis-bstm" class="section level1">
-<h1>Bed Nucleus of the Stria Terminalis (BSTm)</h1>
+<div id="bed-nucleus-of-the-stria-terminalis-bstm" class="section level1" number="13">
+<h1><span class="header-section-number">13</span> Bed Nucleus of the Stria Terminalis (BSTm)</h1>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -4820,12 +4812,12 @@ PGR
 </tr>
 </tbody>
 </table>
-<p><img src="candidate_gene_analysis_files/figure-html/BSTm%20candidate%20gene%20plots-1.png" width="960" /></p>
-<div id="interactions-in-the-bed-nucleus-of-the-stria-terminalis" class="section level2">
-<h2>Interactions in the Bed Nucleus of the Stria Terminalis</h2>
-<div id="esr1-1" class="section level3">
-<h3>ESR1</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-46-1.png" width="672" /></p>
+<p><img src="06_candidate_gene_analysis_files/figure-html/BSTm%20candidate%20gene%20plots-1.png" width="960" style="display: block; margin: auto;" /></p>
+<div id="interactions-in-the-bed-nucleus-of-the-stria-terminalis" class="section level2" number="13.1">
+<h2><span class="header-section-number">13.1</span> Interactions in the Bed Nucleus of the Stria Terminalis</h2>
+<div id="esr1-1" class="section level3" number="13.1.1">
+<h3><span class="header-section-number">13.1.1</span> ESR1</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-46-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -4918,9 +4910,9 @@ ESR1 ~ Status * mean T
 </tbody>
 </table>
 </div>
-<div id="esr2" class="section level3">
-<h3>ESR2</h3>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-48-1.png" width="672" /></p>
+<div id="esr2" class="section level3" number="13.1.2">
+<h3><span class="header-section-number">13.1.2</span> ESR2</h3>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-48-1.png" width="672" style="display: block; margin: auto;" /></p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <thead>
 <tr>
@@ -5032,11 +5024,80 @@ ESR2 ~ Status * mean T
 </div>
 </div>
 </div>
-<div id="heat-map-of-all-candidate-genes" class="section level1">
-<h1>Heat map of all candidate genes</h1>
-<p><img src="candidate_gene_analysis_files/figure-html/unnamed-chunk-50-1.png" width="2880" /></p>
-<pre><code>## png 
-##   2</code></pre>
+<div id="heat-map-of-all-candidate-genes" class="section level1" number="14">
+<h1><span class="header-section-number">14</span> Heat map of all candidate genes</h1>
+<p><img src="06_candidate_gene_analysis_files/figure-html/unnamed-chunk-50-1.png" width="2880" style="display: block; margin: auto;" /></p>
+<pre><code>FALSE png 
+FALSE   2</code></pre>
+<pre><code>FALSE R version 4.0.2 (2020-06-22)
+FALSE Platform: x86_64-w64-mingw32/x64 (64-bit)
+FALSE Running under: Windows 10 x64 (build 19042)
+FALSE 
+FALSE Matrix products: default
+FALSE 
+FALSE locale:
+FALSE [1] LC_COLLATE=English_Australia.1252  LC_CTYPE=English_Australia.1252   
+FALSE [3] LC_MONETARY=English_Australia.1252 LC_NUMERIC=C                      
+FALSE [5] LC_TIME=English_Australia.1252    
+FALSE 
+FALSE attached base packages:
+FALSE  [1] grid      parallel  stats4    stats     graphics  grDevices utils    
+FALSE  [8] datasets  methods   base     
+FALSE 
+FALSE other attached packages:
+FALSE  [1] WGCNA_1.69                  fastcluster_1.1.25         
+FALSE  [3] dynamicTreeCut_1.63-1       RColorBrewer_1.1-2         
+FALSE  [5] pheatmap_1.0.12             MASS_7.3-51.6              
+FALSE  [7] wesanderson_0.3.6           VennDiagram_1.6.20         
+FALSE  [9] futile.logger_1.4.3         kableExtra_1.3.1           
+FALSE [11] DESeq2_1.28.1               SummarizedExperiment_1.18.1
+FALSE [13] DelayedArray_0.14.0         matrixStats_0.56.0         
+FALSE [15] Biobase_2.48.0              GenomicRanges_1.40.0       
+FALSE [17] GenomeInfoDb_1.24.0         IRanges_2.22.2             
+FALSE [19] S4Vectors_0.26.1            BiocGenerics_0.34.0        
+FALSE [21] stringr_1.4.0               ggpubr_0.4.0               
+FALSE [23] ggplot2_3.3.5               reshape2_1.4.4             
+FALSE [25] plyr_1.8.6                 
+FALSE 
+FALSE loaded via a namespace (and not attached):
+FALSE   [1] colorspace_1.4-1       ggsignif_0.6.0         ellipsis_0.3.2        
+FALSE   [4] rio_0.5.16             htmlTable_2.0.1        XVector_0.28.0        
+FALSE   [7] base64enc_0.1-3        rstudioapi_0.13        farver_2.0.3          
+FALSE  [10] bit64_0.9-7            AnnotationDbi_1.50.0   fansi_0.4.1           
+FALSE  [13] xml2_1.3.2             codetools_0.2-16       splines_4.0.2         
+FALSE  [16] doParallel_1.0.15      impute_1.62.0          geneplotter_1.66.0    
+FALSE  [19] knitr_1.29             Formula_1.2-3          broom_0.7.10          
+FALSE  [22] annotate_1.66.0        cluster_2.1.0          GO.db_3.11.4          
+FALSE  [25] png_0.1-7              compiler_4.0.2         httr_1.4.2            
+FALSE  [28] backports_1.1.7        assertthat_0.2.1       Matrix_1.2-18         
+FALSE  [31] fastmap_1.1.0          formatR_1.8            acepack_1.4.1         
+FALSE  [34] htmltools_0.5.2        tools_4.0.2            gtable_0.3.0          
+FALSE  [37] glue_1.5.1             GenomeInfoDbData_1.2.3 dplyr_1.0.7           
+FALSE  [40] Rcpp_1.0.7             carData_3.0-4          cellranger_1.1.0      
+FALSE  [43] jquerylib_0.1.4        vctrs_0.3.8            nlme_3.1-148          
+FALSE  [46] preprocessCore_1.50.0  iterators_1.0.12       xfun_0.29             
+FALSE  [49] openxlsx_4.1.5         rvest_1.0.2            lifecycle_1.0.1       
+FALSE  [52] rstatix_0.6.0          XML_3.99-0.5           zlibbioc_1.34.0       
+FALSE  [55] scales_1.1.1           hms_1.1.1              lambda.r_1.2.4        
+FALSE  [58] yaml_2.2.1             curl_4.3               gridExtra_2.3         
+FALSE  [61] memoise_1.1.0          rpart_4.1-15           latticeExtra_0.6-29   
+FALSE  [64] stringi_1.4.6          RSQLite_2.2.0          highr_0.8             
+FALSE  [67] genefilter_1.70.0      foreach_1.5.0          checkmate_2.0.0       
+FALSE  [70] zip_2.0.4              BiocParallel_1.22.0    rlang_0.4.12          
+FALSE  [73] pkgconfig_2.0.3        bitops_1.0-6           evaluate_0.14         
+FALSE  [76] lattice_0.20-41        purrr_0.3.4            labeling_0.3          
+FALSE  [79] htmlwidgets_1.5.3      cowplot_1.0.0          bit_4.0.4             
+FALSE  [82] tidyselect_1.1.0       magrittr_2.0.1         R6_2.4.1              
+FALSE  [85] Hmisc_4.4-0            generics_0.0.2         DBI_1.1.0             
+FALSE  [88] mgcv_1.8-31            pillar_1.6.4           haven_2.3.1           
+FALSE  [91] foreign_0.8-80         withr_2.4.3            nnet_7.3-14           
+FALSE  [94] survival_3.2-3         abind_1.4-5            RCurl_1.98-1.2        
+FALSE  [97] tibble_3.1.6           crayon_1.4.2           car_3.0-8             
+FALSE [100] futile.options_1.0.1   utf8_1.1.4             rmarkdown_2.11        
+FALSE [103] jpeg_0.1-8.1           locfit_1.5-9.4         readxl_1.3.1          
+FALSE [106] data.table_1.13.0      blob_1.2.1             forcats_0.5.1         
+FALSE [109] digest_0.6.25          webshot_0.5.2          xtable_1.8-4          
+FALSE [112] tidyr_1.1.4            munsell_0.5.0          viridisLite_0.4.0</code></pre>
 </div>
 
 
@@ -5050,7 +5111,7 @@ ESR2 ~ Status * mean T
 
 // add bootstrap table styles to pandoc tables
 function bootstrapStylePandocTables() {
-  $('tr.header').parent('thead').parent('table').addClass('table table-condensed');
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
 }
 $(document).ready(function () {
   bootstrapStylePandocTables();
@@ -5068,7 +5129,7 @@ $(document).ready(function () {
 
 $(document).ready(function () {
   $('.tabset-dropdown > .nav-tabs > li').click(function () {
-    $(this).parent().toggleClass('nav-tabs-open')
+    $(this).parent().toggleClass('nav-tabs-open');
   });
 });
 </script>
@@ -5077,6 +5138,9 @@ $(document).ready(function () {
 
 <script>
 $(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
 
     // move toc-ignore selectors from section div to header
     $('div.section.toc-ignore')

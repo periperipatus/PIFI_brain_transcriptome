@@ -8,13 +8,13 @@ output:
     toc: true
     toc_float: true
     toc_depth: 3
-    
+    number_sections: true
     
 ---
 
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning=FALSE)
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, fig.align="center", comment=FALSE)
 ```
 
 ```{r libraries used, echo=FALSE}
@@ -102,7 +102,7 @@ data$X<- NULL
 
 
 
-setwd("../Candidate_gene_results/")
+setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/DE_results")
 norm_data<- list.files(pattern="*norm.csv")
 norm_data<- lapply(norm_data, read.csv)
 
@@ -119,7 +119,7 @@ results_data<- do.call("rbind", results_data)
 results_data$Tissue<- word(results_data$result, 1,1, sep="_")
 results_data$Test<- word(results_data$result, 2,2, sep="_")
 results_data$Test<- as.factor(results_data$Test)
-setwd("../analysis")
+setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/analysis")
 
 results_data$Test<- revalue(results_data$Test, c("status"="Status", "mean"="mean T"))
 #results_sig<- results_data[results_data$pvalue<0.05,]
@@ -142,13 +142,13 @@ results_data<- results_data[,c(9,10,7,1,2,3,4,5,6)]
 
 ```{r interaction results}
 ## reading in the interaction data
-setwd("../Candidate_gene_results")
+setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/DE_results")
 
 results_names<- list.files(pattern="interactions_")
 results_int<- lapply(results_names, read.csv)
 
 results_int<- do.call("rbind", results_int)
-setwd("../analysis")
+setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/analysis")
 
 results_int$Tissue<- factor(results_int$Tissue, levels=c("GON","PIT","VMH","AH","PVN","POM","ICO","GCT","TNA","AI","LS", "BSTm"))
 

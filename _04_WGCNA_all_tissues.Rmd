@@ -1,0 +1,746 @@
+---
+title: "WGCNA across all tissues"
+subtitle: "For manuscript: Neurogenomic landscape of male cooperative behavior in a wild bird "
+date: Last Knit "`r Sys.Date()`"
+author: "Peri Bolton"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 3
+    number_sections: true
+    
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, fig.align="center", comment=FALSE)
+```
+
+```{r libraries}
+library(WGCNA)
+library(flashClust)
+library(plyr)
+library(DESeq2)
+library(PCAtools)
+library(pheatmap)
+library(kableExtra)
+library(ggpubr)
+library(clusterProfiler)
+library(rrvgo)
+enableWGCNAThreads()
+options(stringsAsFactors = FALSE)
+
+peri_theme <- theme(panel.background = element_rect(fill="white"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
+    axis.title.x = element_text(size = 12), axis.text.x = element_text(size = 10, 
+        colour = "black"), axis.title.y = element_text(size = 12), 
+    axis.text.y = element_text(size = 10, colour = "black"), 
+    legend.text = element_text(size = 10), legend.title = element_text(size = 12), 
+    axis.line.y = element_line(colour = "black"), axis.line.x = element_line(colour = "black"),
+    plot.title = element_text(hjust = 0.5, size=12))  + theme(legend.key=element_blank())
+dodge=position_dodge(0.8)
+```
+
+```{r data}
+key<- read.csv("../data_filtered/data_key_Parsed_ReplicatesRemoved.csv")
+behav<- read.csv("../data_unfiltered/PIPFIL_T_and_behav_data.csv")
+rownames(key)<- key$X
+
+key$Color_ID<- sub("/","", key$Color_ID)
+key<- plyr::rename(key, replace=c("Color_ID"="colorID"))
+behav$status<- plyr::revalue(behav$status, c("floa"="floater", "terr"="territorial"))
+key_behav<- merge(key, behav, by="colorID")
+key_behav<- key_behav[!is.na(key_behav$last_behav),]
+
+
+key_behav<- key_behav[order(key_behav$X),]
+
+#create a data.frame with all of the observations. 
+not_in_behav<- key[!key$X %in% key_behav$X,]
+cols_not_key<- colnames(key_behav)[!colnames(key_behav) %in% colnames(key)]
+cols_not_key_df<- data.frame(matrix(NA, nrow = nrow(not_in_behav), ncol = length(cols_not_key)))
+colnames(cols_not_key_df)<- cols_not_key
+not_in_behav<- cbind(not_in_behav, cols_not_key_df)
+
+key_behav<- rbind(key_behav, not_in_behav)
+
+
+
+data<- read.csv("../data_filtered/data_RawCounts_all_ReplicatesRemoved_antisense_V2.csv")
+rownames(data)<- data$X
+data$X<- NULL
+
+
+```
+
+```{r}
+genes_key<- read.csv("../GO_annotations/Maggies_annotations_modifiedR.csv")
+genes_key<- plyr::rename(genes_key, replace=c("GeneID"="gene"))
+
+data_genes<- data.frame(gene=rownames(data))
+genes_key<- merge(data_genes, genes_key, by="gene", all.x=TRUE)
+
+genes_key$display_gene_ID<- ifelse(is.na(genes_key$best_anno), as.character(genes_key$gene), ifelse(genes_key$best_anno!=genes_key$gene, paste0(genes_key$gene,"/", genes_key$best_anno), as.character(genes_key$best_anno))) 
+  
+  
+
+go_terms<- read.csv("../GO_annotations/pfil_GO_key_raw.csv")
+go_terms<- plyr::rename(go_terms, replace=c("GeneID"="gene"))
+go2gene_bp<- go_terms[which(go_terms$Aspect=="P"),c("GO_ID", "gene")]
+go2gene_mf<- go_terms[which(go_terms$Aspect=="F"),c("GO_ID", "gene")]
+go_obo<- read.csv("../GO_annotations/ontology_obo_out.csv")
+go_obo<- plyr::rename(go_obo, replace=c("id"="GO_ID"))
+go2name_bp<- go_obo[which(go_obo$namespace=="biological_process"),c("GO_ID", "name")]
+go2name_mf<- go_obo[which(go_obo$namespace=="molecular_function"),c("GO_ID", "name")]
+
+```
+
+
+# Whole Brain WGCNA
+
+## Data Quality Control
+
+Here I am looking at the overall structure of the brain data for identifying gene-coexpression modules across all the brain tissues. Because in the within tissue analyses I conducted batch correction I will first see what the data look like in the whole brain with batch correction. 
+
+```{r, wholebrain batch correction}
+
+#identified as a consistent outlier
+outliers=c("PFT2_POM_run1")
+key_brain<- key_behav[key_behav$Tissue!="GON",]
+key_brain<- key_brain[key_brain$Tissue!="PIT",]
+key_brain<- key_brain[!key_brain$X %in% outliers,]
+rownames(key_brain)<- key_brain$X
+#
+data<- data[, colnames(data) %in% key_brain$X]
+###filter out lowly expressed genes
+#
+##remove genes with less than 5 reads
+data$avg_count<- apply(data, 1, mean)
+data<- data[data$avg_count>20,]
+data$avg_count<-NULL
+
+
+dd<- DESeqDataSetFromMatrix(countData=data, colData=key_brain, design= ~ Tissue)
+dd<- DESeq(dd)
+dd<- dd[which(mcols(dd)$betaConv),]
+
+vsd_data<- getVarianceStabilizedData(dd)
+p <- pca(vsd_data, metadata = key_brain)
+biplot(p, lab=NULL, colby="Tissue", shape="Batch", legendPosition="right", title="PCA all")
+pairsplot(p, colby="Tissue", triangle = FALSE, shape="Batch")
+eigencorplot(p, metavars = c("Batch","Year", "Status","Tissue"))
+
+
+
+
+mat<- limma::removeBatchEffect(vsd_data, key_brain$Batch)
+p <- pca(mat, metadata = key_brain)
+biplot(p, lab=NULL, colby="Tissue", shape="Batch", legendPosition="right", title="PCA removeBatchEffect(Batch)")
+eigencorplot(p, metavars = c("Batch","Year", "Status"))
+
+
+wgcnadata<- as.data.frame(t(mat))
+
+gsg = goodSamplesGenes(wgcnadata, verbose = 3)
+gsg$allOK
+
+
+traits<- key_brain[, c("Batch",  "Year")]
+traits$pilot<- as.numeric(ifelse(traits$Batch=="pilot",1,0))
+traits$Run1<- as.numeric(ifelse(traits$Batch=="run1",1,0))
+traits$Run2<- as.numeric(ifelse(traits$Batch=="run2",1,0))
+traits$yr2015<- as.numeric(ifelse(traits$Year=="2015",1,0))
+traits$yr2017<- as.numeric(ifelse(traits$Year=="2017",1,0))
+traits$yr2018<- as.numeric(ifelse(traits$Year=="2018",1,0))
+
+traits<- traits[,-(1:2)] 
+
+
+
+
+A=adjacency(t(wgcnadata),type="signed")
+#-----Calculate whole network connectivity
+k=as.numeric(apply(A,2,sum))-1
+#-----Standardized connectivity
+Z.k=scale(k)
+thresholdZ.k=-2.5 
+outlierColor=ifelse(Z.k<thresholdZ.k,"red","black")
+sampleTree = flashClust(as.dist(1-A), method = "average")
+#-----Convert traits to colors
+traitColors=data.frame(numbers2colors(traits,signed=FALSE))
+dimnames(traitColors)[[2]]=paste(names(traits))
+datColors=data.frame(outlier=outlierColor,traitColors)
+
+#-----Plot the sample dendrogram
+plotDendroAndColors(sampleTree,groupLabels=names(datColors),
+                    colors=datColors,main="Sample dendrogram and trait heatmap")
+
+
+```
+
+
+What do the data look like without the pilot samples and batch correction? Here I rerun the same analyses as above but excluding the batch correction and without the pilot samples. 
+
+The analysis above also suggests PFT1_TNA_run2 is an outlier. In the analysis below that excludes the pilot variables I ran it in combinations that did and did not include this sample. Those analyses that did include the sample showed the same outlier status (not shown), therefore I have removed it subsequently.
+
+
+
+```{r removing pilot data}
+outliers=c("PFT2_POM_run1", "PFT1_TNA_run2")
+key_brain<- key_behav[key_behav$Tissue!="GON",]
+key_brain<- key_brain[key_brain$Tissue!="PIT",]
+key_brain<- key_brain[key_brain$Batch!="pilot",]
+key_brain<- key_brain[!key_brain$X %in% outliers,]
+rownames(key_brain)<- key_brain$X
+#
+brain_data<- data[, colnames(data) %in% key_brain$X]
+###filter out lowly expressed genes
+#
+##remove genes with less than 20 reads
+brain_data$avg_count<- apply(brain_data, 1, mean)
+brain_data<- brain_data[brain_data$avg_count>20,]
+brain_data$avg_count<-NULL
+
+
+
+dd<- DESeqDataSetFromMatrix(countData=brain_data, colData=key_brain, design= ~ Tissue)
+dd<- DESeq(dd)
+dd<- dd[which(mcols(dd)$betaConv),]
+
+vsd_data<- getVarianceStabilizedData(dd)
+
+p <- pca(vsd_data, metadata = key_brain)
+biplot(p, lab=NULL, colby="Tissue", shape="Batch", legendPosition="right", title="PCA brain")
+eigencorplot(p, metavars = c("Batch","Year", "Status", "Tissue"))
+
+
+mat<- limma::removeBatchEffect(vsd_data, key_brain$Batch)
+p <- pca(mat, metadata = key_brain)
+biplot(p, lab=NULL, colby="Tissue", shape="Batch", legendPosition="right", title="PCA removeBatchEffect(Batch)")
+eigencorplot(p, metavars = c("Batch","Year", "Status", "Tissue"))
+
+
+wgcnadata<- as.data.frame(t(mat))
+
+gsg = goodSamplesGenes(wgcnadata, verbose = 3)
+gsg$allOK
+
+
+```
+
+It looks better WITHOUT the batch correction... because batches are not evenly distributed across each Tissue. Therefore I will exclude pilot data and not conduct batch correction for the final analysis.
+
+
+## WGCNA Analysis
+
+Using the dataset without the pilot data and the two outliers ("PFT2_POM_run1 and "PFT1_TNA_run2") I will now commence the main co-expression analysis.
+
+```{r WGCNA analysis}
+datExpr0<- as.data.frame(t(vsd_data))
+#write.csv(datExpr0, file="wholebrain_vsd_nobatchrm.csv")
+gsg = goodSamplesGenes(wgcnadata, verbose = 3)
+gsg$allOK
+
+
+traits<- key_brain[, c("Batch",  "Year")]
+traits$pilot<- as.numeric(ifelse(traits$Batch=="pilot",1,0))
+traits$Run1<- as.numeric(ifelse(traits$Batch=="run1",1,0))
+traits$Run2<- as.numeric(ifelse(traits$Batch=="run2",1,0))
+traits$yr2015<- as.numeric(ifelse(traits$Year=="2015",1,0))
+traits$yr2017<- as.numeric(ifelse(traits$Year=="2017",1,0))
+traits$yr2018<- as.numeric(ifelse(traits$Year=="2018",1,0))
+
+traits<- traits[,-(1:2)] 
+
+
+
+#A=adjacency(t(datExpr0),type="signed")
+##-----Calculate whole network connectivity
+#k=as.numeric(apply(A,2,sum))-1
+##-----Standardized connectivity
+#Z.k=scale(k)
+#thresholdZ.k=-2.5 
+#outlierColor=ifelse(Z.k<thresholdZ.k,"red","black")
+#sampleTree = flashClust(as.dist(1-A), method = "average")
+##-----Convert traits to colors
+#traitColors=data.frame(numbers2colors(traits,signed=FALSE))
+#dimnames(traitColors)[[2]]=paste(names(traits))
+#datColors=data.frame(outlier=outlierColor,traitColors)
+#
+##-----Plot the sample dendrogram
+#plotDendroAndColors(sampleTree,groupLabels=names(datColors),
+#                    colors=datColors,main="Sample dendrogram and trait heatmap")
+
+
+```
+
+```{r soft threshold, echo=TRUE}
+powers<- c(seq(1, 11, by = 1), seq(12, 26, by = 2))
+
+
+sft<- pickSoftThreshold(datExpr0, powerVector=powers, verbose=0, networkType="signed")
+
+
+par(mfrow = c(1,2))
+cex1 = 0.9;
+# Scale-free topology fit index as a function of the soft-thresholding power
+plot(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+     xlab="Soft Threshold (power)",ylab="Scale Free Topology Model Fit,signed R^2",type="n",
+     main = paste("Scale independence"));
+text(sft$fitIndices[,1], -sign(sft$fitIndices[,3])*sft$fitIndices[,2],
+     labels=powers,cex=cex1,col="red");
+# this line corresponds to using an R^2 cut-off of h
+abline(h=0.90,col="red")
+# Mean connectivity as a function of the soft-thresholding power
+plot(sft$fitIndices[,1], sft$fitIndices[,5],
+     xlab="Soft Threshold (power)",ylab="Mean Connectivity", type="n",
+     main = paste("Mean connectivity"))
+text(sft$fitIndices[,1], sft$fitIndices[,5], labels=powers, cex=cex1,col="red")
+softPower=20
+```
+
+The soft-threshold power I have selected here is 20, after which there is no improvement in scale free topology.
+
+
+The adjacency matrix was made on an external server to save my PC some RAMs. 
+
+```{r adjacency matrix, eval=FALSE, echo=TRUE}
+
+
+softPower=20
+
+datExpr0<- read.csv("wholebrain_vsd_nobatchrm.csv")
+rownames(datExpr0)<- datExpr0$X
+datExpr0$X<- NULL
+
+adjacency<- adjacency(datExpr0, power = softPower, type="signed")
+TOM<- TOMsimilarity(adjacency, TOMtype="signed")
+#dissTOM<- 1-TOM
+
+save(adjacency, TOM, file="wholebrain_network.RData")
+```
+
+```{r calculate modules, echo=TRUE}
+#for the knit this data is already loaded above.
+#datExpr0<- read.csv("../WGCNA_results/all_tissues/wholebrain_vsd_nobatchrm.csv")
+#rownames(datExpr0)<- datExpr0$X
+#datExpr0$X<- NULL
+
+
+load("../WGCNA_results/all_tissues/wholebrain_network.RData")
+dissTOM<- 1-TOM
+
+geneTree= flashClust(as.dist(dissTOM), method="average")
+
+#plot(geneTree, xlab="", sub="", main= "Gene Clustering on TOM-based dissimilarity", labels= FALSE, hang=0.04)
+minModuleSize<-30 
+dynamicMods<-cutreeDynamic(dendro= geneTree, distM= dissTOM, deepSplit=2, pamRespectsDendro= FALSE, minClusterSize= minModuleSize)
+#table(dynamicMods)
+
+dynamicColors= labels2colors(dynamicMods)
+
+
+plotDendroAndColors(geneTree, dynamicColors, "Dynamic Tree Cut", dendroLabels= FALSE, hang=0.03, addGuide= TRUE, guideHang= 0.05, main= "Gene dendrogram and module colors")
+
+#-----Merge modules whose expression profiles are very similar
+MEList= moduleEigengenes(datExpr0, colors= dynamicColors)
+MEs= MEList$eigengenes
+#Calculate dissimilarity of module eigenegenes
+MEDiss= 1-cor(MEs)
+#Cluster module eigengenes
+METree= flashClust(as.dist(MEDiss), method= "average")
+
+
+#plot(METree, main= "Clustering of module eigengenes", xlab= "", sub= "")
+MEDissThres= 0.30 # i.e. merge modules with an r2 > 0.90. This is stringent, could relax to reduce number of modules and increase module size.
+#abline(h=MEDissThres, col="red")
+merge= mergeCloseModules(datExpr0, dynamicColors, cutHeight= MEDissThres, verbose =3)
+
+mergedColors=merge$colors
+mergedMEs= merge$newMEs
+
+
+plotDendroAndColors(geneTree, cbind(dynamicColors, mergedColors), c("Dynamic Tree Cut", "Merged dynamic"), dendroLabels= FALSE, hang=0.03, addGuide= TRUE, guideHang=0.05)
+
+
+moduleColors= mergedColors
+colorOrder= c("grey", standardColors(50))
+moduleLabels= match(moduleColors, colorOrder)-1
+MEs=mergedMEs
+
+```
+
+Correlate gene co-expression modules with brain regions, individual and batch, as well as our interest variables. 
+
+```{r trait correlation, echo=TRUE}
+datTraits<- key_brain
+all.equal(rownames(datExpr0), rownames(datTraits))
+
+datTraits$Batch<- ifelse(grepl("run1",datTraits$sampleID), 1,0)
+datTraits$Ai<- ifelse(grepl("AI", datTraits$sampleID), 1,0)
+datTraits$TnA<- ifelse(grepl("TNA", datTraits$sampleID), 1,0)
+datTraits$BSTm<- ifelse(grepl("BST", datTraits$sampleID), 1,0)
+datTraits$ICO<- ifelse(grepl("ICO", datTraits$sampleID), 1,0)
+datTraits$GCT<- ifelse(grepl("GCT", datTraits$sampleID), 1,0)
+datTraits$LS<- ifelse(grepl("LS", datTraits$sampleID), 1,0)
+datTraits$POM<- ifelse(grepl("POM", datTraits$sampleID), 1,0)
+datTraits$VMH<- ifelse(grepl("VMH", datTraits$sampleID), 1,0)
+datTraits$AH<- ifelse(grepl("AH", datTraits$sampleID), 1,0)
+datTraits$PVN<- ifelse(grepl("PVN", datTraits$sampleID), 1,0)
+datTraits$Bird<- as.numeric(as.factor(datTraits$sampleID))
+
+datTraits$Status2<- as.numeric(ifelse(datTraits$Status=="territorial",1,0))
+
+
+datTraits<- subset(datTraits, select=c("Bird","Batch","Status2", "mean_T","strength.all_study","VMH","AH","PVN","POM","ICO","GCT","Ai","TnA","LS", "BSTm"))
+names(datTraits)[names(datTraits)=="Status2"] <- "Status"
+
+
+
+#-----Define numbers of genes and samples
+nGenes = ncol(datExpr0);
+nSamples = nrow(datExpr0);
+#-----Recalculate MEs with color labels
+MEs0 = moduleEigengenes(datExpr0, moduleColors)$eigengenes
+MEs = orderMEs(MEs0)
+
+#-----Correlations of genes with eigengenes
+moduleGeneCor=cor(MEs,datExpr0)
+moduleGenePvalue = corPvalueStudent(moduleGeneCor, nSamples);
+
+moduleTraitCor = cor(MEs, datTraits, use = "p");
+moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nSamples);
+
+#---------------------Module-trait heatmap
+
+
+textMatrix = paste(signif(moduleTraitCor, 2), "\n(",
+                   signif(moduleTraitPvalue, 1), ")", sep = "");
+dim(textMatrix) = dim(moduleTraitCor)
+par(mar = c(6, 10, 3, 3));
+# Display the correlation values within a heatmap plot
+labeledHeatmap(Matrix = moduleTraitCor,
+               xLabels = names(datTraits),
+               yLabels = names(MEs),
+               ySymbols = names(MEs),
+               colorLabels = FALSE,
+               colors = blueWhiteRed(50),
+               textMatrix = textMatrix,
+               setStdMargins = FALSE,
+               cex.text = 0.5,
+               zlim = c(-1,1),
+               main = paste("Module-trait relationships in whole brain"))
+
+knitr::kable(table(moduleColors), caption = paste("Number of genes per module in whole brain")) %>% kable_styling()
+```
+
+See the data portion of this repository to see the the module membership and gene-significance results. 
+
+```{r module memberships}
+datME<- moduleEigengenes(datExpr0,mergedColors)$eigengenes
+datKME<- signedKME(datExpr0, datME, outputColumnName="MM.") #use the "signed eigennode connectivity" or module membership
+
+MMPvalue <- as.data.frame(corPvalueStudent(as.matrix(datKME), nSamples)) # Calculate module membership P-values
+datKME$gene<- rownames(datKME)
+MMPvalue$gene<- rownames(MMPvalue)
+genes=names(datExpr0)
+geneInfo0 <- data.frame(gene=genes,moduleColor=moduleColors)
+geneInfo0 <- merge(geneInfo0, genes_key, by="gene", all.x=TRUE)
+color<- merge(geneInfo0, datKME, by="gene") #these are from your original WGCNA analysis 
+#head(color)
+write.csv(as.data.frame(color), file = paste("../WGCNA_results/all_tissues/wholebrain_results_ModuleMembership.csv", sep="_"), row.names = FALSE)
+MMPvalue<- merge(geneInfo0, MMPvalue, by="gene")
+write.csv(MMPvalue, file=paste("../WGCNA_results/all_tissues/wholebrain_results_ModuleMembership_P-value.csv", sep="_"), row.names = FALSE)
+
+
+#### gene-significance with traits of interest.
+trait = as.data.frame(datTraits$Status) #change here for traits of interest
+names(trait) = "status" #change here for traits of interest 
+modNames = substring(names(MEs), 3)
+geneTraitSignificance = as.data.frame(cor(datExpr0, trait, use = "p"))
+GSPvalue = as.data.frame(corPvalueStudent(as.matrix(geneTraitSignificance), nSamples))
+names(geneTraitSignificance) = paste("GS.", names(trait), sep="")
+names(GSPvalue) = paste("p.GS.", names(trait), sep="")
+GS<- cbind(geneTraitSignificance,GSPvalue)
+
+trait = as.data.frame(datTraits$mean_T)
+names(trait)= "mean_T"
+geneTraitSignificance = as.data.frame(cor(datExpr0, trait, use = "p"))
+GSPvalue = as.data.frame(corPvalueStudent(as.matrix(geneTraitSignificance), nSamples))
+names(geneTraitSignificance) = paste("GS.", names(trait), sep="")
+names(GSPvalue) = paste("p.GS.", names(trait), sep="")
+GS2<- cbind(geneTraitSignificance,GSPvalue)
+
+
+trait = as.data.frame(datTraits$strength.all_study)
+names(trait)= "strength"
+geneTraitSignificance = as.data.frame(cor(datExpr0, trait, use = "p"))
+GSPvalue = as.data.frame(corPvalueStudent(as.matrix(geneTraitSignificance), nSamples))
+names(geneTraitSignificance) = paste("GS.", names(trait), sep="")
+names(GSPvalue) = paste("p.GS.", names(trait), sep="")
+GS4<- cbind(geneTraitSignificance,GSPvalue)
+
+GS$gene<- rownames(GS)
+GS<- cbind(GS,GS2, GS4)
+GS<- merge(geneInfo0,GS, by="gene")
+
+
+write.csv(GS, file="../WGCNA_results/all_tissues/wholebrain_results_GeneSignificance.csv", row.names = FALSE)
+```
+
+Let's have a look at some of the hub-genes for the modules associated with the traits of interest.
+
+```{r}
+gonea<- plotCounts(dd, gene="PER3", intgroup=c("strength.all_study", "Tissue"), returnData=TRUE)
+a<- ggplot(gonea, aes(x=strength.all_study, y=count)) + geom_point(size=2, pch=21 ,fill="honeydew",color="black") + labs(title="PER3, honeydew1 hub gene",x="Strength", y="Normalised Counts") + facet_wrap( ~ Tissue, ncol=5) + peri_theme + geom_smooth(method="lm", alpha=0.15)
+
+goneb<- plotCounts(dd, gene="HSPA5", intgroup=c("strength.all_study", "Tissue"), returnData=TRUE)
+b<-ggplot(goneb, aes(x=strength.all_study, y=count)) + geom_point(size=2, pch=21 ,fill="darkorange2",color="black") + labs(title="HSPA5, darkorange2 hub gene",x="Strength", y="Normalised Counts") + facet_wrap( ~ Tissue,ncol=5) + peri_theme + geom_smooth(method="lm", alpha=0.15)
+
+gonec<- plotCounts(dd, gene="UBA52", intgroup=c("Status", "Tissue"), returnData=TRUE)
+c<- ggplot(gonec, aes(x=Status, y=count)) + geom_point(size=2, pch=21 ,fill="darkturquoise",color="black") + labs(title="UBA52, darkturquoise hub gene",x="Status", y="Normalised Counts") + facet_wrap( ~ Tissue, ncol=5) + peri_theme
+#gone<- plotCounts(dd, gene="LOC113983498", intgroup=c("Status", "Tissue"), returnData=TRUE)
+#ggplot(gone, aes(x=Status, y=count)) + geom_point(size=2, pch=21 ,fill="navajowhite",color="black") + labs(title="AVP, navajowhite",x="Status", y="Normalised Counts") + facet_wrap( ~ Tissue, ncol=5) + peri_theme
+
+ggarrange(a,b,c,nrow=3, labels=c("A","B","C"))
+#ggsave(filename="../WGCNA_results/all_tissues/figure_hubs_traits.pdf", device="pdf", height=15, width=10, units="in")
+
+```
+
+Given the network type used, all genes in a module can only go in the same direction. This means that another module may represent genes that are downregulated by the upregulation of genes in another module (or vice-versa).
+
+```{r intermodule correlations}
+# Specify colors
+colz<- gsub("ME","",colnames(MEs))
+names(colz)<- colnames(MEs)
+ann_colors = list(module=colz)
+
+annotation_col<- data.frame(row.names=colnames(MEs), module=colnames(MEs))
+
+
+correlation<- cor(MEs)
+pheatmap(correlation, annotation_col = annotation_col, annotation_colors = ann_colors, annotation_legend=FALSE, legend_breaks = c(-1,-0.5,0,0.5, 1,1), 
+main="module eigengene correlation in whole brain", legend_labels = c("-1", "-0.5", "0", "0.5","1","correlation\n\n"))
+```
+
+## Interesting Modules
+
+Let's further investigate whether these associations with our traits of interest hold up by using a linear mixed model.
+
+```{r}
+library(lme4)
+library(lmerTest)
+library(nlme)
+#merge module eigengenes with trait matrix.
+mes<- MEs
+mes$sampleID <- rownames(mes)
+mes<- merge(key_brain, mes, by="sampleID")
+mes$Tissue<- as.factor(mes$Tissue)
+
+```
+
+### darkturquoise module
+
+```{r darkturquoise, echo=TRUE}
+m1 <- lme(MEdarkturquoise~Batch + Tissue*Status,random=~ 1|Harvest_ID,data=mes)
+#summary(m1)
+anova(m1)
+plot(m1)
+#ggplot(data=mes, aes(x=Batch, y=MEdarkturquoise, color=Harvest_ID)) + geom_point() + geom_boxplot(fill=NA, outlier.colour = NA) + peri_theme
+
+
+ggplot() + geom_point(data=mes, aes(x=Tissue, y=MEdarkturquoise, color=status, shape=Batch), position=dodge) + geom_boxplot(data=mes, aes(x=Tissue, y=MEdarkturquoise, color=status), fill=NA, outlier.colour = NA) + peri_theme
+
+#tna<- mes[mes$Tissue=="TNA",]
+#m2<- lm(MEdarkturquoise~Batch + Status, data=tna)
+```
+
+Not very convinced with the relationship with Status when accounting for batch and individual ID.
+
+
+### honeydew1
+```{r honeydew1}
+hd <- lme(MEhoneydew1~Batch + Tissue*strength.all_study,random=~1|Harvest_ID,data=mes)
+summary(hd)
+anova(hd)
+ggplot(data=mes, aes(x=strength.all_study, y=MEhoneydew1, color=Harvest_ID)) + geom_point() + geom_boxplot(fill=NA, outlier.colour = NA) + peri_theme + facet_wrap(~ Tissue)
+```
+### paleturquoise
+```{r pale turquoise}
+hd <- lme(MEpaleturquoise~Batch + Tissue*Status,random=~1|Harvest_ID,data=mes)
+summary(hd)
+anova(hd)
+ggplot(data=mes, aes(x=Tissue, y=MEpaleturquoise, color=Status)) + geom_point() + geom_boxplot(fill=NA, outlier.colour = NA) + peri_theme
+```
+
+```{r}
+whichModule="paleturquoise"
+nTop<-30 # I use all the genes in the module, but could limit to top n genes based on MM
+
+
+#extract the expression of the top 30 genes and sort them based on module membership. 
+modcol=paste("MM.",whichModule,sep="")
+module_genes<- color[color$moduleColor==whichModule,]
+
+
+verboseScatterplot(abs(module_genes[, modcol]),
+abs(GS[GS$moduleColor==whichModule, "GS.mean_T"]),
+xlab = paste("Module Membership in", whichModule, "module"),
+ylab = "Gene significance for mean Testosterone",
+main = paste("Module membership vs. gene significance\n"),
+cex.main = 1.2, cex.lab = 1.2, cex.axis = 1.2, col = whichModule)
+
+sorted=color$gene[order(color[,modcol],decreasing=T)]
+hubs=sorted[1:nTop]
+hubs=datExpr0[,match(hubs, colnames(datExpr0))]
+
+
+
+### Sort individual data based on the trait value
+expDesign<- data.frame(row.names=rownames(key_brain), mean_T=key_brain[,"mean_T"], Status=key_brain[,"Status"])
+expDesign<- expDesign[order(expDesign$Status),]
+ann_cols<- list(Status=c(territorial="#414042",floater="#E54849"))
+hubs<- hubs[match(rownames(expDesign), rownames(hubs)), ]
+
+#original heatmap  
+pheatmap(hubs,scale="column", cluster_rows = TRUE,cluster_cols = FALSE,show_rownames = TRUE, show_colnames = TRUE,border_color=NA,  main=paste(whichModule,"module in brain"), annotation_row=expDesign, annotation_colors=ann_cols)
+
+```
+
+```{r paleturqoise}
+ego <- enricher(gene          = module_genes$gene,
+                universe      = geneInfo0$gene,
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.01,
+                qvalueCutoff  = 0.05,
+                TERM2GENE=go2gene_bp,
+                TERM2NAME=go2name_bp)
+
+knitr::kable(ego@result[1:10,], caption=paste0("BP enriched GO terms in ", whichModule," module"), row.names = FALSE) %>% kable_styling()
+write.csv(ego@result, file=paste("../WGCNA_results/all_tissues/",whichModule, "GO_BP.csv", sep="_"))
+
+ego2<- as.data.frame(ego@result$ID)
+colnames(ego2)<- "ID"
+ego2$p.adjust<- ego@result$p.adjust
+
+
+simMatrix <- calculateSimMatrix(ego2$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="BP",
+                                method="Rel")
+scores <- setNames(-log10(ego2$p.adjust), ego2$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+
+### Molecular Function
+
+ego <- enricher(gene          = module_genes$gene,
+                universe      = geneInfo0$gene,
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.01,
+                qvalueCutoff  = 0.05,
+                TERM2GENE=go2gene_mf,
+                TERM2NAME=go2name_mf)
+
+knitr::kable(ego@result[1:10,], caption=paste0("MF enriched GO terms in ", whichModule," module"), row.names = FALSE) %>% kable_styling()
+write.csv(ego@result, file=paste("../WGCNA_results/all_tissues/",whichModule, "GO_MF.csv", sep="_"))
+
+ego2<- as.data.frame(ego@result$ID)
+colnames(ego2)<- "ID"
+ego2$p.adjust<- ego@result$p.adjust
+
+
+simMatrix <- calculateSimMatrix(ego2$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="MF",
+                                method="Rel")
+scores <- setNames(-log10(ego2$p.adjust), ego2$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+
+
+```
+
+
+### navajowhite2
+
+This module is interesting because it's associated with many sex-steroid related genes in the hypothalamic regions.
+
+```{r}
+hd <- lme(MEnavajowhite2~Batch + Tissue*Status,random=~1|Harvest_ID,data=mes)
+summary(hd)
+anova(hd)
+ggplot(data=mes, aes(x=Tissue, y=MEnavajowhite2, color=Status)) + geom_point(position=dodge) + geom_boxplot(fill=NA, outlier.colour = NA) + peri_theme
+
+whichModule="navajowhite2"
+
+#extract the expression of the top 30 genes and sort them based on module membership. 
+modcol=paste("MM.",whichModule,sep="")
+module_genes<- color[color$moduleColor==whichModule,]
+
+
+```
+
+```{r navajowhite}
+ego <- enricher(gene          = module_genes$gene,
+                universe      = geneInfo0$gene,
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.01,
+                qvalueCutoff  = 0.05,
+                TERM2GENE=go2gene_bp,
+                TERM2NAME=go2name_bp)
+
+knitr::kable(ego@result[1:10,], caption=paste0("BP enriched GO terms in ", whichModule," module"), row.names = FALSE) %>% kable_styling()
+write.csv(ego@result, file=paste("../WGCNA_results/all_tissues/",whichModule, "GO_BP.csv", sep="_"))
+
+ego2<- as.data.frame(ego@result$ID)
+colnames(ego2)<- "ID"
+ego2$p.adjust<- ego@result$p.adjust
+
+
+simMatrix <- calculateSimMatrix(ego2$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="BP",
+                                method="Rel")
+scores <- setNames(-log10(ego2$p.adjust), ego2$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+
+### Molecular Function
+
+ego <- enricher(gene          = module_genes$gene,
+                universe      = geneInfo0$gene,
+                pAdjustMethod = "BH",
+                pvalueCutoff  = 0.01,
+                qvalueCutoff  = 0.05,
+                TERM2GENE=go2gene_mf,
+                TERM2NAME=go2name_mf)
+
+knitr::kable(ego@result[1:10,], caption=paste0("MF enriched GO terms in ", whichModule," module"), row.names = FALSE) %>% kable_styling()
+write.csv(ego@result, file=paste("../WGCNA_results/all_tissues/",whichModule, "GO_MF.csv", sep="_"))
+
+ego2<- as.data.frame(ego@result$ID)
+colnames(ego2)<- "ID"
+ego2$p.adjust<- ego@result$p.adjust
+
+
+simMatrix <- calculateSimMatrix(ego2$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="MF",
+                                method="Rel")
+scores <- setNames(-log10(ego2$p.adjust), ego2$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+```
+

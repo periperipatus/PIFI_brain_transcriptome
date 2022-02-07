@@ -8,11 +8,11 @@ output:
     toc: true
     toc_float: true
     toc_depth: 4
-    
+    number_sections: true
 ---
 
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = FALSE, message = FALSE, warning=FALSE)
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, fig.align="center", comment=FALSE)
 ```
 
 ```{r libraries used, echo=FALSE}

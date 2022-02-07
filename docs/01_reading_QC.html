@@ -1,0 +1,1247 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Peri Bolton" />
+
+
+<title>Gene Expression QC</title>
+
+<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    background-color: #ffffff;
+    color: #a0a0a0;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+div.sourceCode
+  { color: #1f1c1b; background-color: #ffffff; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span { color: #1f1c1b; } /* Normal */
+code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+code span.an { color: #ca60ca; } /* Annotation */
+code span.at { color: #0057ae; } /* Attribute */
+code span.bn { color: #b08000; } /* BaseN */
+code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #924c9d; } /* Char */
+code span.cn { color: #aa5500; } /* Constant */
+code span.co { color: #898887; } /* Comment */
+code span.cv { color: #0095ff; } /* CommentVar */
+code span.do { color: #607880; } /* Documentation */
+code span.dt { color: #0057ae; } /* DataType */
+code span.dv { color: #b08000; } /* DecVal */
+code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+code span.fl { color: #b08000; } /* Float */
+code span.fu { color: #644a9b; } /* Function */
+code span.im { color: #ff5500; } /* Import */
+code span.in { color: #b08000; } /* Information */
+code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+code span.op { color: #1f1c1b; } /* Operator */
+code span.ot { color: #006e28; } /* Other */
+code span.pp { color: #006e28; } /* Preprocessor */
+code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+code span.sc { color: #3daee9; } /* SpecialChar */
+code span.ss { color: #ff5500; } /* SpecialString */
+code span.st { color: #bf0303; } /* String */
+code span.va { color: #0057ae; } /* Variable */
+code span.vs { color: #bf0303; } /* VerbatimString */
+code span.wa { color: #bf0303; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">PIFI neurogenomics</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Analysis
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="./candidate_gene_analysis.html">Candidate Genes</a>
+    </li>
+    <li>
+      <a href="./test.html">Test</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="./contact.html">Contact</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/periperipatus/PIFI_brain_transcriptome">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Gene Expression QC</h1>
+<h3 class="subtitle">For manuscript: Neurogenomic landscape of male cooperative behavior in a wild bird</h3>
+<h4 class="author">Peri Bolton</h4>
+<h4 class="date">Last Knit “2022-02-05”</h4>
+
+</div>
+
+
+<div id="sampling" class="section level2">
+<h2>Sampling</h2>
+<p>There are a total of 186 sequenced samples, across 16 individuals and 9-12 Tissues per individual. Each individual’s tissue has a unique library prep. Four tissues from the four individuals in the 2015 pilot study were repeated with fresh library preps and run alongside the new samples. Individuals/libraries were randomized across Batchs.</p>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Individual libraries across sequencing Batchs
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+PFT1
+</th>
+<th style="text-align:right;">
+PFT10
+</th>
+<th style="text-align:right;">
+PFT11
+</th>
+<th style="text-align:right;">
+PFT12
+</th>
+<th style="text-align:right;">
+PFT2
+</th>
+<th style="text-align:right;">
+PFT3
+</th>
+<th style="text-align:right;">
+PFT4
+</th>
+<th style="text-align:right;">
+PFT5
+</th>
+<th style="text-align:right;">
+PFT6
+</th>
+<th style="text-align:right;">
+PFT7
+</th>
+<th style="text-align:right;">
+PFT8
+</th>
+<th style="text-align:right;">
+PFT9
+</th>
+<th style="text-align:right;">
+TF1
+</th>
+<th style="text-align:right;">
+TF2
+</th>
+<th style="text-align:right;">
+TT1
+</th>
+<th style="text-align:right;">
+TT2
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+pilot
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+7
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+run1
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+0
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+run2
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+9
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+7
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+2
+</td>
+</tr>
+</tbody>
+</table>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Tissues across sequencing Batchs
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+AH
+</th>
+<th style="text-align:right;">
+AI
+</th>
+<th style="text-align:right;">
+BSTm
+</th>
+<th style="text-align:right;">
+GCT
+</th>
+<th style="text-align:right;">
+GON
+</th>
+<th style="text-align:right;">
+ICO
+</th>
+<th style="text-align:right;">
+LS
+</th>
+<th style="text-align:right;">
+PIT
+</th>
+<th style="text-align:right;">
+POM
+</th>
+<th style="text-align:right;">
+PVN
+</th>
+<th style="text-align:right;">
+TNA
+</th>
+<th style="text-align:right;">
+VMH
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+pilot
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+4
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+run1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+8
+</td>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+10
+</td>
+<td style="text-align:right;">
+11
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+run2
+</td>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+6
+</td>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+4
+</td>
+<td style="text-align:right;">
+3
+</td>
+<td style="text-align:right;">
+12
+</td>
+<td style="text-align:right;">
+5
+</td>
+<td style="text-align:right;">
+4
+</td>
+</tr>
+</tbody>
+</table>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Social status distribution across sequencing Batchs
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+floater
+</th>
+<th style="text-align:right;">
+territorial
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+pilot
+</td>
+<td style="text-align:right;">
+15
+</td>
+<td style="text-align:right;">
+15
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+run1
+</td>
+<td style="text-align:right;">
+30
+</td>
+<td style="text-align:right;">
+48
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+run2
+</td>
+<td style="text-align:right;">
+37
+</td>
+<td style="text-align:right;">
+41
+</td>
+</tr>
+</tbody>
+</table>
+<p><img src="01_reading_QC_files/figure-html/sample%20summary%20tables-1.png" width="672" /></p>
+<pre><code>## 
+##  Wilcoxon rank sum test with continuity correction
+## 
+## data:  files_key$Number.of.Reads[files_key$Batch == &quot;run1&quot;] and files_key$Number.of.Reads[files_key$Batch == &quot;run2&quot;]
+## W = 3976, p-value = 0.0009372
+## alternative hypothesis: true location shift is not equal to 0</code></pre>
+</div>
+<div id="mapping-results" class="section level1">
+<h1>Mapping Results</h1>
+<p>Briefly, I used STAR to map the reads to the <em>Pipra filicauda</em> genome V1.</p>
+<p><img src="01_reading_QC_files/figure-html/read%20data-1.png" width="960" /> <img src="01_reading_QC_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
+<p>The above plot identifies 3 samples that mapped poorly, and these samples also had low RNA concentrations. Samples PFT3_AI_run2, PFT6_AH_run2, PFT9_ICO_run2 will be excluded from further analyses. Then genes with an average count of greater than or equal to 5 will be excluded from downstream analysis.</p>
+</div>
+<div id="exploration-of-the-expression-data" class="section level1">
+<h1>Exploration of the expression data</h1>
+<p>These data have been filtered a little bit already to exclude individuals with low read mapping, and genes with a mean read count of &lt;5.</p>
+<p>Here I will document the variation across tissues.</p>
+<p><img src="01_reading_QC_files/figure-html/Tissue%20read%20variation-1.png" width="672" /></p>
+<div id="batch-differences-and-outlier-detection" class="section level2">
+<h2>Batch differences and outlier detection</h2>
+<p>The primary purpose of these analyses is to determine:</p>
+<ul>
+<li><p>Do Year and Batch influence need to be accounted for?</p></li>
+<li><p>Whether there is a significant library effect - as per the replicated samples.</p></li>
+<li><p>Whether there are any significantly outlying samples.</p></li>
+</ul>
+<div id="all-samples-pca-and-wgcna" class="section level3">
+<h3>All Samples PCA and WGCNA</h3>
+<p>Here I will use PCA outliers and WGCNA outliers to guide initial filtering.</p>
+<p><img src="01_reading_QC_files/figure-html/pca-1.png" width="672" /></p>
+<pre><code>## [1] &quot;Batch&quot;
+## [1] &quot;Harvest_ID&quot;
+## [1] &quot;Tissue&quot;
+## [1] &quot;Year&quot;</code></pre>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p>There appears to be some variation explained by Year and Batch variables.</p>
+<pre><code>##  [1] &quot;Batch&quot;  &quot;Tissue&quot; &quot;Status&quot; &quot;Year&quot;   &quot;Run1&quot;   &quot;Run2&quot;   &quot;AH&quot;     &quot;AI&quot;    
+##  [9] &quot;BSTm&quot;   &quot;GCT&quot;    &quot;ICO&quot;    &quot;LS&quot;     &quot;PIT&quot;    &quot;POM&quot;    &quot;PVN&quot;    &quot;TNA&quot;   
+## [17] &quot;VMH&quot;    &quot;yr2017&quot; &quot;yr2018&quot;</code></pre>
+<p><img src="01_reading_QC_files/figure-html/wgcna%20qc-1.png" width="1152" /></p>
+</div>
+<div id="year-and-batch-effects" class="section level3">
+<h3>Year and Batch Effects</h3>
+<p>The DESeq design for the full dataset here is ~ Year + Batch + ind.n + Tissue. This includes the replicate samples separated out.</p>
+<div id="batch-effects" class="section level4">
+<h4>Batch Effects</h4>
+<p>There are 4577 genes with an adjusted p-val of &lt;0.05, and therefore differentially expressed with respect to sequencing run1 and run2 in 2019. Approximately equal numbers of genes were differentially expressed up or down.</p>
+<p><img src="01_reading_QC_files/figure-html/Batch%20effects%20figs-1.png" width="384" /></p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-3-1.png" width="384" /></p>
+</div>
+<div id="year-effects" class="section level4">
+<h4>Year effects</h4>
+<p><img src="01_reading_QC_files/figure-html/Year%20Effects%20figs-1.png" width="384" /></p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-4-1.png" width="384" /><img src="01_reading_QC_files/figure-html/unnamed-chunk-4-2.png" width="384" /><img src="01_reading_QC_files/figure-html/unnamed-chunk-4-3.png" width="384" /><img src="01_reading_QC_files/figure-html/unnamed-chunk-4-4.png" width="384" /></p>
+<pre><code>## (polygon[GRID.polygon.367], polygon[GRID.polygon.368], polygon[GRID.polygon.369], polygon[GRID.polygon.370], text[GRID.text.371], text[GRID.text.372], text[GRID.text.373], text[GRID.text.374], text[GRID.text.375])</code></pre>
+<div id="gonads-only" class="section level5">
+<h5>Gonads only</h5>
+<p>Let’s look for Batch and year effects just in run 1 vs run 2, and only in the gonads.</p>
+<p><img src="01_reading_QC_files/figure-html/Batch%20and%20year%20effects%20effects%20in%20gonads-1.png" width="672" /></p>
+<pre><code>## [1] &quot;Batch&quot;
+## [1] &quot;Year&quot;</code></pre>
+<p><img src="01_reading_QC_files/figure-html/Batch%20and%20year%20effects%20effects%20in%20gonads-2.png" width="672" /></p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p>Let’s have a look at the plots for the most significant gene.</p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
+<p>Now compare which DEGs are shared between batch in Gonads and the overall dataset.</p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre><code>## (polygon[GRID.polygon.629], polygon[GRID.polygon.630], polygon[GRID.polygon.631], polygon[GRID.polygon.632], text[GRID.text.633], text[GRID.text.634], lines[GRID.lines.635], text[GRID.text.636], lines[GRID.lines.637], text[GRID.text.638], text[GRID.text.639])</code></pre>
+<p>And now let’s explore Year in the Gonads.</p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
+<p>An example top gene <img src="01_reading_QC_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>And within the Gonads, which of the DEGs associated with Year and Batch are shared?</p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
+<pre><code>## (polygon[GRID.polygon.732], polygon[GRID.polygon.733], polygon[GRID.polygon.734], polygon[GRID.polygon.735], text[GRID.text.736], text[GRID.text.737], text[GRID.text.738], text[GRID.text.739], text[GRID.text.740])</code></pre>
+<p>There is colinearity between Batch and Year in both the full dataset and the single tissue test dataset. All subsequent models will include a composite variable for Year and Batch (Year_Batch) to account for these effects in subsequent analyses.</p>
+</div>
+<div id="random-variable" class="section level5">
+<h5>Random Variable</h5>
+<p>Create a random variable that has the same proportions as Batch and ensure that the p-value distribution does not have an over-abundance of values &lt;0.05, which suggests that the samples were drawn from different distributions. This is essentially a test to ensure that what we are seeing with respect to Batch (and Year) above isn’t just random noise.</p>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">#create a random variable and test against that: </span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1283</span>)</span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>x<span class="ot">&lt;-</span> <span class="fu">sample</span>(LETTERS[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>], <span class="dv">183</span>, <span class="at">replace=</span><span class="cn">TRUE</span>, <span class="at">prob=</span><span class="fu">c</span>(<span class="fl">0.43</span>,<span class="fl">0.41</span>,<span class="fl">0.16</span>))</span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>dd<span class="sc">$</span>random_variable<span class="ot">&lt;-</span> <span class="fu">as.factor</span>(x)</span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">design</span>(dd)<span class="ot">&lt;-</span> <span class="fu">formula</span>(<span class="sc">~</span>random_variable)</span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>dd<span class="ot">&lt;-</span> <span class="fu">DESeq</span>(dd)</span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>testres<span class="ot">&lt;-</span> <span class="fu">results</span>(dd)</span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="fu">plotMA</span>(testres, <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(testres<span class="sc">$</span>pvalue, <span class="at">breaks=</span><span class="dv">20</span>, <span class="at">col=</span><span class="st">&quot;grey&quot;</span>)</span></code></pre></div>
+<p><img src="01_reading_QC_files/figure-html/random%20variable-1.png" width="672" /></p>
+<p>These results suggest that these few differentially expressed genes are drawn from the same distribution, so the results we saw previously are probably real.</p>
+</div>
+</div>
+</div>
+</div>
+<div id="replicate-samples" class="section level2">
+<h2>Replicate Samples</h2>
+<p><img src="01_reading_QC_files/figure-html/replicate%20samples-1.png" width="672" /></p>
+<pre><code>## null device 
+##           1</code></pre>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-11-1.png" width="672" /><img src="01_reading_QC_files/figure-html/unnamed-chunk-11-2.png" width="672" /></p>
+<p>There are 64 differentially expressed genes between replicates. Given that we have batch effects (with respect to Flow Cell and with respect to Year sampled), but also there is not really a strong library prep effect as shown in the replicate samples, I will take the first (pilot) instance of each replicate to include in further analyses. In addition, all subsequent analyses will include include the batch variables where necessary.</p>
+</div>
+</div>
+<div id="finalizing-dataset" class="section level1">
+<h1>Finalizing dataset</h1>
+<p>Finally, using the replicate removed dataset we will do final PCA explorations of brain, gonad and pituitary data.</p>
+<div id="wgcna-outlier-dendrograms" class="section level2">
+<h2>WGCNA outlier dendrograms</h2>
+<pre><code>##  Flagging genes and samples with too many missing values...
+##   ..step 1
+##   ..Excluding 650 genes from the calculation due to too many missing samples or zero variance.
+##    ..bad gene count: 650, bad sample counts: 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+##   ..step 2
+##    ..bad gene count: 650, bad sample counts: 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0</code></pre>
+<pre><code>## Removing genes: LOC113989199, LOC113996415, LOC113999600, LOC113986114, MAL, LOC113986212, ANXA8L1, LOC113987670, LOC113986738, WNT8B, LOC113987002, LOC113987116, MYOZ1, LOC113988486, LOC113988740, LOC113988891, LOC113992422, LOC113993367, KCNK18, LOC113993033, AADAC, LOC113993640, LOC113994023, LOC113994379, LOC113995269, SFTPB, LOC113995459, LOC113995786, LOC113996023, LOC113996839, LOC113997790, LOC113998007, LOC113998263, LOC113998259, LOC113998377, LOC113999047, GATA4, LOC113999270, LOC114000781, LOC114000769, LOC114001312, FBXO47, LOC114003305, TTR, LOC114003649, LOC114003715, SAMD3, LOC113982079, LOC113982548, LOC113983794, LOC113984316, LOC113984309, LOC113984314, LOC113985336, FBXO43, LOC113986136, LOC113986191, PIGR, LOC113986283, ARHGEF38, LOC113986442, IL1R2, LOC113986398, LOC113986463, HOXC9, LOC113986726, LOC113986794, LOC113986682, LOC113986828, LOC113986872, LOC113986873, LOC113986863, INSL5, LOC113986944, LOC113986929, LOC113986927, LOC113986977, TFAP2E, LOC113987072, LOC113987083, LOC113987084, LOC113987081, LOC113987149, LOC113987108, LOC113987187, LOC113987185, LOC113987200, LOC113987255, LOC113987264, LOC113987263, LOC113987281, LOC113987288, SKOR2, LOC113987503, LOC113987522, AMBP, LOC113987633, RGR, LOC113987724, LOC113987747, LOC113987763, SLC13A1, LOC113987776, LOC113987831, LOC113987862, LOC113987864, LOC113987888, LOC113987895, POU4F2, LOC113987959, LOC113987963, LOC113988223, LOC113988342, BEST3, LOC113988402, LOC113988418, LOC113988517, FOXB2, LOC113988692, ADGRG4, ODF3B, LOC113988726, LOC113988749, LOC113988821, LOC113988842, LOC113988841, LOC113988850, LOC113988869, LOC113988848, LOC113988935, LMOD3, LOC113988904, LOC113988949, LOC113989036, LOC113989078, LOC113989285, LOC113989318, LOC113989339, LOC113989352, LOC113989372, LOC113989386, LOC113989391, LOC113989389, LOC113989446, LOC113989451, LOC113989513, LOC113989512, NKX2-4, LOC113989551, LOC113989566, LOC113989656, LOC113989665, LOC113989658, LOC113989659, LOC113989625, LOC113989669, LOC113989691, LOC113989707, HOXA7, LOC113989790, LOC113989799, LOC113989826, LOC113989904, LOC113990037, LOC113990036, LOC113990032, LOC113990289, LOC113990274, LOC113990313, LOC113990365, LOC113990473, LOC113990542, LOC113990550, LOC113990564, LOC113990556, MCHR2, PRDM13, LOC113990610, HMX2, LOC113990731, LOC113990730, LOC113990748, SLC13A2, LOC113990929, FOXA1, LOC113990966, LOC113991033, LOC113991016, LOC113991065, LOC113991122, LOC113991141, LOC113991148, LOC113991194, LOC113991156, LOC113991173, LOC113991174, LOC113991222, LOC113991258, GPR15, LOC113991466, NR1I3, NPBWR1, LOC113991674, LOC113991718, LOC113991733, LOC113991947, PNPLA1, LOC113992030, LOC113992013, LOC113992029, LAD1, LOC113992074, ACTL10, LOC113992118, CLDN3, LOC113992192, LOC113992209, LOC113992241, LOC113992243, LOC113992270, LOC113992273, SERPINA10, LOC113992303, PLG, LOC113992335, LOC113992356, LOC113992407, LOC113992415, LOC113992533, LOC113992531, LOC113992568, SIM2, LOC113992756, PLA1A, LOC113992757, ACRBP, LOC113992808, LOC113992872, LOC113992844, LOC113992845, LOC113992938, LOC113992941, LOC113993051, LOC113993059, LOC113993081, LOC113993177, LOC113993204, LOC113993205, LOC113993219, LOC113993269, LOC113993254, LOC113993326, LOC113993325, LOC113993461, LHX3, LOC113993505, ATOH1, LOC113993534, LOC113993507, LOC113993508, LOC113993554, LOC113993569, LOC113993568, LOC113993581, LOC113993651, LOC113993653, LOC113993721, LOC113993764, LOC113993855, LOC113993908, LOC113993884, DBX1, LOC113993925, LOC113993965, LOC113993989, LOC113994029, LOC113994136, LOC113994191, LOC113994285, LOC113994291, LOC113994243, LOC113994215, LOC113994283, LOC113994290, LOC113994293, LOC113994311, LOC113994324, LOC113994362, LOC113994405, PNOC, LOC113994435, HOXD8, LOC113994486, LOC113994647, LOC113994648, LOC113994669, LOC113994709, LOC113994754, OLIG3, LOC113994811, LOC113994810, LOC113994817, LOC113994818, LOC113994815, LOC113994890, LOC113994907, LOC113994879, LOC113994912, LOC113994910, LOC113994906, LOC113994904, LOC113994983, LOC113994979, LOC113994974, LOC113995007, LOC113995013, CRYBA2, LOC113995299, LOC113995163, LOC113995166, LOC113995248, ASB18, LOC113995308, LOC113995328, LOC113995412, LOC113995507, LOC113995566, FSHB, LOC113995701, HIPK4, LOC113995902, RNF212, LOC113996045, DND1, LOC113996062, LOC113996077, LCA5L, SH3BGR, LOC113996129, MPZL3, TMPRSS4, LOC113996218, LOC113996219, LOC113996260, LOC113996370, LOC113996383, LOC113996382, LOC113996414, LOC113996418, LOC113996436, HOXB6, LOC113996629, LOC113996773, PRR35, LOC113996719, LOC113996779, LOC113996819, CUNH4orf54, LOC113996860, LOC113996871, TFAP2D, LOC113996937, FOXA2, LOC113997051, LOC113997043, LOC113997052, LOC113997097, LOC113997078, LOC113997146, LOC113997194, LOC113997277, LOC113997307, LOC113997314, LOC113997335, LOC113997328, APOA5, PRDM12, FGA, LOC113997603, SLC30A3, LOC113997813, LOC113997832, HABP2, LOC113997948, LOC113998110, LOC113998115, LRRC52, NPHS2, TLX3, LOC113998350, LOC113998359, LOC113998367, LOC113998397, LOC113998410, LOC113998448, LOC113998551, LOC113998600, LOC113998587, LOC113998654, LOC113998717, LOC113998716, LOC113998734, LOC113998764, LOC113998853, LOC113998845, LOC113998956, LOC113999006, LOC113999061, LOC113999072, LOC113999153, TMEM79, LOC113999237, LOC113999240, LOC113999277, LOC113999298, LOC113999296, LOC113999297, LOC113999309, LOC113999340, LOC113999424, AVPR1B, LOC113999541, PDE6C, LOC113999731, LOC113999776, F7, LOC113999795, LOC113999805, LOC113999851, LOC113999865, LOC113999868, GJB7, LOC113999843, LOC113999848, LOC113999863, LOC113999936, LOC113999961, LOC114000120, CUNH3orf85, LOC114000126, LOC114000184, LOC114000352, LOC114000345, LOC114000374, LOC114000638, LOC114000669, LOC114000713, LOC114000737, RFX6, LOC114000843, LOC114000933, LOC114000915, WFDC2, LOC114001160, LOC114001167, LOC114001174, LOC114001222, LOC114001234, LOC114001325, LOC114001340, LOC114001414, LOC114001415, LOC114001412, LOC114001434, TCF21, LOC114001560, LOC114001628, LOC114001630, TMEM81, PIFO, PDZK1IP1, DMBX1, TSPAN1, LOC114001885, FOXB1, LOC114001900, LOC114001911, CAPZA3, LOC114001969, LOC114002040, LOC114002024, PITX1, LOC114002061, LOC114002070, LOC114002133, KCNJ1, LOC114002188, LOC114002194, LOC114002217, LOC114002281, LOC114002283, SYCN, LOC114002415, LOC114002423, LOC114002528, LOC114002499, LOC114002503, LOC114002501, LOC114002527, LOC114002576, LOC114002598, LOC114002616, C8A, ANGPTL3, LOC114002757, LOC114002734, LOC114002772, LOC114002773, LOC114002851, LOC114002850, LOC114002885, LOC114002890, LOC114002892, LOC114002880, LOC114002894, LOC114002936, LOC114002941, LOC114002969, LOC114003230, HAAO, LOC114003382, LOC114003546, LOC114003557, LOC114003569, LOC114003583, LOC114003618, LOC114003623, LOC114003753, LOC114003876, PTF1A, LOC114004103, LOC114004175, LOC114004162, CUNH21orf58, KMO, LOC114004240, LOC114004301, LOC114004303, LOC114004308, LOC114004313, DMRT3, LOC113981980, LOC113981981, LOC113981956, LOC113982004, LOC113982027, LOC113982105, LOC113982199, LOC113982191, LOC113982196, LOC113982195, LOC113982194, LOC113982279, LOC113982294, RBBP8NL, LOC113982344, LOC113982436, LOC113982502, LOC113982515, LOC113982517, LOC113982497, LOC113982607, LOC113982725, LOC113982736, LOC113982808, LOC113982853, MUC16, LOC113982893, LOC113982908, ONECUT3, LOC113982937, LOC113982996, CUNH14orf39, LOC113983033, LOC113983034, LOC113983059, LOC113983145, LOC113983191, LOC113983202, LOC113983251, LOC113983278, LOC113983285, LOC113983353, LOC113983377, LOC113983387, LOC113983399, LOC113983400, LOC113983391, LOC113983438, LOC113983421, LOC113983425, LOC113983476, LOC113983461, LOC113983462, LOC113983486, LOC113983506, LOC113983526, LOC113983555, LOC113983581, LOC113983592, FETUB, LOC113983735, LHX9, LOC113983826, SPATA46, LOC113983880, LOC113983987, LOC113984055, LOC113984094, LOC113984164, LOC113984208, NKX3-1, LHX5, LOC113984296, LOC113984555, LOC113984595, LOC113984571, LOC113984661, LOC113984701, LOC113984727, LOC113984885, LOC113984918, LOC113984977, LOC113984969, LOC113985010, LOC113985080, LOC113985086, TEKT3, LOC113985117, LOC113985140, LOC113985156, LOC113985192, LOC113985217, LOC113985252, LOC113985251, LOC113985261, C1QL4, LOC113985324, LOC113985504, LOC113985549, LOC113985665, LOC113985554, LOC113985645, LOC113985682, LOC113985674, LOC113985722, LOC113985812, LOC113985878, LOC113985925, LOC113986065</code></pre>
+<p><img src="01_reading_QC_files/figure-html/wgnca%20dendrograms%20per%20tissue-1.png" width="672" /></p>
+</div>
+<div id="brain" class="section level2">
+<h2>Brain</h2>
+<p><img src="01_reading_QC_files/figure-html/brain-1.png" width="576" /></p>
+<pre><code>## [1] &quot;Tissue&quot;
+## [1] &quot;Year_Batch&quot;</code></pre>
+<p><img src="01_reading_QC_files/figure-html/brain-2.png" width="576" /></p>
+</div>
+<div id="gonads" class="section level2">
+<h2>Gonads</h2>
+<p><img src="01_reading_QC_files/figure-html/gonads-1.png" width="576" /></p>
+</div>
+<div id="pituitary" class="section level2">
+<h2>Pituitary</h2>
+<p><img src="01_reading_QC_files/figure-html/pituitary-1.png" width="576" /></p>
+</div>
+<div id="confound-between-tissue-and-batch" class="section level2">
+<h2>Confound between tissue and batch</h2>
+<p>On discussions with Chris, it is possible the number of genes we are seeing as differentially expressed in the main analysis is owing to a confound between tissue and batch, as a few tissues are sequenced exclusively on a single batch. To explore this, we can see whether the DEGs for batch are the same as those for tissue differences. Tissue will be AH, which only has run 2 and PIT, which was compared at Run 1 vs Run 2</p>
+<table>
+<caption>
+Batches and Tissues
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+</th>
+<th style="text-align:right;">
+AH
+</th>
+<th style="text-align:right;">
+PIT
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+run1
+</td>
+<td style="text-align:right;">
+0
+</td>
+<td style="text-align:right;">
+8
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+run2
+</td>
+<td style="text-align:right;">
+11
+</td>
+<td style="text-align:right;">
+4
+</td>
+</tr>
+</tbody>
+</table>
+<p><img src="01_reading_QC_files/figure-html/batch%20effects%20contd-1.png" width="672" /></p>
+<pre><code>## (polygon[GRID.polygon.1238], polygon[GRID.polygon.1239], polygon[GRID.polygon.1240], polygon[GRID.polygon.1241], text[GRID.text.1242], text[GRID.text.1243], text[GRID.text.1244], text[GRID.text.1245], text[GRID.text.1246])</code></pre>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<pre><code>## (polygon[GRID.polygon.1247], polygon[GRID.polygon.1248], polygon[GRID.polygon.1249], polygon[GRID.polygon.1250], polygon[GRID.polygon.1251], polygon[GRID.polygon.1252], text[GRID.text.1253], text[GRID.text.1254], text[GRID.text.1255], text[GRID.text.1256], text[GRID.text.1257], text[GRID.text.1258], text[GRID.text.1259], text[GRID.text.1260], text[GRID.text.1261], text[GRID.text.1262])</code></pre>
+<p>However, when you run PIT on its own with respect to batch there are 2441 differentially expressed genes. Seems like tissues need to be kept separate to remove this confound.</p>
+<pre><code>## R version 4.0.2 (2020-06-22)
+## Platform: x86_64-w64-mingw32/x64 (64-bit)
+## Running under: Windows 10 x64 (build 19042)
+## 
+## Matrix products: default
+## 
+## locale:
+## [1] LC_COLLATE=English_Australia.1252  LC_CTYPE=English_Australia.1252   
+## [3] LC_MONETARY=English_Australia.1252 LC_NUMERIC=C                      
+## [5] LC_TIME=English_Australia.1252    
+## 
+## attached base packages:
+##  [1] grid      parallel  stats4    stats     graphics  grDevices utils    
+##  [8] datasets  methods   base     
+## 
+## other attached packages:
+##  [1] wesanderson_0.3.6           VennDiagram_1.6.20         
+##  [3] futile.logger_1.4.3         kableExtra_1.3.1           
+##  [5] WGCNA_1.69                  fastcluster_1.1.25         
+##  [7] dynamicTreeCut_1.63-1       pheatmap_1.0.12            
+##  [9] lubridate_1.8.0             DESeq2_1.28.1              
+## [11] SummarizedExperiment_1.18.1 DelayedArray_0.14.0        
+## [13] matrixStats_0.56.0          Biobase_2.48.0             
+## [15] GenomicRanges_1.40.0        GenomeInfoDb_1.24.0        
+## [17] IRanges_2.22.2              S4Vectors_0.26.1           
+## [19] BiocGenerics_0.34.0         stringr_1.4.0              
+## [21] PCAtools_2.0.0              cowplot_1.0.0              
+## [23] lattice_0.20-41             ggrepel_0.8.2              
+## [25] ggplot2_3.3.5               reshape2_1.4.4             
+## [27] plyr_1.8.6                 
+## 
+## loaded via a namespace (and not attached):
+##   [1] colorspace_1.4-1          ellipsis_0.3.2           
+##   [3] htmlTable_2.0.1           XVector_0.28.0           
+##   [5] base64enc_0.1-3           rstudioapi_0.13          
+##   [7] farver_2.0.3              bit64_0.9-7              
+##   [9] AnnotationDbi_1.50.0      fansi_0.4.1              
+##  [11] xml2_1.3.2                codetools_0.2-16         
+##  [13] splines_4.0.2             doParallel_1.0.15        
+##  [15] impute_1.62.0             geneplotter_1.66.0       
+##  [17] knitr_1.29                Formula_1.2-3            
+##  [19] annotate_1.66.0           cluster_2.1.0            
+##  [21] GO.db_3.11.4              png_0.1-7                
+##  [23] compiler_4.0.2            httr_1.4.2               
+##  [25] dqrng_0.2.1               backports_1.1.7          
+##  [27] assertthat_0.2.1          Matrix_1.2-18            
+##  [29] fastmap_1.1.0             limma_3.44.3             
+##  [31] formatR_1.8               BiocSingular_1.4.0       
+##  [33] acepack_1.4.1             htmltools_0.5.2          
+##  [35] tools_4.0.2               rsvd_1.0.3               
+##  [37] gtable_0.3.0              glue_1.5.1               
+##  [39] GenomeInfoDbData_1.2.3    dplyr_1.0.7              
+##  [41] Rcpp_1.0.7                jquerylib_0.1.4          
+##  [43] vctrs_0.3.8               preprocessCore_1.50.0    
+##  [45] iterators_1.0.12          DelayedMatrixStats_1.10.0
+##  [47] xfun_0.29                 rvest_1.0.2              
+##  [49] lifecycle_1.0.1           irlba_2.3.3              
+##  [51] XML_3.99-0.5              zlibbioc_1.34.0          
+##  [53] scales_1.1.1              lambda.r_1.2.4           
+##  [55] RColorBrewer_1.1-2        yaml_2.2.1               
+##  [57] memoise_1.1.0             gridExtra_2.3            
+##  [59] rpart_4.1-15              latticeExtra_0.6-29      
+##  [61] stringi_1.4.6             RSQLite_2.2.0            
+##  [63] highr_0.8                 genefilter_1.70.0        
+##  [65] foreach_1.5.0             checkmate_2.0.0          
+##  [67] BiocParallel_1.22.0       rlang_0.4.12             
+##  [69] pkgconfig_2.0.3           bitops_1.0-6             
+##  [71] evaluate_0.14             purrr_0.3.4              
+##  [73] labeling_0.3              htmlwidgets_1.5.3        
+##  [75] bit_4.0.4                 tidyselect_1.1.0         
+##  [77] magrittr_2.0.1            R6_2.4.1                 
+##  [79] generics_0.0.2            Hmisc_4.4-0              
+##  [81] DBI_1.1.0                 pillar_1.6.4             
+##  [83] foreign_0.8-80            withr_2.4.3              
+##  [85] survival_3.2-3            RCurl_1.98-1.2           
+##  [87] nnet_7.3-14               tibble_3.1.6             
+##  [89] crayon_1.4.2              futile.options_1.0.1     
+##  [91] utf8_1.1.4                rmarkdown_2.11           
+##  [93] jpeg_0.1-8.1              locfit_1.5-9.4           
+##  [95] data.table_1.13.0         blob_1.2.1               
+##  [97] webshot_0.5.2             digest_0.6.25            
+##  [99] xtable_1.8-4              munsell_0.5.0            
+## [101] viridisLite_0.4.0</code></pre>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>
