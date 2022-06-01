@@ -8,7 +8,9 @@ output:
 
 # Neurogenomics of cooperative behavior in the wire-tailed manakin
 
-This website contains supplements to the paper-based supplementary material. It includes the markdown documents of the code I used to do the analyses, and the full stuff can be accessed on the github repository.
+This website contains supplements to the word document-based supplementary material. It includes the markdown documents of the code I used to do the analyses, and the full figures and code can be accessed on the github repository itself.
+
+Please note that the GO annotation methods are not in Rmarkdown. The code used can be found [here](https://github.com/periperipatus/PIFI_brain_transcriptome/tree/main/GO_annotation).
 
 
 

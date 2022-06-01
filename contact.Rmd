@@ -1,0 +1,13 @@
+---
+title: "Contact Details"
+output: 
+  html_document:
+    toc: FALSE
+---
+
+
+# Dr Peri Bolton
+
+Dr Bolton led the bioinformatic analysis. Access to the github repository is [here](https://github.com/periperipatus/PIFI_brain_transcriptome/tree/main/).
+
+She is contactable at peri dot bolton at gmail.com

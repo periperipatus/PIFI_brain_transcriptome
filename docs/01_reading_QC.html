@@ -9,7 +9,7 @@
 <meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
 
 
-<meta name="author" content="Peri Bolton" />
+<meta name="author" content="Last Substantive Change October 2020" />
 
 
 <title>Gene Expression QC</title>
@@ -410,16 +410,28 @@ div.tocify {
       <ul class="nav navbar-nav">
         <li class="dropdown">
   <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
-    Analysis
+    Analyses
      
     <span class="caret"></span>
   </a>
   <ul class="dropdown-menu" role="menu">
     <li>
-      <a href="./candidate_gene_analysis.html">Candidate Genes</a>
+      <a href="./01_reading_QC.html">Data QC and filtering</a>
     </li>
     <li>
-      <a href="./test.html">Test</a>
+      <a href="./02_DESeq2.html">Differential Expression</a>
+    </li>
+    <li>
+      <a href="./03_WGCNA_wholebrain.html">Whole-brain co-expression</a>
+    </li>
+    <li>
+      <a href="./04_WGCNA_single_tissue.html">Co-expression in each tissue</a>
+    </li>
+    <li>
+      <a href="./05_candidate_gene_analysis.html">Candidate Genes</a>
+    </li>
+    <li>
+      <a href="./06_tissue_summary_similarity.html">Summaries and overlap analyses</a>
     </li>
   </ul>
 </li>
@@ -445,18 +457,18 @@ div.tocify {
 
 <h1 class="title toc-ignore">Gene Expression QC</h1>
 <h3 class="subtitle">For manuscript: Neurogenomic landscape of male cooperative behavior in a wild bird</h3>
-<h4 class="author">Peri Bolton</h4>
-<h4 class="date">Last Knit “2022-02-05”</h4>
+<h4 class="author">Last Substantive Change October 2020</h4>
+<h4 class="date">Last Knit “2022-05-24”</h4>
 
 </div>
 
 
-<div id="sampling" class="section level2">
-<h2>Sampling</h2>
+<div id="sampling" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Sampling</h1>
 <p>There are a total of 186 sequenced samples, across 16 individuals and 9-12 Tissues per individual. Each individual’s tissue has a unique library prep. Four tissues from the four individuals in the 2015 pilot study were repeated with fresh library preps and run alongside the new samples. Individuals/libraries were randomized across Batchs.</p>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
-Individual libraries across sequencing Batchs
+Number of individual libraries across sequencing Batchs
 </caption>
 <thead>
 <tr>
@@ -676,7 +688,7 @@ run2
 </table>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
-Tissues across sequencing Batchs
+Number of libraries in each tissue across sequencing Batchs
 </caption>
 <thead>
 <tr>
@@ -848,7 +860,7 @@ run2
 </table>
 <table class="table" style="margin-left: auto; margin-right: auto;">
 <caption>
-Social status distribution across sequencing Batchs
+Number of libraries for each social status across sequencing Batchs
 </caption>
 <thead>
 <tr>
@@ -898,7 +910,7 @@ run2
 </tr>
 </tbody>
 </table>
-<p><img src="01_reading_QC_files/figure-html/sample%20summary%20tables-1.png" width="672" /></p>
+<p>The plot below is just a quick check to see if any of the batches/samples stick out in terms of read depth. Gross differences in the number of reads in each batch might indicate a problem with comparing between them. <img src="01_reading_QC_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
 <pre><code>## 
 ##  Wilcoxon rank sum test with continuity correction
 ## 
@@ -906,134 +918,132 @@ run2
 ## W = 3976, p-value = 0.0009372
 ## alternative hypothesis: true location shift is not equal to 0</code></pre>
 </div>
-<div id="mapping-results" class="section level1">
-<h1>Mapping Results</h1>
-<p>Briefly, I used STAR to map the reads to the <em>Pipra filicauda</em> genome V1.</p>
-<p><img src="01_reading_QC_files/figure-html/read%20data-1.png" width="960" /> <img src="01_reading_QC_files/figure-html/unnamed-chunk-1-1.png" width="672" /></p>
-<p>The above plot identifies 3 samples that mapped poorly, and these samples also had low RNA concentrations. Samples PFT3_AI_run2, PFT6_AH_run2, PFT9_ICO_run2 will be excluded from further analyses. Then genes with an average count of greater than or equal to 5 will be excluded from downstream analysis.</p>
+<div id="mapping-results" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Mapping Results</h1>
+<p>Briefly, I used STAR to map the reads to the <em>Pipra filicauda</em> Refseq Genome V1 GCF_003945595.1. See the mapping script on the github <a href="https://github.com/periperipatus/PIFI_brain_transcriptome/tree/analysis_code">repository</a></p>
+<p>The figure below shows the results of the summary statistics for each library</p>
+<p><img src="01_reading_QC_files/figure-html/read%20data-1.png" width="672" /></p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p>The above plots identify 3 samples that mapped poorly, and these samples also had low RNA concentrations. Samples PFT3_AI_run2, PFT6_AH_run2, PFT9_ICO_run2 will be excluded from further analyses. Then genes with an average count of greater than or equal to 5 will be excluded from downstream analysis.</p>
 </div>
-<div id="exploration-of-the-expression-data" class="section level1">
-<h1>Exploration of the expression data</h1>
+<div id="exploration-of-the-expression-data" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Exploration of the expression data</h1>
 <p>These data have been filtered a little bit already to exclude individuals with low read mapping, and genes with a mean read count of &lt;5.</p>
-<p>Here I will document the variation across tissues.</p>
-<p><img src="01_reading_QC_files/figure-html/Tissue%20read%20variation-1.png" width="672" /></p>
-<div id="batch-differences-and-outlier-detection" class="section level2">
-<h2>Batch differences and outlier detection</h2>
+<p>Here I will document gene read depth variation across tissues.</p>
+<p><img src="01_reading_QC_files/figure-html/Tissue%20read%20variation-1.png" width="1440" /></p>
+<div id="batch-differences-and-outlier-detection" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> Batch differences and outlier detection</h2>
 <p>The primary purpose of these analyses is to determine:</p>
 <ul>
 <li><p>Do Year and Batch influence need to be accounted for?</p></li>
 <li><p>Whether there is a significant library effect - as per the replicated samples.</p></li>
 <li><p>Whether there are any significantly outlying samples.</p></li>
 </ul>
-<div id="all-samples-pca-and-wgcna" class="section level3">
-<h3>All Samples PCA and WGCNA</h3>
+<div id="all-samples-pca-and-wgcna" class="section level3" number="3.1.1">
+<h3><span class="header-section-number">3.1.1</span> All Samples PCA and WGCNA</h3>
 <p>Here I will use PCA outliers and WGCNA outliers to guide initial filtering.</p>
 <p><img src="01_reading_QC_files/figure-html/pca-1.png" width="672" /></p>
 <pre><code>## [1] &quot;Batch&quot;
 ## [1] &quot;Harvest_ID&quot;
 ## [1] &quot;Tissue&quot;
 ## [1] &quot;Year&quot;</code></pre>
-<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-2-1.png" width="672" /></p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-3-1.png" width="672" /></p>
 <p>There appears to be some variation explained by Year and Batch variables.</p>
 <pre><code>##  [1] &quot;Batch&quot;  &quot;Tissue&quot; &quot;Status&quot; &quot;Year&quot;   &quot;Run1&quot;   &quot;Run2&quot;   &quot;AH&quot;     &quot;AI&quot;    
 ##  [9] &quot;BSTm&quot;   &quot;GCT&quot;    &quot;ICO&quot;    &quot;LS&quot;     &quot;PIT&quot;    &quot;POM&quot;    &quot;PVN&quot;    &quot;TNA&quot;   
 ## [17] &quot;VMH&quot;    &quot;yr2017&quot; &quot;yr2018&quot;</code></pre>
-<p><img src="01_reading_QC_files/figure-html/wgcna%20qc-1.png" width="1152" /></p>
+<p><img src="01_reading_QC_files/figure-html/wgcna%20qc-1.png" width="480" /></p>
 </div>
-<div id="year-and-batch-effects" class="section level3">
-<h3>Year and Batch Effects</h3>
+<div id="year-and-batch-effects" class="section level3" number="3.1.2">
+<h3><span class="header-section-number">3.1.2</span> Year and Batch Effects</h3>
 <p>The DESeq design for the full dataset here is ~ Year + Batch + ind.n + Tissue. This includes the replicate samples separated out.</p>
-<div id="batch-effects" class="section level4">
-<h4>Batch Effects</h4>
+<div id="batch-effects" class="section level4" number="3.1.2.1">
+<h4><span class="header-section-number">3.1.2.1</span> Batch Effects</h4>
 <p>There are 4577 genes with an adjusted p-val of &lt;0.05, and therefore differentially expressed with respect to sequencing run1 and run2 in 2019. Approximately equal numbers of genes were differentially expressed up or down.</p>
-<p><img src="01_reading_QC_files/figure-html/Batch%20effects%20figs-1.png" width="384" /></p>
-<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-3-1.png" width="384" /></p>
+<p><img src="01_reading_QC_files/figure-html/Batch%20effects%20figs-1.png" width="768" /></p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-4-1.png" width="768" /></p>
 </div>
-<div id="year-effects" class="section level4">
-<h4>Year effects</h4>
-<p><img src="01_reading_QC_files/figure-html/Year%20Effects%20figs-1.png" width="384" /></p>
-<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-4-1.png" width="384" /><img src="01_reading_QC_files/figure-html/unnamed-chunk-4-2.png" width="384" /><img src="01_reading_QC_files/figure-html/unnamed-chunk-4-3.png" width="384" /><img src="01_reading_QC_files/figure-html/unnamed-chunk-4-4.png" width="384" /></p>
-<pre><code>## (polygon[GRID.polygon.367], polygon[GRID.polygon.368], polygon[GRID.polygon.369], polygon[GRID.polygon.370], text[GRID.text.371], text[GRID.text.372], text[GRID.text.373], text[GRID.text.374], text[GRID.text.375])</code></pre>
-<div id="gonads-only" class="section level5">
-<h5>Gonads only</h5>
-<p>Let’s look for Batch and year effects just in run 1 vs run 2, and only in the gonads.</p>
+<div id="year-effects" class="section level4" number="3.1.2.2">
+<h4><span class="header-section-number">3.1.2.2</span> Year effects</h4>
+<p><img src="01_reading_QC_files/figure-html/Year%20Effects%20figs-1.png" width="768" /></p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-5-1.png" width="768" /></p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-6-1.png" width="672" /><img src="01_reading_QC_files/figure-html/unnamed-chunk-6-2.png" width="672" /></p>
+<pre><code>## (polygon[GRID.polygon.509], polygon[GRID.polygon.510], polygon[GRID.polygon.511], polygon[GRID.polygon.512], text[GRID.text.513], text[GRID.text.514], text[GRID.text.515], text[GRID.text.516], text[GRID.text.517])</code></pre>
+<div id="gonads-only" class="section level5" number="3.1.2.2.1">
+<h5><span class="header-section-number">3.1.2.2.1</span> Gonads only</h5>
+<p>Let’s look for Batch and year effects just in run 1 vs run 2, and only in the a given tissue. I’m just going to use the testes (GON) as a test.</p>
 <p><img src="01_reading_QC_files/figure-html/Batch%20and%20year%20effects%20effects%20in%20gonads-1.png" width="672" /></p>
 <pre><code>## [1] &quot;Batch&quot;
 ## [1] &quot;Year&quot;</code></pre>
 <p><img src="01_reading_QC_files/figure-html/Batch%20and%20year%20effects%20effects%20in%20gonads-2.png" width="672" /></p>
-<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-5-1.png" width="672" /></p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-7-1.png" width="768" /></p>
 <p>Let’s have a look at the plots for the most significant gene.</p>
-<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-6-1.png" width="672" /></p>
-<p>Now compare which DEGs are shared between batch in Gonads and the overall dataset.</p>
-<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
-<pre><code>## (polygon[GRID.polygon.629], polygon[GRID.polygon.630], polygon[GRID.polygon.631], polygon[GRID.polygon.632], text[GRID.text.633], text[GRID.text.634], lines[GRID.lines.635], text[GRID.text.636], lines[GRID.lines.637], text[GRID.text.638], text[GRID.text.639])</code></pre>
-<p>And now let’s explore Year in the Gonads.</p>
 <p><img src="01_reading_QC_files/figure-html/unnamed-chunk-8-1.png" width="672" /></p>
-<p>An example top gene <img src="01_reading_QC_files/figure-html/unnamed-chunk-9-1.png" width="672" /></p>
+<p>And now let’s explore Year in the Gonads.</p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-9-1.png" width="768" /></p>
+<p>An example top gene <img src="01_reading_QC_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
 <p>And within the Gonads, which of the DEGs associated with Year and Batch are shared?</p>
-<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-10-1.png" width="672" /></p>
-<pre><code>## (polygon[GRID.polygon.732], polygon[GRID.polygon.733], polygon[GRID.polygon.734], polygon[GRID.polygon.735], text[GRID.text.736], text[GRID.text.737], text[GRID.text.738], text[GRID.text.739], text[GRID.text.740])</code></pre>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-11-1.png" width="672" /></p>
+<pre><code>## (polygon[GRID.polygon.863], polygon[GRID.polygon.864], polygon[GRID.polygon.865], polygon[GRID.polygon.866], text[GRID.text.867], text[GRID.text.868], text[GRID.text.869], text[GRID.text.870], text[GRID.text.871])</code></pre>
 <p>There is colinearity between Batch and Year in both the full dataset and the single tissue test dataset. All subsequent models will include a composite variable for Year and Batch (Year_Batch) to account for these effects in subsequent analyses.</p>
 </div>
-<div id="random-variable" class="section level5">
-<h5>Random Variable</h5>
+<div id="random-variable" class="section level5" number="3.1.2.2.2">
+<h5><span class="header-section-number">3.1.2.2.2</span> Random Variable</h5>
 <p>Create a random variable that has the same proportions as Batch and ensure that the p-value distribution does not have an over-abundance of values &lt;0.05, which suggests that the samples were drawn from different distributions. This is essentially a test to ensure that what we are seeing with respect to Batch (and Year) above isn’t just random noise.</p>
-<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co">#create a random variable and test against that: </span></span>
-<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1283</span>)</span>
-<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>x<span class="ot">&lt;-</span> <span class="fu">sample</span>(LETTERS[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>], <span class="dv">183</span>, <span class="at">replace=</span><span class="cn">TRUE</span>, <span class="at">prob=</span><span class="fu">c</span>(<span class="fl">0.43</span>,<span class="fl">0.41</span>,<span class="fl">0.16</span>))</span>
-<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>dd<span class="sc">$</span>random_variable<span class="ot">&lt;-</span> <span class="fu">as.factor</span>(x)</span>
-<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a><span class="fu">design</span>(dd)<span class="ot">&lt;-</span> <span class="fu">formula</span>(<span class="sc">~</span>random_variable)</span>
-<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>dd<span class="ot">&lt;-</span> <span class="fu">DESeq</span>(dd)</span>
-<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>testres<span class="ot">&lt;-</span> <span class="fu">results</span>(dd)</span>
-<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
-<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a><span class="fu">plotMA</span>(testres, <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span>
-<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(testres<span class="sc">$</span>pvalue, <span class="at">breaks=</span><span class="dv">20</span>, <span class="at">col=</span><span class="st">&quot;grey&quot;</span>)</span></code></pre></div>
-<p><img src="01_reading_QC_files/figure-html/random%20variable-1.png" width="672" /></p>
+<div class="sourceCode" id="cb7"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="co">#create a random variable and test against that: </span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="fu">set.seed</span>(<span class="dv">1283</span>)</span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a>x<span class="ot">&lt;-</span> <span class="fu">sample</span>(LETTERS[<span class="dv">1</span><span class="sc">:</span><span class="dv">3</span>], <span class="dv">183</span>, <span class="at">replace=</span><span class="cn">TRUE</span>, <span class="at">prob=</span><span class="fu">c</span>(<span class="fl">0.43</span>,<span class="fl">0.41</span>,<span class="fl">0.16</span>))</span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a>dd<span class="sc">$</span>random_variable<span class="ot">&lt;-</span> <span class="fu">as.factor</span>(x)</span>
+<span id="cb7-5"><a href="#cb7-5" aria-hidden="true" tabindex="-1"></a><span class="fu">design</span>(dd)<span class="ot">&lt;-</span> <span class="fu">formula</span>(<span class="sc">~</span>random_variable)</span>
+<span id="cb7-6"><a href="#cb7-6" aria-hidden="true" tabindex="-1"></a>dd<span class="ot">&lt;-</span> <span class="fu">DESeq</span>(dd)</span>
+<span id="cb7-7"><a href="#cb7-7" aria-hidden="true" tabindex="-1"></a>testres<span class="ot">&lt;-</span> <span class="fu">results</span>(dd)</span>
+<span id="cb7-8"><a href="#cb7-8" aria-hidden="true" tabindex="-1"></a><span class="fu">par</span>(<span class="at">mfrow=</span><span class="fu">c</span>(<span class="dv">1</span>,<span class="dv">2</span>))</span>
+<span id="cb7-9"><a href="#cb7-9" aria-hidden="true" tabindex="-1"></a><span class="fu">plotMA</span>(testres, <span class="at">ylim=</span><span class="fu">c</span>(<span class="sc">-</span><span class="dv">1</span>,<span class="dv">1</span>))</span>
+<span id="cb7-10"><a href="#cb7-10" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(testres<span class="sc">$</span>pvalue, <span class="at">breaks=</span><span class="dv">20</span>, <span class="at">col=</span><span class="st">&quot;grey&quot;</span>, <span class="at">main=</span><span class="st">&quot;p-value distribution from DE on random variable&quot;</span>)</span></code></pre></div>
+<p><img src="01_reading_QC_files/figure-html/random%20variable-1.png" width="768" /></p>
 <p>These results suggest that these few differentially expressed genes are drawn from the same distribution, so the results we saw previously are probably real.</p>
 </div>
 </div>
 </div>
 </div>
-<div id="replicate-samples" class="section level2">
-<h2>Replicate Samples</h2>
-<p><img src="01_reading_QC_files/figure-html/replicate%20samples-1.png" width="672" /></p>
+<div id="replicate-samples" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> Replicate Samples</h2>
+<p>Now, let’s see how different the samples from 2015 are from their replicates on the latest run. These were sequencing replicates from the 2015 libraries.</p>
+<p><img src="01_reading_QC_files/figure-html/replicate%20samples-1.png" width="768" /></p>
 <pre><code>## null device 
 ##           1</code></pre>
-<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-11-1.png" width="672" /><img src="01_reading_QC_files/figure-html/unnamed-chunk-11-2.png" width="672" /></p>
-<p>There are 64 differentially expressed genes between replicates. Given that we have batch effects (with respect to Flow Cell and with respect to Year sampled), but also there is not really a strong library prep effect as shown in the replicate samples, I will take the first (pilot) instance of each replicate to include in further analyses. In addition, all subsequent analyses will include include the batch variables where necessary.</p>
+<p>Now let’s use ordination (1) and sample distance (2) to see how different they are from eachother.</p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
+<p>Let’s see how the expression differs between replicates for the top 20 most expressed genes. These show that expression is always in the same direction, and usually very close in value. <img src="01_reading_QC_files/figure-html/unnamed-chunk-14-1.png" width="672" /></p>
+<p>Now, take sample-sample distance and cluster. These show that replicates cluster together, and then tissues.</p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-15-1.png" width="672" /></p>
+<p>There are 64 differentially expressed genes between replicates. We appear to have broad batch effects (with respect to Flow Cell (Batch) and with respect to Year sampled), but also there is not really a strong replicate effect as shown.</p>
+<p>In order to maximise sample size, and to maximise the number of individuals in the pilot batch group, I will take the first (pilot) instance of each replicate to include in further analyses. In addition, all subsequent analyses will include include the batch variables where necessary.</p>
 </div>
 </div>
-<div id="finalizing-dataset" class="section level1">
-<h1>Finalizing dataset</h1>
-<p>Finally, using the replicate removed dataset we will do final PCA explorations of brain, gonad and pituitary data.</p>
-<div id="wgcna-outlier-dendrograms" class="section level2">
-<h2>WGCNA outlier dendrograms</h2>
-<pre><code>##  Flagging genes and samples with too many missing values...
-##   ..step 1
-##   ..Excluding 650 genes from the calculation due to too many missing samples or zero variance.
-##    ..bad gene count: 650, bad sample counts: 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0
-##   ..step 2
-##    ..bad gene count: 650, bad sample counts: 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0</code></pre>
-<pre><code>## Removing genes: LOC113989199, LOC113996415, LOC113999600, LOC113986114, MAL, LOC113986212, ANXA8L1, LOC113987670, LOC113986738, WNT8B, LOC113987002, LOC113987116, MYOZ1, LOC113988486, LOC113988740, LOC113988891, LOC113992422, LOC113993367, KCNK18, LOC113993033, AADAC, LOC113993640, LOC113994023, LOC113994379, LOC113995269, SFTPB, LOC113995459, LOC113995786, LOC113996023, LOC113996839, LOC113997790, LOC113998007, LOC113998263, LOC113998259, LOC113998377, LOC113999047, GATA4, LOC113999270, LOC114000781, LOC114000769, LOC114001312, FBXO47, LOC114003305, TTR, LOC114003649, LOC114003715, SAMD3, LOC113982079, LOC113982548, LOC113983794, LOC113984316, LOC113984309, LOC113984314, LOC113985336, FBXO43, LOC113986136, LOC113986191, PIGR, LOC113986283, ARHGEF38, LOC113986442, IL1R2, LOC113986398, LOC113986463, HOXC9, LOC113986726, LOC113986794, LOC113986682, LOC113986828, LOC113986872, LOC113986873, LOC113986863, INSL5, LOC113986944, LOC113986929, LOC113986927, LOC113986977, TFAP2E, LOC113987072, LOC113987083, LOC113987084, LOC113987081, LOC113987149, LOC113987108, LOC113987187, LOC113987185, LOC113987200, LOC113987255, LOC113987264, LOC113987263, LOC113987281, LOC113987288, SKOR2, LOC113987503, LOC113987522, AMBP, LOC113987633, RGR, LOC113987724, LOC113987747, LOC113987763, SLC13A1, LOC113987776, LOC113987831, LOC113987862, LOC113987864, LOC113987888, LOC113987895, POU4F2, LOC113987959, LOC113987963, LOC113988223, LOC113988342, BEST3, LOC113988402, LOC113988418, LOC113988517, FOXB2, LOC113988692, ADGRG4, ODF3B, LOC113988726, LOC113988749, LOC113988821, LOC113988842, LOC113988841, LOC113988850, LOC113988869, LOC113988848, LOC113988935, LMOD3, LOC113988904, LOC113988949, LOC113989036, LOC113989078, LOC113989285, LOC113989318, LOC113989339, LOC113989352, LOC113989372, LOC113989386, LOC113989391, LOC113989389, LOC113989446, LOC113989451, LOC113989513, LOC113989512, NKX2-4, LOC113989551, LOC113989566, LOC113989656, LOC113989665, LOC113989658, LOC113989659, LOC113989625, LOC113989669, LOC113989691, LOC113989707, HOXA7, LOC113989790, LOC113989799, LOC113989826, LOC113989904, LOC113990037, LOC113990036, LOC113990032, LOC113990289, LOC113990274, LOC113990313, LOC113990365, LOC113990473, LOC113990542, LOC113990550, LOC113990564, LOC113990556, MCHR2, PRDM13, LOC113990610, HMX2, LOC113990731, LOC113990730, LOC113990748, SLC13A2, LOC113990929, FOXA1, LOC113990966, LOC113991033, LOC113991016, LOC113991065, LOC113991122, LOC113991141, LOC113991148, LOC113991194, LOC113991156, LOC113991173, LOC113991174, LOC113991222, LOC113991258, GPR15, LOC113991466, NR1I3, NPBWR1, LOC113991674, LOC113991718, LOC113991733, LOC113991947, PNPLA1, LOC113992030, LOC113992013, LOC113992029, LAD1, LOC113992074, ACTL10, LOC113992118, CLDN3, LOC113992192, LOC113992209, LOC113992241, LOC113992243, LOC113992270, LOC113992273, SERPINA10, LOC113992303, PLG, LOC113992335, LOC113992356, LOC113992407, LOC113992415, LOC113992533, LOC113992531, LOC113992568, SIM2, LOC113992756, PLA1A, LOC113992757, ACRBP, LOC113992808, LOC113992872, LOC113992844, LOC113992845, LOC113992938, LOC113992941, LOC113993051, LOC113993059, LOC113993081, LOC113993177, LOC113993204, LOC113993205, LOC113993219, LOC113993269, LOC113993254, LOC113993326, LOC113993325, LOC113993461, LHX3, LOC113993505, ATOH1, LOC113993534, LOC113993507, LOC113993508, LOC113993554, LOC113993569, LOC113993568, LOC113993581, LOC113993651, LOC113993653, LOC113993721, LOC113993764, LOC113993855, LOC113993908, LOC113993884, DBX1, LOC113993925, LOC113993965, LOC113993989, LOC113994029, LOC113994136, LOC113994191, LOC113994285, LOC113994291, LOC113994243, LOC113994215, LOC113994283, LOC113994290, LOC113994293, LOC113994311, LOC113994324, LOC113994362, LOC113994405, PNOC, LOC113994435, HOXD8, LOC113994486, LOC113994647, LOC113994648, LOC113994669, LOC113994709, LOC113994754, OLIG3, LOC113994811, LOC113994810, LOC113994817, LOC113994818, LOC113994815, LOC113994890, LOC113994907, LOC113994879, LOC113994912, LOC113994910, LOC113994906, LOC113994904, LOC113994983, LOC113994979, LOC113994974, LOC113995007, LOC113995013, CRYBA2, LOC113995299, LOC113995163, LOC113995166, LOC113995248, ASB18, LOC113995308, LOC113995328, LOC113995412, LOC113995507, LOC113995566, FSHB, LOC113995701, HIPK4, LOC113995902, RNF212, LOC113996045, DND1, LOC113996062, LOC113996077, LCA5L, SH3BGR, LOC113996129, MPZL3, TMPRSS4, LOC113996218, LOC113996219, LOC113996260, LOC113996370, LOC113996383, LOC113996382, LOC113996414, LOC113996418, LOC113996436, HOXB6, LOC113996629, LOC113996773, PRR35, LOC113996719, LOC113996779, LOC113996819, CUNH4orf54, LOC113996860, LOC113996871, TFAP2D, LOC113996937, FOXA2, LOC113997051, LOC113997043, LOC113997052, LOC113997097, LOC113997078, LOC113997146, LOC113997194, LOC113997277, LOC113997307, LOC113997314, LOC113997335, LOC113997328, APOA5, PRDM12, FGA, LOC113997603, SLC30A3, LOC113997813, LOC113997832, HABP2, LOC113997948, LOC113998110, LOC113998115, LRRC52, NPHS2, TLX3, LOC113998350, LOC113998359, LOC113998367, LOC113998397, LOC113998410, LOC113998448, LOC113998551, LOC113998600, LOC113998587, LOC113998654, LOC113998717, LOC113998716, LOC113998734, LOC113998764, LOC113998853, LOC113998845, LOC113998956, LOC113999006, LOC113999061, LOC113999072, LOC113999153, TMEM79, LOC113999237, LOC113999240, LOC113999277, LOC113999298, LOC113999296, LOC113999297, LOC113999309, LOC113999340, LOC113999424, AVPR1B, LOC113999541, PDE6C, LOC113999731, LOC113999776, F7, LOC113999795, LOC113999805, LOC113999851, LOC113999865, LOC113999868, GJB7, LOC113999843, LOC113999848, LOC113999863, LOC113999936, LOC113999961, LOC114000120, CUNH3orf85, LOC114000126, LOC114000184, LOC114000352, LOC114000345, LOC114000374, LOC114000638, LOC114000669, LOC114000713, LOC114000737, RFX6, LOC114000843, LOC114000933, LOC114000915, WFDC2, LOC114001160, LOC114001167, LOC114001174, LOC114001222, LOC114001234, LOC114001325, LOC114001340, LOC114001414, LOC114001415, LOC114001412, LOC114001434, TCF21, LOC114001560, LOC114001628, LOC114001630, TMEM81, PIFO, PDZK1IP1, DMBX1, TSPAN1, LOC114001885, FOXB1, LOC114001900, LOC114001911, CAPZA3, LOC114001969, LOC114002040, LOC114002024, PITX1, LOC114002061, LOC114002070, LOC114002133, KCNJ1, LOC114002188, LOC114002194, LOC114002217, LOC114002281, LOC114002283, SYCN, LOC114002415, LOC114002423, LOC114002528, LOC114002499, LOC114002503, LOC114002501, LOC114002527, LOC114002576, LOC114002598, LOC114002616, C8A, ANGPTL3, LOC114002757, LOC114002734, LOC114002772, LOC114002773, LOC114002851, LOC114002850, LOC114002885, LOC114002890, LOC114002892, LOC114002880, LOC114002894, LOC114002936, LOC114002941, LOC114002969, LOC114003230, HAAO, LOC114003382, LOC114003546, LOC114003557, LOC114003569, LOC114003583, LOC114003618, LOC114003623, LOC114003753, LOC114003876, PTF1A, LOC114004103, LOC114004175, LOC114004162, CUNH21orf58, KMO, LOC114004240, LOC114004301, LOC114004303, LOC114004308, LOC114004313, DMRT3, LOC113981980, LOC113981981, LOC113981956, LOC113982004, LOC113982027, LOC113982105, LOC113982199, LOC113982191, LOC113982196, LOC113982195, LOC113982194, LOC113982279, LOC113982294, RBBP8NL, LOC113982344, LOC113982436, LOC113982502, LOC113982515, LOC113982517, LOC113982497, LOC113982607, LOC113982725, LOC113982736, LOC113982808, LOC113982853, MUC16, LOC113982893, LOC113982908, ONECUT3, LOC113982937, LOC113982996, CUNH14orf39, LOC113983033, LOC113983034, LOC113983059, LOC113983145, LOC113983191, LOC113983202, LOC113983251, LOC113983278, LOC113983285, LOC113983353, LOC113983377, LOC113983387, LOC113983399, LOC113983400, LOC113983391, LOC113983438, LOC113983421, LOC113983425, LOC113983476, LOC113983461, LOC113983462, LOC113983486, LOC113983506, LOC113983526, LOC113983555, LOC113983581, LOC113983592, FETUB, LOC113983735, LHX9, LOC113983826, SPATA46, LOC113983880, LOC113983987, LOC113984055, LOC113984094, LOC113984164, LOC113984208, NKX3-1, LHX5, LOC113984296, LOC113984555, LOC113984595, LOC113984571, LOC113984661, LOC113984701, LOC113984727, LOC113984885, LOC113984918, LOC113984977, LOC113984969, LOC113985010, LOC113985080, LOC113985086, TEKT3, LOC113985117, LOC113985140, LOC113985156, LOC113985192, LOC113985217, LOC113985252, LOC113985251, LOC113985261, C1QL4, LOC113985324, LOC113985504, LOC113985549, LOC113985665, LOC113985554, LOC113985645, LOC113985682, LOC113985674, LOC113985722, LOC113985812, LOC113985878, LOC113985925, LOC113986065</code></pre>
-<p><img src="01_reading_QC_files/figure-html/wgnca%20dendrograms%20per%20tissue-1.png" width="672" /></p>
+<div id="finalizing-dataset" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Finalizing dataset</h1>
+<p>Finally, using the replicate removed dataset we will do final PCA explorations of brain and pituitary data. Note the Gonads are above with the replicate samples.</p>
+<div id="wgcna-outlier-dendrograms" class="section level2" number="4.1">
+<h2><span class="header-section-number">4.1</span> WGCNA outlier dendrograms</h2>
+<pre><code>## png 
+##   2</code></pre>
 </div>
-<div id="brain" class="section level2">
-<h2>Brain</h2>
-<p><img src="01_reading_QC_files/figure-html/brain-1.png" width="576" /></p>
+<div id="brain" class="section level2" number="4.2">
+<h2><span class="header-section-number">4.2</span> Brain</h2>
+<p>This PCA figure is annotated with potential outliers based on the above per-tissue WGCNA, and a draft version of the below PCA plot. Outliers were selected in the WGCNA plot based on branch length (sample distance) from main group and the number of samples. Similar logic applied to the PCA.</p>
+<p><img src="01_reading_QC_files/figure-html/brain-1.png" width="672" /></p>
 <pre><code>## [1] &quot;Tissue&quot;
 ## [1] &quot;Year_Batch&quot;</code></pre>
-<p><img src="01_reading_QC_files/figure-html/brain-2.png" width="576" /></p>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-17-1.png" width="672" /></p>
+<p>Still seeing Year and Batch effects in the whole brain dataset.</p>
 </div>
-<div id="gonads" class="section level2">
-<h2>Gonads</h2>
-<p><img src="01_reading_QC_files/figure-html/gonads-1.png" width="576" /></p>
+<div id="pituitary" class="section level2" number="4.3">
+<h2><span class="header-section-number">4.3</span> Pituitary</h2>
+<p><img src="01_reading_QC_files/figure-html/pituitary-1.png" width="672" /></p>
 </div>
-<div id="pituitary" class="section level2">
-<h2>Pituitary</h2>
-<p><img src="01_reading_QC_files/figure-html/pituitary-1.png" width="576" /></p>
-</div>
-<div id="confound-between-tissue-and-batch" class="section level2">
-<h2>Confound between tissue and batch</h2>
+<div id="confound-between-tissue-and-batch" class="section level2" number="4.4">
+<h2><span class="header-section-number">4.4</span> Confound between tissue and batch</h2>
 <p>On discussions with Chris, it is possible the number of genes we are seeing as differentially expressed in the main analysis is owing to a confound between tissue and batch, as a few tissues are sequenced exclusively on a single batch. To explore this, we can see whether the DEGs for batch are the same as those for tissue differences. Tissue will be AH, which only has run 2 and PIT, which was compared at Run 1 vs Run 2</p>
 <table>
 <caption>
@@ -1077,13 +1087,14 @@ run2
 </tbody>
 </table>
 <p><img src="01_reading_QC_files/figure-html/batch%20effects%20contd-1.png" width="672" /></p>
-<pre><code>## (polygon[GRID.polygon.1238], polygon[GRID.polygon.1239], polygon[GRID.polygon.1240], polygon[GRID.polygon.1241], text[GRID.text.1242], text[GRID.text.1243], text[GRID.text.1244], text[GRID.text.1245], text[GRID.text.1246])</code></pre>
-<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-12-1.png" width="672" /></p>
-<pre><code>## (polygon[GRID.polygon.1247], polygon[GRID.polygon.1248], polygon[GRID.polygon.1249], polygon[GRID.polygon.1250], polygon[GRID.polygon.1251], polygon[GRID.polygon.1252], text[GRID.text.1253], text[GRID.text.1254], text[GRID.text.1255], text[GRID.text.1256], text[GRID.text.1257], text[GRID.text.1258], text[GRID.text.1259], text[GRID.text.1260], text[GRID.text.1261], text[GRID.text.1262])</code></pre>
+<pre><code>## (polygon[GRID.polygon.1475], polygon[GRID.polygon.1476], polygon[GRID.polygon.1477], polygon[GRID.polygon.1478], text[GRID.text.1479], text[GRID.text.1480], text[GRID.text.1481], text[GRID.text.1482], text[GRID.text.1483])</code></pre>
+<p><img src="01_reading_QC_files/figure-html/unnamed-chunk-18-1.png" width="672" /></p>
+<pre><code>## (polygon[GRID.polygon.1484], polygon[GRID.polygon.1485], polygon[GRID.polygon.1486], polygon[GRID.polygon.1487], polygon[GRID.polygon.1488], polygon[GRID.polygon.1489], text[GRID.text.1490], text[GRID.text.1491], text[GRID.text.1492], text[GRID.text.1493], text[GRID.text.1494], text[GRID.text.1495], text[GRID.text.1496], text[GRID.text.1497], text[GRID.text.1498], text[GRID.text.1499])</code></pre>
 <p>However, when you run PIT on its own with respect to batch there are 2441 differentially expressed genes. Seems like tissues need to be kept separate to remove this confound.</p>
+<p>The next analysis I conduct will be the differential expression analyses in DESeq. See menus for these and more analyses.</p>
 <pre><code>## R version 4.0.2 (2020-06-22)
 ## Platform: x86_64-w64-mingw32/x64 (64-bit)
-## Running under: Windows 10 x64 (build 19042)
+## Running under: Windows 10 x64 (build 19044)
 ## 
 ## Matrix products: default
 ## 
@@ -1139,31 +1150,32 @@ run2
 ##  [47] xfun_0.29                 rvest_1.0.2              
 ##  [49] lifecycle_1.0.1           irlba_2.3.3              
 ##  [51] XML_3.99-0.5              zlibbioc_1.34.0          
-##  [53] scales_1.1.1              lambda.r_1.2.4           
-##  [55] RColorBrewer_1.1-2        yaml_2.2.1               
-##  [57] memoise_1.1.0             gridExtra_2.3            
-##  [59] rpart_4.1-15              latticeExtra_0.6-29      
-##  [61] stringi_1.4.6             RSQLite_2.2.0            
-##  [63] highr_0.8                 genefilter_1.70.0        
-##  [65] foreach_1.5.0             checkmate_2.0.0          
-##  [67] BiocParallel_1.22.0       rlang_0.4.12             
-##  [69] pkgconfig_2.0.3           bitops_1.0-6             
-##  [71] evaluate_0.14             purrr_0.3.4              
-##  [73] labeling_0.3              htmlwidgets_1.5.3        
-##  [75] bit_4.0.4                 tidyselect_1.1.0         
-##  [77] magrittr_2.0.1            R6_2.4.1                 
-##  [79] generics_0.0.2            Hmisc_4.4-0              
-##  [81] DBI_1.1.0                 pillar_1.6.4             
-##  [83] foreign_0.8-80            withr_2.4.3              
-##  [85] survival_3.2-3            RCurl_1.98-1.2           
-##  [87] nnet_7.3-14               tibble_3.1.6             
-##  [89] crayon_1.4.2              futile.options_1.0.1     
-##  [91] utf8_1.1.4                rmarkdown_2.11           
-##  [93] jpeg_0.1-8.1              locfit_1.5-9.4           
-##  [95] data.table_1.13.0         blob_1.2.1               
-##  [97] webshot_0.5.2             digest_0.6.25            
-##  [99] xtable_1.8-4              munsell_0.5.0            
-## [101] viridisLite_0.4.0</code></pre>
+##  [53] scales_1.1.1              ragg_1.2.1               
+##  [55] lambda.r_1.2.4            RColorBrewer_1.1-2       
+##  [57] yaml_2.2.1                memoise_1.1.0            
+##  [59] gridExtra_2.3             rpart_4.1-15             
+##  [61] latticeExtra_0.6-29       stringi_1.4.6            
+##  [63] RSQLite_2.2.0             highr_0.8                
+##  [65] genefilter_1.70.0         foreach_1.5.0            
+##  [67] checkmate_2.0.0           BiocParallel_1.22.0      
+##  [69] systemfonts_1.0.3         rlang_0.4.12             
+##  [71] pkgconfig_2.0.3           bitops_1.0-6             
+##  [73] evaluate_0.14             purrr_0.3.4              
+##  [75] labeling_0.3              htmlwidgets_1.5.3        
+##  [77] bit_4.0.4                 tidyselect_1.1.0         
+##  [79] magrittr_2.0.1            R6_2.4.1                 
+##  [81] generics_0.0.2            Hmisc_4.4-0              
+##  [83] DBI_1.1.0                 pillar_1.6.4             
+##  [85] foreign_0.8-80            withr_2.4.3              
+##  [87] survival_3.2-3            RCurl_1.98-1.2           
+##  [89] nnet_7.3-14               tibble_3.1.6             
+##  [91] crayon_1.4.2              futile.options_1.0.1     
+##  [93] utf8_1.1.4                rmarkdown_2.11           
+##  [95] jpeg_0.1-8.1              locfit_1.5-9.4           
+##  [97] data.table_1.13.0         blob_1.2.1               
+##  [99] webshot_0.5.2             digest_0.6.25            
+## [101] xtable_1.8-4              textshaping_0.3.6        
+## [103] munsell_0.5.0             viridisLite_0.4.0</code></pre>
 </div>
 </div>
 
@@ -1216,7 +1228,7 @@ $(document).ready(function ()  {
 
     // establish options
     var options = {
-      selectors: "h1,h2,h3",
+      selectors: "h1,h2,h3,h4,h5",
       theme: "bootstrap3",
       context: '.toc-content',
       hashGenerator: function (text) {

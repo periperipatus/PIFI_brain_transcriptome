@@ -2,12 +2,13 @@
 title: "Gene Expression QC"
 subtitle: "For manuscript: Neurogenomic landscape of male cooperative behavior in a wild bird "
 date: Last Knit "`r Sys.Date()`"
-author: "Peri Bolton"
+author: "Last Substantive Change October 2020"
 output:
   html_document:
     toc: true
     toc_float: true
-    toc_depth: 3
+    toc_depth: 5
+    number_sections: true
     
 ---
 
@@ -67,15 +68,20 @@ files_key$time_kill<- difftime(files_key$Kill, files_key$Capture, units = "mins"
 files_key$time_kill<- as.numeric(files_key$time_kill)
 ```
 
-## Sampling 
+# Sampling 
 
 There are a total of `r nrow(files_key)` sequenced samples, across `r length(levels(files_key$Harvest_ID))` individuals and 9-12 Tissues per individual. Each individual's tissue has a unique library prep. Four tissues from the four individuals in the 2015 pilot study were repeated with fresh library preps and run  alongside the new samples. Individuals/libraries were randomized across Batchs. 
 
-```{r sample summary tables}
-knitr::kable(table(files_key$Batch, files_key$Harvest_ID), caption="Individual libraries across sequencing Batchs", padding=20,)  %>% kable_styling()
-knitr::kable(table(files_key$Batch, files_key$Tissue), caption="Tissues across sequencing Batchs", padding=20,) %>% kable_styling()
-knitr::kable(table(files_key$Batch, files_key$Status), caption="Social status distribution across sequencing Batchs", padding=20) %>% kable_styling()
 
+```{r sample summary tables}
+knitr::kable(table(files_key$Batch, files_key$Harvest_ID), caption="Number of individual libraries across sequencing Batchs", padding=20,)  %>% kable_styling()
+knitr::kable(table(files_key$Batch, files_key$Tissue), caption="Number of libraries in each tissue across sequencing Batchs", padding=20,) %>% kable_styling()
+knitr::kable(table(files_key$Batch, files_key$Status), caption="Number of libraries for each social status across sequencing Batchs", padding=20) %>% kable_styling()
+```
+
+
+The plot below is just a quick check to see if any of the batches/samples stick out in terms of read depth. Gross differences in the number of reads in each batch might indicate a problem with comparing between them. 
+```{r}
 boxplot(files_key$Number.of.Reads ~ files_key$Batch, ylab="Total Number of Reads", xlab="Batch")
 
 wilcox.test(files_key$Number.of.Reads[files_key$Batch=="run1"], files_key$Number.of.Reads[files_key$Batch=="run2"])
@@ -83,12 +89,12 @@ wilcox.test(files_key$Number.of.Reads[files_key$Batch=="run1"], files_key$Number
 
 # Mapping Results
 
-Briefly, I used STAR to map the reads to the *Pipra filicauda* genome V1. 
+Briefly, I used STAR to map the reads to the *Pipra filicauda* Refseq Genome V1 GCF_003945595.1. See the mapping script on the github [repository](https://github.com/periperipatus/PIFI_brain_transcriptome/tree/analysis_code)
 
-```{r read data, fig.width=10, fig.height=3}
+The figure below shows the results of the summary statistics for each library
+
+```{r read data, fig.width=7, fig.height=22}
 #read in the gene counts info from STAR
-
-
 
 mapping_summary<- read.table("../data_unfiltered/stringent.exonCounts.txt.summary", header=T)
 
@@ -113,19 +119,21 @@ mapping_summary$Tissue<- revalue(mapping_summary$Tissue, replace=c("BSTM"="BSTm"
 mapping<- ggplot(mapping_summary, aes(fill=Mapping, y=Reads_mapped, x=sample)) + geom_bar(position="stack", stat="identity")
 mapping<- mapping + theme_minimal()
 mapping<- mapping + labs(y="Number of reads", x="Sample")
-mapping + theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5, size = rel(0.5))) + scale_y_continuous(expand=c(0,0))
-#ggsave(filename="figure_mapping_summary_featureCounts.png", device="png", width=60, height=15, units="cm", dpi="print")
+mapping + theme(axis.text.x=element_text(angle=90, hjust=1, vjust=0.5, size = rel(0.5)), legend.position="top") + scale_y_continuous(expand=c(0,0)) + coord_flip()
+
+#ggsave(filename="../data_filtered/figs/figure_mapping_summary_featureCounts.png", device="png", width=15, height=60, units="cm", dpi="print", bg="white")
 
 ##The Above plot identifies that the following samples should be removed from subsequent analysis owing to poor mapping
 poor<- c("PFT3_AI_run2", "PFT6_AH_run2", "PFT9_ICO_run2")
 ```
+
 ```{r}
 files_key<- files_key[!rownames(files_key) %in% poor,]
 boxplot(mapping_summary$Reads_mapped[mapping_summary$Mapping=="Assigned"] ~ mapping_summary$Batch[mapping_summary$Mapping=="Assigned"], ylab="Number of Mapped Reads", xlab="Batch")
 ```
 
 
-The above plot identifies 3 samples that mapped poorly, and these samples also had low RNA concentrations. Samples `r poor` will be excluded from further analyses. Then genes with an average count of greater than or equal to 5 will be excluded from downstream analysis. 
+The above plots identify 3 samples that mapped poorly, and these samples also had low RNA concentrations. Samples `r poor` will be excluded from further analyses. Then genes with an average count of greater than or equal to 5 will be excluded from downstream analysis. 
 
 ```{r prep data matrix}
 
@@ -184,9 +192,9 @@ replicates<- c("TF1_GON", "TF1_POM", "TF1_TNA", "TF1_VMH", "TF2_GON", "TF2_POM",
 
 These data have been filtered a little bit already to exclude individuals with low read mapping, and genes with a mean read count of <5.
 
-Here I will document the variation across tissues. 
+Here I will document gene read depth variation across tissues. 
 
-```{r Tissue read variation}
+```{r Tissue read variation, fig.width=15,fig.height=10}
 tissues_sampled<- unique(files_key$Tissue)
 out<- list()
 for(t in tissues_sampled){
@@ -238,7 +246,7 @@ p <- pca(vsd_data, metadata = files_key)
 biplot(p, lab=NA, colby="Tissue", shape="Batch", legendPosition="right")
 #biplot(p, lab=NA, colby="Year", legendPosition="right")
 #biplot(p, lab=NA, colby="Batch", legendPosition="right")
-#ggsave(filename="figure_PCA_vst_all.png", device="png", width=30, height=30, units="cm", dpi="print")
+ggsave(filename="../data_filtered/figs/figure_PCA_all_tissues.png", device="png", width=30, height=30, units="cm", dpi="print")
 ```
 
 ```{r}
@@ -250,9 +258,9 @@ eigencorplot(p, metavars = c("Batch","Year", "Tissue", "Harvest_ID"))
 There appears to be some variation explained by Year and Batch variables. 
 
 
-```{r wgcna qc, fig.width=12, fig.height=6}
+```{r wgcna qc, fig.width=5, fig.height=25}
 options(stringsAsFactors = FALSE)
-#wgcnadata<- read.csv("data_VST_all_WGCNA.csv")
+
 
 design <- model.matrix(~files_key$Tissue)
 
@@ -286,18 +294,9 @@ traits<- traits[,-(1:4)]
 #gsg<- goodSamplesGenes(wgcnadata, verbose=3)
 #gsg$allOK
 sampleTree<-hclust(dist(wgcnadata), method="average")
-#par(cex=0.6)
-#par(mar=c(0,4,2,0))
-#png("pass1_sample_clustering.png", width=2000, height=600, units="px")
-plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="", cex.lab = 1.5, cex.axis = 1.5, cex.main = 2)
-#traitColors = numbers2colors(traits, signed = FALSE)
+sampleTree<- as.dendrogram(sampleTree)
+plot(sampleTree, main = "Sample clustering to detect outliers", sub="", xlab="height", cex.lab = 1.5, cex.axis = 1.5, cex.main = 2, horiz=TRUE)
 
-
-#png("figure_WGCNA_qc_dendrogram.png", width = 3000, height = 1000, res = 300, pointsize=5)
-#plotDendroAndColors(sampleTree, traitColors,
-#                    groupLabels = names(traits),
-#                    main = "Sample dendrogram and trait heatmap")
-#dev.off()
 
 ```
 
@@ -327,9 +326,9 @@ The DESeq design for the full dataset here is ~ Year + Batch + ind.n + Tissue. T
 
 There are `r sum(run2run1$padj < 0.05, na.rm=TRUE)` genes with an adjusted p-val of <0.05, and therefore differentially expressed with respect to sequencing run1 and run2 in 2019. Approximately equal numbers of genes were differentially expressed up or down. 
 
-```{r Batch effects figs, fig.width=4, fig.height=8}
+```{r Batch effects figs, fig.width=8, fig.height=4}
 #png("figure_MAplot_all_Run2vsPilot.png", width = 1200, height = 800, res = 300, pointsize=5)
-par(mfrow=c(2,1))
+par(mfrow=c(1,2))
 plotMA(run2pilot, ylim = c(-1, 1), main="Run2 vs Pilot")
 #dev.off()
 #png("figure_pvalhist_all_Run2vsPilot.png", width = 1200, height = 800, res = 300, pointsize=5)
@@ -337,8 +336,8 @@ hist(run2pilot$pvalue, breaks=20, col="grey", main="Run2 vs Pilot", xlab="uncorr
 #dev.off()
 ```
 
-```{r, fig.width=4, fig.height=8}
-par(mfrow=c(2,1))
+```{r, fig.width=8, fig.height=4}
+par(mfrow=c(1,2))
 #png("figure_MAplot_all_Run2vsRun1.png", width = 1200, height = 800, res = 300, pointsize=5)
 plotMA(run2run1, ylim = c(-1, 1), main="Run2 vs Run1")
 #dev.off()
@@ -350,8 +349,8 @@ hist(run2run1$pvalue, breaks=20, col="grey", main="Run2 vs Run1", xlab="uncorrec
 
 #### Year effects
 
-```{r Year Effects figs, fig.width=4, fig.height=8}
-par(mfrow=c(3,4))
+```{r Year Effects figs, fig.width=8, fig.height=4}
+par(mfrow=c(1,2))
 #png("figure_MAplot_all_2015v2018.png", width = 1200, height = 800, res = 300, pointsize=5)
 plotMA(year15v18, ylim = c(-1, 1), main="2015 vs 2018")
 #dev.off()
@@ -360,15 +359,17 @@ hist(year15v18$pvalue, breaks=20, col="grey", main="2015 vs 2018", xlab="uncorre
 #dev.off()
 ```
 
-```{r, fig.width=4, fig.height=8}
+```{r, fig.width=8, fig.height=4}
 #png("figure_MAplot_all_2017v2018.png", width = 1200, height = 800, res = 300, pointsize=5)
+par(mfrow=c(1,2))
 plotMA(year17v18, ylim = c(-1, 1), main="2017 vs 2018")
 #dev.off()
 #png("figure_pvalhist_all_2017v2018.png", width = 1200, height = 800, res = 300, pointsize=5)
 hist(year17v18$pvalue, breaks=20, col="grey", main="2017 vs 2018", xlab="uncorrected P-value")
 #dev.off()
+```
 
-
+```{r}
 gone<- plotCounts(dd, gene=row.names(year17v18[1,]), intgroup=c("Year", "Batch"), returnData=TRUE)
 
 ggplot(gone, aes(x=Year, y=count, colour=Batch)) + geom_boxplot(outlier.shape = NA) + geom_point(position=dodge) + labs(title=paste0(row.names(year17v18[1,])," padj=", year17v18$padj[1]), y="Normalised Counts") + theme_classic() + theme(axis.text=element_text(size=12), axis.title=element_text(size=14,face="bold"), plot.title = element_text(hjust = 0.5)) 
@@ -393,7 +394,7 @@ draw.pairwise.venn(area1=length(year17v18_genes), area2=length(run2run1_genes), 
  
 ##### Gonads only
 
-Let's look for Batch and year effects just in run 1 vs run 2, and only in the gonads. 
+Let's look for Batch and year effects just in run 1 vs run 2, and only in the a given tissue. I'm just going to use the testes (GON) as a test.  
 
 ```{r Batch and year effects effects in gonads}
 gonads_data<- data[colnames(data) %in% rownames(files_key[files_key$Tissue=="GON" & files_key$Batch!="pilot",])]
@@ -415,10 +416,12 @@ eigencorplot(p, metavars = c("Batch","Year"))
 res<- results(dd_gon, alpha=0.05)
 res<- res[order(res$padj),]
 #res[rownames(res)=="SYAP1",]
+
+gonr2r1_genes<- rownames(res[which(res$padj<0.05),])
 ```
 
 
-```{r}
+```{r,fig.height=4, fig.width=8}
 par(mfrow=c(1,2))
 plotMA(res, ylim=c(-1,1), main="Gonads: Run2 vs Run 1")
 hist(res$pvalue, breaks=20, col="grey", main="Gonads: Run2 vs Run1", xlab="uncorrected P-value")
@@ -432,23 +435,10 @@ gone<- plotCounts(dd_gon, gene=row.names(res[1,]), intgroup=c("Batch", "Year"), 
 ggplot(gone, aes(x=Batch, y=count, colour=Year)) + geom_boxplot(outlier.shape = NA) + geom_point(position=dodge) + labs(title=paste0(row.names(res[1,])," padj=", signif(res$padj[1]),2), y="Normalised Counts") + theme_classic() + theme(axis.text=element_text(size=12), axis.title=element_text(size=14,face="bold"), plot.title = element_text(hjust = 0.5)) 
 ```
 
-Now compare which DEGs are shared between batch in Gonads and the overall dataset. 
-
-```{r}
-gonr2r1_genes<- res[!is.na(res$padj),]
-gonr2r1_genes<- subset(gonr2r1_genes, padj < 0.05)
-gonr2r1_genes<- rownames(gonr2r1_genes)
-sharedr2r1<- gonr2r1_genes[gonr2r1_genes %in% run2run1_genes]
-
-colours<- wes_palette("Darjeeling1", 2, type="discrete")
-grid.newpage()
-draw.pairwise.venn(area1=length(gonr2r1_genes), area2=length(run2run1_genes), cross.area=length(sharedr2r1), category=c("Gonads Only", "All Tissues"), fill=colours, cex=1.5, cat.cex=1.5, cat.dist=0.1,  margin=0.1)
-```
-
 
 And now let's explore Year in the Gonads. 
 
-```{r}
+```{r, fig.height=4, fig.width=8}
 dd_gon<- DESeqDataSetFromMatrix(countData=gonads_data, colData=gonads_key, design=~ Year)
 dd_gon<- DESeq(dd_gon)
 
@@ -470,6 +460,8 @@ ggplot(gone, aes(x=Year, y=count, colour=Batch)) + geom_boxplot(outlier.shape = 
 And within the Gonads, which of the DEGs associated with Year and Batch are shared?
 
 ```{r}
+
+
 gon17v18_genes<- res[!is.na(res$padj),]
 gon17v18_genes<- subset(gon17v18_genes, padj < 0.05)
 gon17v18_genes<- rownames(gon17v18_genes)
@@ -490,7 +482,7 @@ There is colinearity between Batch and Year in both the full dataset and the sin
 Create a random variable that has the same proportions as Batch and ensure that the p-value distribution does not have an over-abundance of values <0.05, which suggests that the samples were drawn from different distributions. This is essentially a test to ensure that what we are seeing with respect to Batch (and Year) above isn't just random noise. 
 
 
-```{r random variable, echo=TRUE}
+```{r random variable, echo=TRUE, fig.height=4, fig.width=8}
 #create a random variable and test against that: 
 set.seed(1283)
 x<- sample(LETTERS[1:3], 183, replace=TRUE, prob=c(0.43,0.41,0.16))
@@ -500,7 +492,7 @@ dd<- DESeq(dd)
 testres<- results(dd)
 par(mfrow=c(1,2))
 plotMA(testres, ylim=c(-1,1))
-hist(testres$pvalue, breaks=20, col="grey")
+hist(testres$pvalue, breaks=20, col="grey", main="p-value distribution from DE on random variable")
 
 ```
 
@@ -508,7 +500,10 @@ These results suggest that these few differentially expressed genes are drawn fr
 
 
 ## Replicate Samples
-```{r replicate samples}
+
+Now, let's see how different the samples from 2015 are from their replicates on the latest run. These were sequencing replicates from the 2015 libraries. 
+
+```{r replicate samples, fig.height=4, fig.width=8}
 ddrep<- dd[ , dd$Sample %in% replicates]
 design(ddrep)<- formula(~Batch)
 ddrep$Batch<- ifelse(grepl("run",ddrep$Batch),"run", "pilot")
@@ -520,18 +515,24 @@ resrep<- results(ddrep, name="Batch_run_vs_pilot")
 resrep<- resrep[order(resrep$padj),] 
 
 #png("figure_MAplot_pvalhist_replicates.png", width = 800, height = 1000, res = 300, pointsize=5)
-par(mfrow=c(2,1))
+par(mfrow=c(1,2))
 plotMA(resrep, ylim = c(-1, 1), main="Rerun vs Pilot")
 hist(resrep$pvalue, breaks=20, col="grey", main=NULL, xlab="uncorrected P-value")
 dev.off()
+```
 
+Now let's use ordination (1) and sample distance (2) to see how different they are from eachother. 
+
+```{r}
 vsdrep<- vst(ddrep, blind=TRUE)
 vsdrep_data<- assay(vsdrep)
 p <- pca(vsdrep_data, metadata = rep_key)
 biplot(p, lab=rep_key$Harvest_ID, colby="Tissue", shape="Batch", legendPosition="right")
-#ggsave(filename="figure_PCA_vst_replicates_qc.png", device="png", width=30, height=30, units="cm", dpi="print")
 
 
+```
+
+```{r, include=FALSE}
 df <- as.data.frame(colData(ddrep)[,c("Batch")])
 rownames(df)<- colnames(assay(ddrep))
 colnames(df)<- "run"
@@ -541,6 +542,8 @@ pheatmap(assay(vsdrep), cluster_rows=FALSE, show_rownames=FALSE,
 #save_pheatmap_png(my_heatmap, "figure_heatmap_qc.png")
 ```
 
+
+Let's see how the expression differs between replicates for the top 20 most expressed genes. These show that expression is always in the same direction, and usually very close in value. 
 ```{r}
 #repeat but only on the top 20 most expressed genes. 
 select <- order(rowMeans(counts(ddrep,normalized=TRUE)),
@@ -549,8 +552,11 @@ pheatmap(assay(vsdrep)[select,], cluster_rows=FALSE, show_rownames=FALSE,
                       cluster_cols=FALSE, fontsize=8, annotation_col=df)
 #save_pheatmap_png(my_heatmap, "figure_heatmap_qc_top20.png")
 
+```
 
+Now, take sample-sample distance and cluster. These show that replicates cluster together, and then tissues. 
 
+```{r}
 #sample distances between replicates
 sampleDists <- dist(t(assay(vsdrep)))
 sampleDistMatrix <- as.matrix(sampleDists)
@@ -564,11 +570,15 @@ pheatmap(sampleDistMatrix,
 
 
 There are `r sum(resrep$padj < 0.05, na.rm=TRUE)` differentially expressed genes between replicates. 
-Given that we have batch effects (with respect to Flow Cell and with respect to Year sampled), but also there is not really a strong library prep effect as shown in the replicate samples, I will take the first (pilot) instance of each replicate to include in further analyses. In addition, all subsequent analyses will include include the batch variables where necessary.
+We appear to have broad batch effects  (with respect to Flow Cell (Batch) and with respect to Year sampled), but also there is not really a strong replicate effect as shown.
+
+In order to maximise sample size, and to maximise the number of individuals in the pilot batch group, I will take the first (pilot) instance of each replicate to include in further analyses. In addition, all subsequent analyses will include include the batch variables where necessary.
 
 # Finalizing dataset
 
-Finally, using the replicate removed dataset we will do final PCA explorations of brain, gonad and pituitary data.
+Finally, using the replicate removed dataset we will do final PCA explorations of brain and pituitary data. Note the Gonads are above with the replicate samples.
+
+
 
 ```{r removing duplicates}
 reps<- ddrep$sampleID
@@ -587,7 +597,6 @@ ddcoll<- DESeq(ddcoll)
 #"2015_pilot" "2017_run1"  "2017_run2"  "2018_run1"  "2018_run2"
 ddcoll_vsd<- vst(ddcoll, blind=TRUE)
 ddcoll_vsd<- assay(ddcoll_vsd)
-#write.csv(ddcoll_vsd, "data_VST_all_ReplicatesRemoved_antisense_V2.csv", row.names=TRUE)
 
 
 
@@ -608,7 +617,7 @@ write.csv(ddcoll_key, "../data_filtered/data_key_Parsed_ReplicatesRemoved.csv", 
 
 ## WGCNA outlier dendrograms
 
-```{r wgnca dendrograms per tissue}
+```{r wgnca dendrograms per tissue, include=FALSE}
 
 gon<- ddcoll_vsd[,colnames(ddcoll_vsd) %in% rownames(ddcoll_key[ddcoll_key$Tissue=="GON",])]
 pit<- ddcoll_vsd[,colnames(ddcoll_vsd) %in% rownames(ddcoll_key[ddcoll_key$Tissue=="PIT",])]
@@ -680,23 +689,26 @@ sampleTrees = list()
 for (set in 1:nSets){
   sampleTrees[[set]] = hclust(dist(multiExpr[[set]]$data), method = "average")
 }
+```
 
-#png(file = "figure_SampleClustering.png", width = 2400, height = 2000, units="px", pointsize=16);
+```{r, fig.width=10, fig.height=10}
+png(file = "../data_filtered/figs/figure_SampleClustering.png", width = 2400, height = 2000, units="px", pointsize=16);
 par(mfrow=c(3,4))
 par(mar = c(0, 4, 2, 0))
 for (set in 1:nSets)
   plot(sampleTrees[[set]], main = paste("Sample clustering on all genes in", setLabels[set]),
        xlab="", sub="", cex = 1)
-#dev.off()
+dev.off()
 
 ```
 
 
-
-
 ## Brain
 
-```{r brain, fig.height=6, fig.width=6}
+
+This PCA figure is annotated with potential outliers based on the above per-tissue WGCNA, and a draft version of the below PCA plot. Outliers were selected in the WGCNA plot based on branch length (sample distance) from main group and the number of samples. Similar logic applied to the PCA. 
+
+```{r brain, fig.height=6, fig.width=7}
 
 brain_exp<- ddcoll[,ddcoll$Tissue!="GON"]
 brain_exp<- brain_exp[,brain_exp$Tissue!="PIT"]
@@ -714,28 +726,21 @@ brain_key$outliers<- ifelse(rownames(brain_key) %in% potential_outliers, rowname
 
 brain_pca_all <- pca(brain_data, metadata = brain_key)
 biplot(brain_pca_all, lab=brain_key$outliers, shape="Batch" ,colby="Tissue", legendPosition="right")
-#ggsave(filename="figure_PCA_brain_qcRepsCombined_outlier_labs.png", device="png", width=30, height=25, units="cm", dpi="print")
+ggsave(filename="../data_filtered/figs/figure_PCA_brain_qcRepsRemoved_outlier_labs.png", device="png", width=30, height=25, units="cm", dpi="print")
+```
+
+```{r}
+
 eigencorplot(brain_pca_all, metavars = c("Year_Batch", "Tissue"))
 ```
 
-## Gonads 
-```{r gonads, fig.height=6, fig.width=6}
-gonads<- ddcoll[,ddcoll$Tissue=="GON"]
-gonads$Tissue<- droplevels(gonads$Tissue)
-gonads$Year_Batch<- droplevels(gonads$Year_Batch)
-design(gonads)<- formula(~Year_Batch)
-gonads<- DESeq(gonads)
-gonads_vsd<- vst(gonads, blind=TRUE)
-gonads_vsd<- assay(gonads_vsd)
-gonads_key<- as.data.frame(colData(gonads))
 
-gonads_pca <- pca(gonads_vsd, metadata = gonads_key)
-biplot(gonads_pca, lab=NULL ,colby="Batch", shape="Year", legendPosition="right")
-```
+Still seeing Year and Batch effects in the whole brain dataset.
+
 
 ## Pituitary
 
-```{r pituitary, fig.height=6, fig.width=6}
+```{r pituitary, fig.height=6, fig.width=7}
 pit<- ddcoll[,ddcoll$Tissue=="PIT"]
 pit$Tissue<- droplevels(pit$Tissue)
 pit$Year_Batch<- droplevels(pit$Year_Batch)
@@ -748,8 +753,6 @@ pit_key<- as.data.frame(colData(pit))
 
 pit_pca <- pca(pit_vsd, metadata = pit_key)
 biplot(pit_pca, lab=NULL ,colby="Batch", shape="Year", legendPosition="right")
-
-
 ```
 
 
@@ -825,6 +828,8 @@ draw.triple.venn(area1 = length(AHvPIT_genes),
 
 However, when you run PIT on its own with respect to batch there are `r sum(pitres$padj < 0.05, na.rm=TRUE) ` differentially expressed genes. Seems like tissues need to be kept separate to remove this confound.
 
+
+The next analysis I conduct will be the differential expression analyses in DESeq. See menus for these and more analyses. 
 
 ```{r}
 sessionInfo()
