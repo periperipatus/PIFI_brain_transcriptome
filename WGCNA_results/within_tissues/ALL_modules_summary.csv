@@ -1,0 +1,13 @@
+Tissue,Individual,Status,mean_T,strength,total_modules
+GON,0,1,2,0,10
+PIT,1,2,0,4,26
+VMH,0,1,1,0,31
+AH,0,2,0,0,37
+PVN,0,1,0,0,17
+POM,0,2,5,9,68
+ICO,0,0,3,3,31
+GCT,2,0,1,7,40
+TNA,0,2,6,4,28
+AI,0,1,7,2,36
+LS,0,0,0,4,27
+BSTm,0,1,2,5,26
