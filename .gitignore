@@ -2,12 +2,15 @@
 analysis/
 
 #Results
-docs/
-Candidate_gene_results/
-DE_results/
-GO_annotations/
+docs_temp/
+#Candidate_gene_results/
+#DE_results/
+#GO_annotations/
 #Overlap_results/
 WGCNA_results/
+WGCNA_results/all_tissues/
+WGCNA_results/within_tissue
+*.RData
 *.Rmd
 *.Rhistory
 
