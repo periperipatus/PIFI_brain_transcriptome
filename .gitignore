@@ -13,5 +13,6 @@ WGCNA_results/within_tissue
 *.RData
 *.Rmd
 *.Rhistory
+*.gaf
 
 .Rproj.user
