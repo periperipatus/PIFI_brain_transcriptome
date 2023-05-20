@@ -224,6 +224,97 @@ de_genes<- pos_neg_out %>% group_by(tissue) %>% summarize(status_genes=sum(abs(r
 keep<- c(keep, "de_genes")
 ```
 
+```{r}
+all_data<- data
+
+start<- nrow(all_data)
+#remove genes with avg read counts <20
+all_data$avg_count<- apply(all_data, 1, mean)
+all_data<- all_data[all_data$avg_count>20,]
+all_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+all_data$percent_0<- apply(all_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(all_data)/2
+all_data<- all_data[all_data$percent_0<=thresh,]
+all_data$percent_0<-NULL
+
+dd<- DESeqDataSetFromMatrix(countData=all_data, colData=key_behav, design= ~ Tissue)
+dd<- DESeq(dd)
+dd<- dd[which(mcols(dd)$betaConv),]
+
+#NCBI cox genes for Pipra
+cox<- c("COX1-homolog"="LOC113984744", "COX6-homolog"="LOC114003485","COX14-homolog"="LOC113993743", "COX15-homolog"="LOC113982573")
+iegs<- c(Fos="FOS", jun="JUN", EGR1="EGR1")
+cox<- iegs
+a<- plotCounts(dd, gene=cox[1], intgroup=c("Class","Status", "Tissue","strength.all_study","mean_T"), returnData=TRUE)
+a$sample<- rownames(a)
+ap<- ggplot(a, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title=names(cox[1]),x="", y="Normalised Counts") + peri_theme + scale_color_manual(values=status_cols[2:3])
+b<- plotCounts(dd, gene=cox[2], intgroup=c("Class","Status", "Tissue","strength.all_study","mean_T"), returnData=TRUE)
+b$sample<- rownames(b)
+bp<- ggplot(b, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title=names(cox[2]),x="", y="Normalised Counts") + peri_theme + scale_color_manual(values=status_cols[2:3])
+c<- plotCounts(dd, gene=cox[3], intgroup=c("Class","Status", "Tissue","strength.all_study","mean_T"), returnData=TRUE)
+c$sample<- rownames(c)
+cp<- ggplot(c, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title=names(cox[3]),x="", y="Normalised Counts") + peri_theme + scale_color_manual(values=status_cols[2:3])
+#d<- plotCounts(dd, gene=cox[4], intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+#dp<- ggplot(d, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title=names(cox[4]),x="", y="Normalised Counts") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+ggarrange(ap,bp,cp)
+
+a$ind<- word(a$sample,1,1, sep="_")
+a<- dcast(a, ind + mean_T + Status + strength.all_study ~ Tissue, value.var="count")
+colnames(a)[5:16]<- paste0("FOS_",colnames(a)[5:16])
+b$ind<- word(b$sample,1,1,sep="_")
+b<- dcast(b,ind + mean_T + Status + strength.all_study ~ Tissue, value.var="count")
+colnames(b)[5:16]<- paste0("JUN_",colnames(b)[5:16])
+c$ind<- word(c$sample,1,1,sep="_")
+c<- dcast(c, ind + mean_T + Status + strength.all_study ~ Tissue, value.var="count")
+colnames(c)[5:16]<- paste0("EGR1_",colnames(c)[5:16])
+
+iegs<- merge(a,b, by="ind")
+iegs<- merge(iegs,c, by="ind")
+iegs<- iegs[,!grepl("\\.x", colnames(iegs))]
+iegs<- iegs[,!grepl("\\.y", colnames(iegs))]
+iegs2<- iegs[,-c(1,27)]
+pvalue_cor<- cor(iegs2, use= "pairwise.complete.obs", method="pearson")
+pheatmap(pvalue_cor)
+
+
+candidates<- c("AR", "SRD5A2", "LOC113993669", "ESR1", "ESR2", "PGR","GNRH1", "PRL","PRLR","VIP", "VIPR1", "VIPR2","LOC113983511", "OXTR", "LOC113983498", "AVPR1A")
+out<- list()
+for(i in candidates){
+  a<- plotCounts(dd, gene=i, intgroup=c("Class","Status", "Tissue","strength.all_study","mean_T"), returnData=TRUE)
+a$sample<- rownames(a)
+a$ind<- word(a$sample,1,1, sep="_")
+a<- dcast(a, ind  ~ Tissue, value.var="count")
+out[[i]]<- a
+}
+candidate_genes<- do.call("cbind", out)
+inds<- candidate_genes$AR.ind
+candidate_genes<- candidate_genes[,!grepl("ind",colnames(candidate_genes))]
+candidate_genes$ind<- inds
+
+key_behav$ind<- word(key_behav$sampleID,1,1, sep="_")
+
+cg<- merge(key_behav[,c(5,8,11,12)], candidate_genes, by="ind")
+cg$Status<- as.numeric(ifelse(cg$Status=="territorial",1,0))
+
+cgcor<- cor(cg[,-1], use= "pairwise.complete.obs", method="pearson")
+pheatmap(cgcor, clustering_method="complete")
+
+xy <- t(combn(colnames(cgcor[,-1]), 2))
+xy<- data.frame(xy, dist=cgcor[xy,-1])
+cor_cgclust<-
+ggplot(xy, aes(x=dist, fill=..x..)) + geom_histogram(color="grey80", size=0.3) + scale_fill_gradient2(low=color[42], high = color[74]) + peri_figure + scale_y_continuous(expand=c(0,0), limits=c(0,15)) + theme(legend.position="none", aspect.ratio = 0.2) + labs(x="r") + scale_x_continuous(limits=c(-1,1)) + geom_vline(aes(xintercept=mean(dist)),
+            color="grey70", linetype="dashed", size=0.3) 
+keep<- c(keep, "xy_status")
+
+result <- pvclust(cgcor, method.dist="cor", method.hclust="complete", nboot=1000, parallel=TRUE)
+
+plot(result)
+pvrect(result, alpha=0.90)
+```
 
 
 ## Pairwise Tissue Similarities
@@ -1534,10 +1625,16 @@ pos_neg_int$tissue<- factor(pos_neg_int$tissue, levels=tissue_order)
 pos_neg_int$abs_val<- ifelse(grepl("significant",pos_neg_int$type), abs(pos_neg_int$res), "")
 pos_cols<- c("#0D8CFF", "#AED9FF","#FF3300","#FFBBAA")
 
-ggplot(pos_neg_int, aes(x=tissue, y=res, fill=type)) + geom_bar(stat="identity") + peri_theme + scale_y_continuous(expand=c(0,0), limits=c(-1200, 1200)) + labs(title="Status x mean T", x="", y="") + scale_fill_manual(values=pos_cols) + geom_hline(yintercept=0)+ theme(legend.position = "none") + geom_text(aes(label=abs_val),vjust=pos_neg_int$res < 0)+ theme(plot.margin = unit(c(1,1,0,0), "lines"))
+p<- ggplot(pos_neg_int, aes(x=tissue, y=res, fill=type)) + geom_bar(stat="identity") + peri_theme + scale_y_continuous(expand=c(0,0), limits=c(-1200, 1200)) + labs(title="Status x mean T", x="", y="") + scale_fill_manual(values=pos_cols) + geom_hline(yintercept=0)+ theme(legend.position = "none") + geom_text(aes(label=abs_val),vjust=pos_neg_int$res < 0)+ theme(plot.margin = unit(c(1,1,0,0), "lines"))
+p
+ggsave("../Overlap_results/figure_StatusmeanT_bars.pdf", plot=p, device="pdf", height=1.75, width=1.75, units="in")
 
 ```
 
+```{r}
+
+
+```
 
 
 

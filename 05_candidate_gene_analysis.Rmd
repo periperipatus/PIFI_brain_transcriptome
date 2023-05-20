@@ -26,7 +26,6 @@ library(stringr)
 library(DESeq2)
 library(kableExtra)
 library(VennDiagram)
-library(wesanderson)
 library(MASS)
 library(pheatmap)
 library(RColorBrewer)
@@ -581,6 +580,7 @@ pit_plots[["status_ESR1"]]<- ggplot(ESR1, aes(x=Status, y=ESR1, color=Class)) + 
 ESR2<- subset(pit_norm, select=c("sampleID","ESR2"))
 ESR2<- merge(pit_key, ESR2, by="sampleID")
 ESR2$ESR2<- as.numeric(ESR2$ESR2)
+ESR2<- ESR2[!grepl("PFT3", ESR2$sampleID),]
 
 Rsq<- signif(cor(ESR2$strength.all_study, ESR2$ESR2)^2,2)
 lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="ESR2" & results_pit$Test=="Strength"],2)
@@ -594,7 +594,7 @@ pit_plots[["str_esr2"]]<- ggplot(ESR2, aes(x=strength.all_study, y=ESR2, color=C
 PRL<- subset(pit_norm, select=c("sampleID","PRL"))
 PRL<- merge(pit_key, PRL, by="sampleID")
 PRL$PRL<- as.numeric(PRL$PRL)
-
+PRL<- PRL[!grepl("PFT3", PRL$sampleID),]
 
 Rsq<- signif(cor(PRL$strength.all_study, PRL$PRL)^2,2)
 lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="PRL" & results_pit$Test=="Strength"],2)
@@ -603,14 +603,6 @@ padj=signif(results_pit$padj[results_pit$gene=="PRL" & results_pit$Test=="Streng
 
 
 pit_plots[["str_PRL"]]<- ggplot(PRL, aes(x=strength.all_study, y=PRL, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Strength", y="", title="PRL X Strength",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) +scale_colour_manual(values=status_cols, name="Age x Status")
-
-
-#VIPR1 x degree
-VIPR1<- subset(pit_norm, select=c("sampleID","VIPR1"))
-VIPR1<- merge(pit_key, VIPR1, by="sampleID")
-VIPR1$VIPR1<- as.numeric(VIPR1$VIPR1)
-#strength X vipr1
-
 
 
 
@@ -630,7 +622,7 @@ padj=signif(results_pit$padj[results_pit$gene=="VIPR2" & results_pit$Test=="mean
 pit_plots[["meanT_vipr2"]]<- ggplot(VIPR2, aes(x=mean_T, y=VIPR2, color=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="VIPR2 X mean T", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq)))+ scale_colour_manual(values=status_cols, name="Age x Status") 
 
 #VIPR2 X strength
-
+VIPR2<- VIPR2[!grepl("PFT3", VIPR2$sampleID),]
 Rsq<- signif(cor(VIPR2$strength.all_study, VIPR2$VIPR2)^2,2)
 lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="VIPR2" & results_pit$Test=="Strength"],2)
 praw<- signif(results_pit$pvalue[results_pit$gene=="VIPR2" & results_pit$Test=="Strength"],2)
@@ -652,7 +644,7 @@ padj=signif(results_pit$padj[results_pit$gene=="LOC113983498" & results_pit$Test
 pit_plots[["meanT_AVP"]]<- ggplot(AVP, aes(x=mean_T, y=AVP, colour=Class)) + geom_point(size=4,pch=19) + peri_theme + labs(x="Mean Testosterone", y="", title="AVP X Mean T", subtitle=substitute(paste("LFC=",a," p=",b," padj=", c,  " R"^{2},"=",d),list(a=lfc, b=praw, c=padj, d=Rsq))) +scale_colour_manual(values=status_cols, name="Age x Status")
 
 # AVP strength
-
+AVP<- AVP[!grepl("PFT3", AVP$sampleID),]
 Rsq<- signif(cor(AVP$strength.all_study, AVP$AVP)^2,2)
 lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="LOC113983498" & results_pit$Test=="Strength"],2)
 praw<- signif(results_pit$pvalue[results_pit$gene=="LOC113983498" & results_pit$Test=="Strength"],2)
@@ -664,7 +656,7 @@ pit_plots[["strength_AVP"]]<- ggplot(AVP, aes(x=strength.all_study, y=AVP, colou
 AVPR1B<- subset(pit_norm, select=c("sampleID","AVPR1B"))
 AVPR1B<- merge(pit_key, AVPR1B, by="sampleID")
 AVPR1B$AVPR1B<- as.numeric(AVPR1B$AVPR1B)
-
+AVPR1B<- AVPR1B[!grepl("PFT3", AVPR1B$sampleID),]
 
 Rsq<- signif(cor(AVPR1B$strength.all_study, AVPR1B$AVPR1B)^2,2)
 lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="AVPR1B" & results_pit$Test=="Strength"],2)
@@ -689,7 +681,7 @@ pit_plots[["meanT_oxt"]]<- ggplot(OXT, aes(x=mean_T, y=OXT, colour=Class)) + geo
 
 
 
-
+OXT<- OXT[!grepl("PFT3", OXT$sampleID),]
 Rsq<- signif(cor(OXT$strength.all_study, OXT$OXT)^2,2)
 lfc<- signif(results_pit$log2FoldChange[results_pit$gene=="LOC113983511" & results_pit$Test=="Strength"],2)
 praw<- signif(results_pit$pvalue[results_pit$gene=="LOC113983511" & results_pit$Test=="Strength"],2)
@@ -702,11 +694,11 @@ pit_plots[["strength_oxt"]]<- ggplot(OXT, aes(x=strength.all_study, y=OXT, colou
 
 
 
-figure<- ggarrange(plotlist=pit_plots, ncol=2, nrow=5, common.legend = TRUE)
+figure<- ggarrange(plotlist=pit_plots, ncol=5, nrow=2, common.legend = TRUE)
 figure<- annotate_figure(figure, top = text_grob("Candidate genes in pituitary (PIT)", face = "bold", size = 12), left=textGrob("Normalized counts", rot = 90, vjust = 1, gp=gpar(fontsize=12)))
 figure
 
-#ggsave(filename="../Candidate_gene_results/PIT_significant.png", figure,device="png", width=50, height=20, units="cm", dpi=300, bg="white")
+ggsave(filename="../Candidate_gene_results/PIT_significant_PFT3rmStrength.png", figure, device="png", width=50, height=20, units="cm", dpi=300, bg="white")
 ```
 
 
@@ -760,7 +752,56 @@ figure<- ggarrange(a,b, labels=c("A","B"), nrow=2)
 
 ```
 
+## VIPR2
 
+VIPR2 was associated with both mean T and strength in the PIT. conduct AIC analysis to choose among models. 
+
+```{r}
+VIPR2<- subset(pit_norm, select=c("sampleID","VIPR2"))
+VIPR2<- merge(pit_key, VIPR2, by="sampleID")
+VIPR2$VIPR2<- as.numeric(VIPR2$VIPR2)
+status_cols2<- c("#E54849","#414042")
+
+lfc<- signif(results_int$log2FoldChange[results_int$gene=="VIPR2" & results_int$Tissue=="PIT"],2)
+praw<- signif(results_int$pvalue[results_int$gene=="VIPR2" & results_int$Tissue=="PIT"],2)
+padj=signif(results_int$padj[results_int$gene=="VIPR2" & results_int$Tissue=="PIT"],2)
+
+
+a<- ggplot(VIPR2, aes(x=mean_T, y=VIPR2, color=Status)) + geom_point(size=4,pch=19) + labs(title="VIPR2 X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+a
+
+```
+
+```{r}
+VIPR2_pit_lm_Status<- lm(VIPR2 ~ Batch  + Status, data=VIPR2)
+VIPR2_pit_lm_meanT<- lm(VIPR2 ~Batch +  mean_T, data=VIPR2)
+VIPR2_pit_lm_Str<- lm(VIPR2 ~Batch +  strength.all_study, data=VIPR2)
+VIPR2_pit_lm_int<- lm(VIPR2 ~ Batch + Status*mean_T, data=VIPR2)
+
+#against the NULL model
+VIPR2_pit_lm_null<- lm(VIPR2 ~ Batch  , data=VIPR2)
+
+model=c("VIPR2 ~ Batch", "VIPR2 ~ Batch + Status", "VIPR2 ~ Batch + mean T", "VIPR2 ~ Batch + Strength","VIPR2 ~ Batch + Status * mean T") 
+AIC=c(AIC(VIPR2_pit_lm_null), AIC(VIPR2_pit_lm_Status),AIC(VIPR2_pit_lm_meanT),AIC(VIPR2_pit_lm_Str), AIC(VIPR2_pit_lm_int))
+deltaAIC<- c(NA,AIC[1]-AIC[2], AIC[1]-AIC[3], AIC[1]-AIC[4], AIC[1]-AIC[5])
+
+lm_p<- c(anova(VIPR2_pit_lm_null)$'Pr(>F)'[1],anova(VIPR2_pit_lm_Status)$'Pr(>F)'[2],anova(VIPR2_pit_lm_meanT)$'Pr(>F)'[2],anova(VIPR2_pit_lm_Str)$'Pr(>F)'[2],anova(VIPR2_pit_lm_int)$'Pr(>F)'[4])
+DESeq2_raw_p=c(NA,
+               results_pit$pvalue[results_pit$gene=="VIPR2" & results_pit$Test=="Status"],
+               results_pit$pvalue[results_pit$gene=="VIPR2" & results_pit$Test=="mean T"],
+               results_pit$pvalue[results_pit$gene=="VIPR2" & results_pit$Test=="Strength"],
+               results_int$pvalue[results_int$gene=="VIPR2" & results_int$Tissue=="PIT"])
+
+
+
+knitr::kable(data.frame(model, AIC,deltaAIC,lm_p, DESeq2_raw_p),row.names=FALSE, digits=3, padding=20,caption="Model validation in the pituitary (pit) for how VIPR2 expression is related to our interest variables") %>% kable_styling()
+
+b<- ggtexttable(data.frame(model=model, AIC=signif(AIC,4), deltaAIC=signif(deltaAIC,1), lm_p=signif(lm_p,1), DESeq_raw_p=signif(DESeq2_raw_p,1)), rows=NULL)
+
+
+figure<- ggarrange(a,b, labels=c("A","B"), nrow=2)
+#ggsave(filename="../Candidate_gene_results/PIT_interaction.png", figure,device="png", width=15, height=20, units="cm", dpi=300, bg="white")
+```
 
 # Ventromedial Hypothalamus
 
@@ -1130,11 +1171,13 @@ lfc<- signif(results_int$log2FoldChange[results_int$gene=="AR" & results_int$Tis
 praw<- signif(results_int$pvalue[results_int$gene=="AR" & results_int$Tissue=="PVN"],2)
 padj=signif(results_int$padj[results_int$gene=="AR" & results_int$Tissue=="PVN"],2)
 
-a<- ggplot(AR, aes(x=mean_T, y=AR, color=Status)) + geom_point(size=4,pch=19) + labs(title="AR X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15)
+a<- ggplot(AR, aes(x=mean_T, y=AR, color=Status)) + geom_point(size=4,pch=19) + labs(title="AR X Status * mean T",subtitle=substitute(paste("LFC=",a," p=",b," padj=", c),list(a=lfc, b=praw, c=padj)), x="mean Testosterone", y="Normalized Counts") + peri_theme + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15, formula=y ~ color*x)
 a
 
-p<- ggplot(AR, aes(x=mean_T, y=AR, color=Status)) + geom_point(size=0.6,pch=19) + labs(title="AR",subtitle=substitute(paste("LFC=",a," p=",b," q=", c),list(a=lfc, b=praw, c=padj)), x="mean testosterone", y="normalized counts") + peri_figure + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15, size=0.4) + theme(legend.position = "none", aspect.ratio=1)
-ggsave("../Candidate_gene_results/figure_PVN_AR.pdf", plot=p, device="pdf", height=1.60, width=1.60, units="in")
+
+p<- ggplot(AR, aes(x=mean_T, y=AR, color=Status)) + geom_point(size=0.6,pch=19) + labs(title="AR",subtitle=substitute(paste("LFC=",a," p=",b," q=", c),list(a=lfc, b=praw, c=padj)), x="mean testosterone", y="normalized counts") + peri_figure + scale_colour_manual(values=status_cols2) + geom_smooth(method="lm", alpha=0.15, size=0.4, se=FALSE) + theme(legend.position = "none", aspect.ratio=1)
+p<- ggplot(AR, aes(x=mean_T, y=AR, color=Status)) + geom_point(size=0.6,pch=19) + peri_figure + scale_colour_manual(values=status_cols2) + labs(title="AR", subtitle="blah",x="mean T", y="normalized counts") + geom_smooth(method="lm", alpha=0.15, size=0.4, se=FALSE) + theme(legend.position = "none", aspect.ratio=1)
+ggsave("../Candidate_gene_results/figure_PVN_AR_noerror.pdf", plot=p, device="pdf", height=1.60, width=1.60, units="in")
 
 ```
 

@@ -400,6 +400,15 @@ ggarrange(plotlist=plots, ncol=5, nrow=2)
 a<- plotCounts(dd, gene="AR", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
 ap<- ggplot(a, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="AR",x="", y="Normalised Counts") + peri_theme + scale_color_manual(values=status_cols[2:3])
 
+gh<- plotCounts(dd, gene="GH1", intgroup=c("Class","Status", "Tissue","time_kill","Plumage_Age","strength.all_study"), returnData=TRUE)
+ghp1<- ggplot(gh, aes(x=Status, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="GH1",x="", y="Normalised Counts") + peri_theme + facet_wrap(~ Tissue, scales="free")
+
+ghp2<- ggplot(gh, aes(x=time_kill, y=count))  + geom_point(aes(color=time_kill)) + labs(title="GH1",x="", y="Normalised Counts") + peri_theme + facet_wrap(~ Tissue, scales="free")
+ghp3<- ggplot(gh, aes(x=strength.all_study, y=count))  + geom_point(aes(color=strength.all_study)) + labs(title="GH1",x="", y="Normalised Counts") + peri_theme + facet_wrap(~ Tissue, scales="free")
+
+#+ scale_color_manual(values=status_cols[2:3])
+
+
 b<- plotCounts(dd, gene="SRD5A2", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
 bp<- ggplot(b, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="SRD5A2",x="", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
 
@@ -556,7 +565,7 @@ test<- data.frame(PC5=p$rotated$PC5, PC10=p$rotated$PC10)
 test<- cbind(test, brain_behav)
 
 #summary(lm(PC5 ~ Year + Tissue*Status,data=test ))
-m1<- lme(PC5 ~ Batch + Tissue*Status, random=~1|Harvest_ID, data=test)
+m1<- lme(PC5 ~ Year + Tissue*Status, random=~1|Harvest_ID, data=test)
 pc5test<- anova(m1)
 
 
@@ -584,7 +593,7 @@ g<-biplot(p, x="PC1",y="PC10", lab=NULL, colby="strength.all_study", shape="Stat
 h<-ggplot(test, aes(x=strength.all_study, y=PC10, color=Tissue)) + geom_point() + peri_theme  + theme(legend.position="none") 
 
 ggarrange(e,ggarrange(pc5test_anova,f, nrow=2),g,ggarrange(pc10test_anova,h, nrow=2),ncol=2, nrow=2,labels=c(LETTERS[1:4]))
-#ggsave(filename="figure_wholebrain_PC5_10.png", device="png",height =8.5 ,width=11, units="in")
+#ggsave(g,filename="figure_wholebrain_PC5_10.png", device="png",height =8.5 ,width=11, units="in")
 
 
 ```
@@ -1098,7 +1107,7 @@ DESeq model specification ~ Year +  mean_T
 This chunk also includes a function I wrote to remove highly influential observations (as measured by Cook's Distance) from the continuous data. I know from previous iterations of this analysis that there are observations that are highly influential and also [DESeq2 does not exclude these from the results in continuous data](https://support.bioconductor.org/p/126040/).
 
 ```{r GON mean T DEseq, fig.height=4, fig.width=10, echo=TRUE}
-dd<- DESeqDataSetFromMatrix(countData=gon_data, colData=gon_behav, design= ~ Year + mean_T)
+dd<- DESeqDataSetFromMatrix(countData=gon_data, colData=gon_behav, design= ~ Year + Status + mean_T)
 dd<- DESeq(dd)
 dd<- dd[which(mcols(dd)$betaConv),]
 res<- results(dd, alpha=0.1)
@@ -1175,10 +1184,10 @@ g
 
 ```{r hub plot, eval=FALSE, echo=FALSE}
 
-hub<- "TH"
+hub<- "STAR"
 out<-  plotCounts(dd, gene=hub, intgroup=c("mean_T", "Class"), returnData=TRUE)
 Rsq<- cor(out$mean_T, out$count)^2
-hplot<- ggplot(out, aes(x=mean_T, y=count, color=Class)) + geom_point(size=4) + labs(title=expaste0(row.names(res[hub,])," LFC=",signif(mean_T_res$log2FoldChange[mean_T_res$gene==hub],2) ," padj=", signif(mean_T_res$padj[mean_T_res$gene==hub],2), " R^2=", signif(Rsq,2)),x="", y="Normalised Counts") + peri_theme + scale_colour_manual(values=status_cols, name="Age x Status")+ theme(legend.position="none")
+hplot<- ggplot(out, aes(x=mean_T, y=count, color=Class)) + geom_point(size=4) + labs(title=paste0(row.names(res[hub,])," LFC=",signif(mean_T_res$log2FoldChange[mean_T_res$gene==hub],2) ," padj=", signif(mean_T_res$padj[mean_T_res$gene==hub],2), " R^2=", signif(Rsq,2)),x="", y="Normalised Counts") + peri_theme + scale_colour_manual(values=status_cols, name="Age x Status")+ theme(legend.position="none")
 ```
 
 <br>
@@ -1291,10 +1300,23 @@ For pulling out candidate genes with interactions
 dd<- DESeqDataSetFromMatrix(countData=gon_data, colData=gon_behav, design= ~ Year + Status + mean_T + Status:mean_T)
 dd<- DESeq(dd)
 dd<- dd[which(mcols(dd)$betaConv),]
+
+res<- results(dd, alpha=0.1, name = "mean_T")
+res<- rm_continuous_outliers(dd,res)
+res<- res[order(res$padj),]
+#summary(res)
+
+res<- results(dd, alpha=0.1, name = "Status_territorial_vs_floater")
+res<- rm_continuous_outliers(dd,res)
+res<- res[order(res$padj),]
+#summary(res)
 res<- results(dd, alpha=0.1, name = "Statusterritorial.mean_T")
 res<- rm_continuous_outliers(dd,res)
 res<- res[order(res$padj),]
 summary(res)
+
+
+
 
 interaction_res<- as.data.frame(res)
 interaction_res$gene<- rownames(res)
@@ -1881,6 +1903,16 @@ res1<- rbind(res1, outs)
 res1<- res1[order(res1$padj),]
 summary(res1)
 
+res<- results(dd, alpha=0.1, name = "mean_T")
+res<- rm_continuous_outliers(dd,res)
+res<- res[order(res$padj),]
+#summary(res)
+
+res<- results(dd, alpha=0.1, name = "Status_territorial_vs_floater")
+res<- rm_continuous_outliers(dd,res)
+res<- res[order(res$padj),]
+#summary(res)
+
 interaction_res<- as.data.frame(res1)
 interaction_res$gene<- rownames(res1)
 interaction_res$Tissue<- "PIT"
@@ -1948,7 +1980,7 @@ summary(res)
 strength_res<- data.frame(res[order(rownames(res)),])
 strength_res$gene<- row.names(strength_res)
 
-#write.csv(strength_res, file="../DE_results/results_PIT_Strength.csv", row.names=FALSE)
+write.csv(strength_res, file="../DE_results/results_PIT_Strength_withPFT3.csv", row.names=FALSE)
 
 
 par(mfrow=c(1,2))
@@ -2069,9 +2101,9 @@ dat<- plotCounts(dd, gene=hub, intgroup=c("Class","Status", "strength.all_study"
 Rsq<- cor(dat$strength.all_study, dat$count)^2
 
 
-p<- ggplot(dat, aes(x=strength.all_study, y=count)) + geom_point(size=0.6, pch=19) + peri_figure + scale_colour_manual(values=status_cols[2:3]) + labs(x="average number interactions/day (scaled)", y="normalized counts", title=hub, subtitle=paste0("LFC=", signif(res$log2FoldChange[rownames(res)==hub],1), ", p=",signif(res$pvalue[rownames(res)==hub],1), ", padj=", signif(res$padj[rownames(res)==hub],1), " R^2=", signif(Rsq,1))) + geom_smooth(method="lm", alpha=0.15,, color="grey50", size=0.4) + theme(legend.position = "none", aspect.ratio = 1) + geom_point(aes(color=Status), size=0.6, pch=19)
+p<- ggplot(dat, aes(x=strength.all_study, y=count)) + geom_point(size=0.6, pch=19) + peri_figure + scale_colour_manual(values=status_cols[2:3]) + labs(x="average number interactions/day (scaled)", y="normalized counts", title=hub, subtitle=paste0("LFC=", signif(res$log2FoldChange[rownames(res)==hub],1), ", p=",signif(res$pvalue[rownames(res)==hub],1), ", padj=", signif(res$padj[rownames(res)==hub],1), " R^2=", signif(Rsq,1))) + geom_smooth(method="lm", alpha=0.15,, color="grey50", size=0.4, se=FALSE) + theme(legend.position = "none", aspect.ratio = 1) + geom_point(aes(color=Status), size=0.6, pch=19)
 p
-ggsave("../DE_results/figure_PIT_PRL_str.pdf", plot=p, device="pdf", height=1.60, width=1.60, units="in")
+ggsave("../DE_results/figure_PIT_PRL_str_noerror.pdf", plot=p, device="pdf", height=1.60, width=1.60, units="in")
 ```
 
 ```{r plotting PIT, eval=FALSE}
@@ -3976,6 +4008,17 @@ g<- annotate_figure(g, top=textGrob("Top six DEGs by Social Network Strength in 
 g
 ```
 
+```{r, eval=FALSE}
+hub<-"LOC113983511"
+
+dat<- plotCounts(dd, gene=hub, intgroup=c("Class","Status", "strength.all_study"), returnData=TRUE)
+Rsq<- cor(dat$strength.all_study, dat$count)^2
+p<- ggplot(dat, aes(x=strength.all_study, y=count)) + geom_point(size=0.6, pch=19) + peri_figure + scale_colour_manual(values=status_cols[2:3]) + labs(x="average number interactions/day (scaled)", y="normalized counts", title=hub, subtitle=paste0("LFC=", signif(res$log2FoldChange[rownames(res)==hub],1), ", p=",signif(res$pvalue[rownames(res)==hub],1), ", q=", signif(res$padj[rownames(res)==hub],1), " R^2=", signif(Rsq,1))) + geom_smooth(method="lm", alpha=0.15,, color="grey50", size=0.4, se=FALSE) + theme(legend.position = "none", aspect.ratio = 1) + geom_point(aes(color=Status), size=0.6, pch=19)
+p
+ggsave("../DE_results/figure_LS_OXT_str_noerror.pdf", plot=p, device="pdf", height=1.60, width=1.60, units="in")
+
+```
+
 <br>
 
 ### Gene Ontology
@@ -4398,12 +4441,9 @@ hub<-"AR"
 dat<- plotCounts(dd, gene=hub, intgroup=c("Class","Status", "mean_T"), returnData=TRUE)
 Rsq<- cor(dat$mean_T, dat$count)^2
 
-p<- ggplot(dat, aes(x=mean_T, y=count)) + geom_point(size=0.6, pch=19) + peri_figure + scale_colour_manual(values=status_cols[2:3]) + labs(x="mean testosterone", y="normalized counts", title=hub, subtitle=paste0("LFC=", signif(res$log2FoldChange[rownames(res)==hub],1), ", p=",signif(res$pvalue[rownames(res)==hub],1), ", padj=", signif(res$padj[rownames(res)==hub],1), " R^2=", signif(Rsq,1))) + geom_smooth(method="lm", alpha=0.15,, color="grey50", size=0.4) + theme(legend.position = "none", aspect.ratio = 1) + geom_point(aes(color=Status), size=0.6, pch=19) + scale_y_continuous(breaks=c(500,1000,1500), limits=c(200,1500))
+p<- ggplot(dat, aes(x=mean_T, y=count)) + geom_point(size=0.6, pch=19) + peri_figure + scale_colour_manual(values=status_cols[2:3]) + labs(x="mean testosterone", y="normalized counts", title=hub, subtitle=paste0("LFC=", signif(res$log2FoldChange[rownames(res)==hub],1), ", p=",signif(res$pvalue[rownames(res)==hub],1), ", padj=", signif(res$padj[rownames(res)==hub],1), " R^2=", signif(Rsq,1))) + geom_smooth(method="lm", alpha=0.15,, color="grey50", size=0.4, se=FALSE) + theme(legend.position = "none", aspect.ratio = 1) + geom_point(aes(color=Status), size=0.6, pch=19) + scale_y_continuous(breaks=c(500,1000,1500), limits=c(200,1500))
 p
-ggsave("../DE_results/figure_POM_AR_meanT.pdf", plot=p, device="pdf", height=1.60, width=1.60, units="in")
-
-
-
+ggsave("../DE_results/figure_POM_AR_meanT_noerror.pdf", plot=p, device="pdf", height=1.60, width=1.60, units="in")
 
 
 ```
@@ -7789,6 +7829,82 @@ g<- annotate_figure(g, top=textGrob("Top six DEGs by Status * Mean T in LS",gp=g
 g
 ```
 
+```{r}
+res_go<- interaction_res
+res_go$logP<- -log(res_go$pvalue, 10)
+res_go$logP<- ifelse(res_go$log2FoldChange<0, -(res_go$logP), res_go$logP)
+res_go$gene<- rownames(res_go)
+res_go<- as.data.frame(res_go)
+res_go<- merge(res_go, go_key, by="gene")
+res_go<- res_go[order(res_go$logP, decreasing=TRUE),]
+res_go<- res_go[!is.na(res_go$logP),]
+res_go$pvalue<- ifelse(is.na(res_go$padj), NA, as.numeric(res_go$pvalue))
+
+geneList<- res_go$logP
+names(geneList)<- res_go$gene
+
+
+gs<- GSEA(geneList, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+ridgeplot(gs)  + scale_fill_viridis() + peri_theme
+```
+
+```{r}
+y<- enricher(interaction_res$gene[interaction_res$padj<0.1], universe=res_go$gene, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+
+ego2<- y@result
+ego2$GeneRatio2<- word(ego2$GeneRatio, 1,1, sep="/")
+ego2$GeneRatio2<- as.numeric(ego2$GeneRatio2)
+
+goplot<- ggplot(ego2[1:20,], aes(x=Description, y=GeneRatio2, fill=qvalue)) + geom_bar(stat="identity") + theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1)) + coord_flip() + peri_theme + scale_y_continuous(expand=c(0,0)) + labs(x="", y="No. genes enriched", title="Top 20 GO BP") + scale_fill_viridis()
+goplot
+
+knitr::kable(y@result[1:10,], caption="BP enriched GO terms in LS", row.names = FALSE) %>% kable_styling()
+
+#ps<-colorRampPalette(brewer.pal(n = 7, name =
+#  "Purples"))
+#scales::viridis_pal()(4)
+p<- ggplot(ego2[1:20,], aes(x=Description, y=GeneRatio2, fill=pvalue)) + geom_bar(stat="identity", size=0.3, color="#2A1E59") + theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1.2)) + coord_flip() + peri_figure + scale_y_continuous(expand=c(0,0)) + labs(x="", y="No. genes enriched") + theme(aspect.ratio = 1.2) + scale_fill_distiller(palette="Purples")
+p
+ggsave("../DE_results/figure_LS_GO_str.pdf", plot=p, device="pdf", height=1.60, width=4.60, units="in")
+
+#geom_bar(stat="identity", color="#3A2060", size=0.3, fill="#74638C") 
+
+go_mean_T<- y@result
+write.csv(y@result, file="../DE_results/GO_BP_LS_strength.csv", row.names=FALSE)
+ego2<- as.data.frame(go_mean_T$ID)
+colnames(ego2)<- "ID"
+ego2$p.adjust<- go_mean_T$p.adjust
+
+simMatrix <- calculateSimMatrix(ego2$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="BP",
+                                method="Rel")
+scores <- setNames(-log10(ego2$p.adjust), ego2$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+
+p<- scatterPlot(simMatrix, reducedTerms) + theme_bw() +  labs(title="Semantic similarity of GO terms") + theme(plot.title = element_text(hjust = 0.5, size=12))
+```
+
+```{r, eval=FALSE}
+hub<-"DRD3"
+
+dat<- plotCounts(dd, gene=hub, intgroup=c("Class","Status", "mean_T"), returnData=TRUE)
+Rsq<- cor(dat$strength.all_study, dat$count)^2
+p<- ggplot(dat, aes(x=strength.all_study, y=count, colour=Status)) + geom_point(size=0.6, pch=19) + peri_figure + scale_colour_manual(values=status_cols[2:3]) + labs(x="average number interactions/day (scaled)", y="normalized counts", title=hub, subtitle=paste0("LFC=", signif(res$log2FoldChange[rownames(res)==hub],1), ", p=",signif(res$pvalue[rownames(res)==hub],1), ", q=", signif(res$padj[rownames(res)==hub],1), " R^2=", signif(Rsq,1))) + geom_smooth(method="lm", alpha=0.15,, color="grey50", size=0.4) + theme(legend.position = "none", aspect.ratio = 1) + geom_point(aes(color=Status), size=0.6, pch=19)
+p
+ggsave("../DE_results/figure_LS_NPY1R_str.pdf", plot=p, device="pdf", height=1.60, width=1.60, units="in")
+
+
+p<- ggplot(dat, aes(x=mean_T, y=count, color=Status)) + geom_point(pch=19) + peri_figure + scale_colour_manual(values=status_cols[2:3]) + labs(title="AR", subtitle="blah",x="mean T", y="normalized counts") + geom_smooth(method="lm", alpha=0.15, size=0.4, se=FALSE) + theme(legend.position = "none", aspect.ratio=1)
+
+```
+
+
+
 <br>
 
 ## Strength LS
@@ -8471,6 +8587,48 @@ g<- annotate_figure(g, top=textGrob("Top six DEGs by Status * Mean T in BSTm",gp
 g
 ```
 
+```{r}
+res_go<- interaction_res
+res_go$logP<- -log(res_go$pvalue, 10)
+res_go$logP<- ifelse(res_go$log2FoldChange<0, -(res_go$logP), res_go$logP)
+res_go$gene<- rownames(res_go)
+res_go<- as.data.frame(res_go)
+res_go<- merge(res_go, go_key, by="gene")
+res_go<- res_go[order(res_go$logP, decreasing=TRUE),]
+res_go<- res_go[!is.na(res_go$logP),]
+res_go$pvalue<- ifelse(is.na(res_go$padj), NA, as.numeric(res_go$pvalue))
+
+geneList<- res_go$logP
+names(geneList)<- res_go$gene
+
+
+y<- GSEA(geneList, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+gseaplot<- ridgeplot(y) + peri_theme + labs(title="Top GO BP terms from GSEA") + scale_fill_viridis()
+gseaplot
+
+go_mean_T<- y@result
+write.csv(y@result, file="../DE_results/GSEA_BP_BSTm_interaction.csv", row.names=FALSE)
+ego2<- as.data.frame(go_mean_T$ID)
+colnames(ego2)<- "ID"
+ego2$p.adjust<- go_mean_T$p.adjust
+
+#simMatrix <- calculateSimMatrix(ego2$ID,
+#                                orgdb="org.Hs.eg.db",
+#                                ont="BP",
+#                                method="Rel")
+#scores <- setNames(-log10(ego2$p.adjust), ego2$ID)
+#reducedTerms <- reduceSimMatrix(simMatrix,
+#                                scores,
+#                               threshold=0.7,
+#                                orgdb="org.Hs.eg.db")
+#treemapPlot(reducedTerms)
+
+
+
+#p<- scatterPlot(simMatrix, reducedTerms) + theme_bw() +  labs(title="Semantic similarity of GO terms") + theme(plot.title = element_text(hjust = 0.5, size=12))
+```
+
+
 <br>
 
 ## Strength BSTm
@@ -8534,12 +8692,17 @@ g
 
 ```
 ```{r,  eval=FALSE}
+
 hub<-"PGR"
+
 dat<- plotCounts(dd, gene=hub, intgroup=c("Class","Status", "strength.all_study"), returnData=TRUE)
 Rsq<- cor(dat$strength.all_study, dat$count)^2
-ggplot(dat, aes(x=strength.all_study, y=count)) + geom_point(size=4, pch=19) + peri_theme + scale_colour_manual(values=status_cols[2:3]) + labs(x="strength", y="Normalized Counts", title=paste0(hub,"\n LFC=", signif(res$log2FoldChange[rownames(res)==hub],2), ", p=",signif(res$pvalue[rownames(res)==hub],2), ", padj=", signif(res$padj[rownames(res)==hub],2), " R^2=", signif(Rsq,2))) + theme(legend.position = "none") + geom_smooth(method="lm", color="black") + geom_point(aes(color=Status), pch=19, size=4)
+p<- ggplot(dat, aes(x=strength.all_study, y=count)) + geom_point(size=0.6, pch=19) + peri_figure + scale_colour_manual(values=status_cols[2:3]) + labs(x="average number interactions/day (scaled)", y="normalized counts", title=hub, subtitle=paste0("LFC=", signif(res$log2FoldChange[rownames(res)==hub],1), ", p=",signif(res$pvalue[rownames(res)==hub],1), ", q=", signif(res$padj[rownames(res)==hub],1), " R^2=", signif(Rsq,1))) + geom_smooth(method="lm", alpha=0.15,, color="grey50", size=0.4, se=FALSE) + theme(legend.position = "none", aspect.ratio = 1) + geom_point(aes(color=Status), size=0.6, pch=19)
+p
+ggsave("../DE_results/figure_BSTm_PGR_str_noerror.pdf", plot=p, device="pdf", height=1.60, width=1.60, units="in")
 
 ```
+
 
 <br>
 
