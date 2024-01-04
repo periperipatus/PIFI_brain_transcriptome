@@ -1,0 +1,7948 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Last Substantive Change April 2021" />
+
+<meta name="date" content="2024-01-04" />
+
+<title>Candidate Gene Analysis</title>
+
+<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    background-color: #ffffff;
+    color: #a0a0a0;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+div.sourceCode
+  { color: #1f1c1b; background-color: #ffffff; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span { color: #1f1c1b; } /* Normal */
+code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+code span.an { color: #ca60ca; } /* Annotation */
+code span.at { color: #0057ae; } /* Attribute */
+code span.bn { color: #b08000; } /* BaseN */
+code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #924c9d; } /* Char */
+code span.cn { color: #aa5500; } /* Constant */
+code span.co { color: #898887; } /* Comment */
+code span.cv { color: #0095ff; } /* CommentVar */
+code span.do { color: #607880; } /* Documentation */
+code span.dt { color: #0057ae; } /* DataType */
+code span.dv { color: #b08000; } /* DecVal */
+code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+code span.fl { color: #b08000; } /* Float */
+code span.fu { color: #644a9b; } /* Function */
+code span.im { color: #ff5500; } /* Import */
+code span.in { color: #b08000; } /* Information */
+code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+code span.op { color: #1f1c1b; } /* Operator */
+code span.ot { color: #006e28; } /* Other */
+code span.pp { color: #006e28; } /* Preprocessor */
+code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+code span.sc { color: #3daee9; } /* SpecialChar */
+code span.ss { color: #ff5500; } /* SpecialString */
+code span.st { color: #bf0303; } /* String */
+code span.va { color: #0057ae; } /* Variable */
+code span.vs { color: #bf0303; } /* VerbatimString */
+code span.wa { color: #bf0303; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">PIFI neurogenomics</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Analyses
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="./01_reading_QC.html">Supp 1: Data QC and filtering</a>
+    </li>
+    <li>
+      <a href="./02_1_Checks_PCA.html">Supp 1 &amp; 2: Checks and System-wide PCA</a>
+    </li>
+    <li>
+      <a href="./02_2_WGCNA_wholebrain.html">Supp 2: Whole-brain WGCNA</a>
+    </li>
+    <li>
+      <a href="./02_3_WGCNA_HPG.html">Supp 2: HPG WGCNA</a>
+    </li>
+    <li>
+      <a href="./03_DESeq2.html">Supp 3: Per Tissue Differential Expression</a>
+    </li>
+    <li>
+      <a href="./04_candidate_gene_analysis.html">Supp 4: Candidate Gene Analysis</a>
+    </li>
+    <li>
+      <a href="./05_WGCNA_single_tissue.html">Supp 5: Within Tissue WGCNA </a>
+    </li>
+    <li>
+      <a href="./06_tissue_summary_similarity.html">Supp 6: Summaries and overlap analyses</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="./contact.html">Contact</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/periperipatus/PIFI_brain_transcriptome">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Candidate Gene Analysis</h1>
+<h3 class="subtitle">For manuscript: Neurogenomic landscape of male
+cooperative behavior in a wild bird</h3>
+<h4 class="author">Last Substantive Change April 2021</h4>
+<h4 class="date">2024-01-04</h4>
+
+</div>
+
+
+<p>This document contains the differential expression results from
+DESeq2 for our candidate genes. These candidates are:
+<code>AR, SRD5A2, LOC113993669, ESR1, ESR2, PGR, GNRH1, PRL, PRLR, VIP, VIPR1, VIPR2, LOC113983511, OXTR, LOC113983498, AVPR1A, AVPR1B, LOC113982601</code>.</p>
+<ul>
+<li><p>LOC113993669 is CYP19A1 (Aromatase)</p></li>
+<li><p>LOC113983511 is OXT (Mesotocin)</p></li>
+<li><p>LOC113983498 is vasotocin-neurophysin (AVP precursor)</p></li>
+<li><p>LOC113982601 is AVPR2.</p></li>
+</ul>
+<p>All p-values (raw and corrected) presented in this document are
+derived from the outputs of DESeq2 without further modification.</p>
+<div id="gonads-gon" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Gonads (GON)</h1>
+<p>The next sections are scatter plots showing the expression profiles
+of candidate genes in each tissue. The candidate genes were first
+selected from the DESeq2 results based on a raw p-value of &lt;0.05, and
+then plotted for validation. We excluded genes which had low R^2, and/or
+highly influential observations from further analysis.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list=</span> <span class="fu">ls</span>()[<span class="sc">!</span>(<span class="fu">ls</span>() <span class="sc">%in%</span> keep)])</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>tissue<span class="ot">=</span><span class="st">&quot;GON&quot;</span></span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a></span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a><span class="do">### Create subset for Status ####</span></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>gon_key<span class="ot">&lt;-</span> <span class="fu">subset</span>(key_behav, Tissue<span class="sc">==</span><span class="st">&quot;GON&quot;</span>)</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>gon_key<span class="ot">&lt;-</span> <span class="fu">droplevels</span>(gon_key)</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a></span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>gon_data<span class="ot">&lt;-</span> data[,<span class="fu">colnames</span>(data) <span class="sc">%in%</span> <span class="fu">rownames</span>(gon_key)]</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a><span class="co">#remove genes with less than 5 reads</span></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a>gon_data<span class="sc">$</span>avg_count<span class="ot">&lt;-</span> <span class="fu">apply</span>(gon_data, <span class="dv">1</span>, mean)</span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>gon_data<span class="ot">&lt;-</span> gon_data[gon_data<span class="sc">$</span>avg_count<span class="sc">&gt;</span><span class="dv">5</span>,]</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>gon_data<span class="sc">$</span>avg_count<span class="ot">&lt;-</span><span class="cn">NULL</span></span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a></span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a></span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a><span class="co">#remove genes where &gt;50% of samples have 0 gene expression</span></span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a>gon_data<span class="sc">$</span>percent_0<span class="ot">&lt;-</span> <span class="fu">apply</span>(gon_data, <span class="dv">1</span>, <span class="cf">function</span>(x)<span class="fu">length</span>(x[x<span class="sc">==</span><span class="dv">0</span>]))</span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>thresh<span class="ot">&lt;-</span> <span class="fu">ncol</span>(gon_data)<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a>gon_data<span class="ot">&lt;-</span> gon_data[gon_data<span class="sc">$</span>percent_0<span class="sc">&lt;=</span>thresh,]</span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a>gon_data<span class="sc">$</span>percent_0<span class="ot">&lt;-</span><span class="cn">NULL</span></span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a>dd<span class="ot">&lt;-</span> <span class="fu">DESeqDataSetFromMatrix</span>(<span class="at">countData=</span>gon_data, <span class="at">colData=</span>gon_key, <span class="at">design=</span> <span class="sc">~</span> Batch)</span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a>dd<span class="ot">&lt;-</span> <span class="fu">DESeq</span>(dd)</span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a></span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a>gd<span class="ot">&lt;-</span> <span class="fu">counts</span>(dd,<span class="at">normalized=</span><span class="cn">TRUE</span>)</span>
+<span id="cb1-27"><a href="#cb1-27" tabindex="-1"></a>status_results<span class="ot">&lt;-</span> gd[<span class="fu">rownames</span>(gd) <span class="sc">%in%</span> candidates2,]</span>
+<span id="cb1-28"><a href="#cb1-28" tabindex="-1"></a>status_results<span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">t</span>(status_results))</span>
+<span id="cb1-29"><a href="#cb1-29" tabindex="-1"></a>status_results<span class="sc">$</span>sampleID<span class="ot">&lt;-</span> <span class="fu">rownames</span>(status_results)</span>
+<span id="cb1-30"><a href="#cb1-30" tabindex="-1"></a>status_results<span class="ot">&lt;-</span> <span class="fu">merge</span>(gon_key, status_results, <span class="at">by=</span><span class="st">&quot;sampleID&quot;</span>)</span>
+<span id="cb1-31"><a href="#cb1-31" tabindex="-1"></a></span>
+<span id="cb1-32"><a href="#cb1-32" tabindex="-1"></a></span>
+<span id="cb1-33"><a href="#cb1-33" tabindex="-1"></a><span class="do">## data for continuous variables. </span></span>
+<span id="cb1-34"><a href="#cb1-34" tabindex="-1"></a>gon_norm<span class="ot">&lt;-</span> norm_data[[<span class="dv">5</span>]]</span>
+<span id="cb1-35"><a href="#cb1-35" tabindex="-1"></a><span class="fu">rownames</span>(gon_norm)<span class="ot">&lt;-</span> gon_norm<span class="sc">$</span>X</span>
+<span id="cb1-36"><a href="#cb1-36" tabindex="-1"></a>gon_norm<span class="sc">$</span>X<span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb1-37"><a href="#cb1-37" tabindex="-1"></a>gon_norm<span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">t</span>(gon_norm))</span>
+<span id="cb1-38"><a href="#cb1-38" tabindex="-1"></a>gon_norm<span class="ot">&lt;-</span> gon_norm[,<span class="fu">colnames</span>(gon_norm) <span class="sc">%in%</span> candidates2]</span>
+<span id="cb1-39"><a href="#cb1-39" tabindex="-1"></a>gon_norm<span class="sc">$</span>sampleID<span class="ot">&lt;-</span> <span class="fu">rownames</span>(gon_norm)</span>
+<span id="cb1-40"><a href="#cb1-40" tabindex="-1"></a>gon_norm<span class="ot">&lt;-</span> <span class="fu">merge</span>(gon_norm, gon_key, <span class="at">by=</span><span class="st">&quot;sampleID&quot;</span>)</span></code></pre></div>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant results from DESeq2 before FDR correction in the GON. Where
+pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected
+p-value (for the number of genes in the sample per model)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIPR2
+</td>
+<td style="text-align:left;">
+~ Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+155.295
+</td>
+<td style="text-align:right;">
+-2.027
+</td>
+<td style="text-align:right;">
+0.005
+</td>
+<td style="text-align:right;">
+0.496
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A
+</td>
+<td style="text-align:left;">
+~ Year + mean_T
+</td>
+<td style="text-align:right;">
+188.293
+</td>
+<td style="text-align:right;">
+0.793
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.014
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR
+</td>
+<td style="text-align:left;">
+~ Year + mean_T
+</td>
+<td style="text-align:right;">
+1011.597
+</td>
+<td style="text-align:right;">
+0.324
+</td>
+<td style="text-align:right;">
+0.020
+</td>
+<td style="text-align:right;">
+0.441
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1
+</td>
+<td style="text-align:left;">
+~ Year + strength.all_study
+</td>
+<td style="text-align:right;">
+120.522
+</td>
+<td style="text-align:right;">
+0.459
+</td>
+<td style="text-align:right;">
+0.022
+</td>
+<td style="text-align:right;">
+0.587
+</td>
+</tr>
+</tbody>
+</table>
+<div id="exploring-status-specific-expression" class="section level2"
+number="1.1">
+<h2><span class="header-section-number">1.1</span> Exploring status
+specific expression</h2>
+<p>A reviewer had a concern about overparameterizing the interaction
+models. Therefore, for the interaction models we ran an alternate set of
+models to test whether number of model parameters influenced whether we
+got a significant result on that gene. So we ran reduced models to test
+whether we still those effects in reduced models, and whether batch had
+a significant effect on any candidate genes. The latter will decide
+whether I need to also include the batch variables in follow up lms and
+AIC.</p>
+<div id="batch" class="section level3" number="1.1.1">
+<h3><span class="header-section-number">1.1.1</span> Batch</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Batch variable results for GON
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+</tr>
+</tbody>
+</table>
+<p>Batch wasn’t important for anyone!</p>
+</div>
+<div id="alternate-models" class="section level3" number="1.1.2">
+<h3><span class="header-section-number">1.1.2</span> Alternate
+models</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Results from alternate models for interaction inGON
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIPR2
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+155.295
+</td>
+<td style="text-align:right;">
+-2.019
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.379
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR2
+</td>
+<td style="text-align:left;">
+~ Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+155.295
+</td>
+<td style="text-align:right;">
+-2.027
+</td>
+<td style="text-align:right;">
+0.005
+</td>
+<td style="text-align:right;">
+0.496
+</td>
+</tr>
+</tbody>
+</table>
+<p>Therefore not only is the Year variable not important for expression
+in any of our candidate genes, but status specific expression of VIPR2
+is not sensitive to inclusion of this parameter in the model. Therefore
+I am going to use the model without YEAR included.</p>
+</div>
+<div id="aic" class="section level3" number="1.1.3">
+<h3><span class="header-section-number">1.1.3</span> AIC</h3>
+<div id="vipr2" class="section level4" number="1.1.3.1">
+<h4><span class="header-section-number">1.1.3.1</span> VIPR2</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in GON where full lm model is ~ Status + mean_T +
+Status:mean_T, but DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIPR2 ~ 1
+</td>
+<td style="text-align:right;">
+149.6635
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR2 ~ Status
+</td>
+<td style="text-align:right;">
+151.5783
+</td>
+<td style="text-align:right;">
+-1.9147977
+</td>
+<td style="text-align:right;">
+0.7949428
+</td>
+<td style="text-align:right;">
+0.9993856
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR2 ~ mean T
+</td>
+<td style="text-align:right;">
+149.9019
+</td>
+<td style="text-align:right;">
+-0.2383861
+</td>
+<td style="text-align:right;">
+0.2371554
+</td>
+<td style="text-align:right;">
+0.0615867
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR2 ~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+148.0384
+</td>
+<td style="text-align:right;">
+1.6251157
+</td>
+<td style="text-align:right;">
+0.0576544
+</td>
+<td style="text-align:right;">
+0.0014815
+</td>
+</tr>
+</tbody>
+</table>
+<p><img src="04_candidate_gene_analysis_files/figure-html/GON%20AIC%20vIPR2-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>Not going to accept VIPR2 because it’s not better than the null.</p>
+</div>
+</div>
+</div>
+<div id="final-res" class="section level2" number="1.2">
+<h2><span class="header-section-number">1.2</span> Final Res</h2>
+<p>Note these decisions are made after the plotting below, but I am
+including a decision element in the plotting so that’s why it’s
+above.</p>
+</div>
+<div id="gene-plots" class="section level2" number="1.3">
+<h2><span class="header-section-number">1.3</span> Gene Plots</h2>
+<p><img src="04_candidate_gene_analysis_files/figure-html/GON%20plotting-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="pituitary-pit" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> Pituitary (PIT)</h1>
+<p>Hereafter, I exclude repeated code from presentation, but it is
+available on the github repository. Any variation on the code presented
+previously is shown.</p>
+<p>This one is a little more complicated because PFT3 was excluded from
+the overall strength DE analysis owing to some genes with strong outlier
+effects that I couldn’t remove otherwise. So we’re also going to compare
+results with and without PFT3.</p>
+<pre><code>FALSE [1] TRUE</code></pre>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant results from DESeq2 before FDR correction in the PIT. Where
+pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected
+p-value (for the number of genes in the sample per model)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+<th style="text-align:right;">
+woPFT3_baseMean
+</th>
+<th style="text-align:right;">
+woPFT3_log2FoldChange
+</th>
+<th style="text-align:right;">
+woPFT3_pvalue
+</th>
+<th style="text-align:right;">
+woPFT3_padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+123.156
+</td>
+<td style="text-align:right;">
+-12.764
+</td>
+<td style="text-align:right;">
+0.018
+</td>
+<td style="text-align:right;">
+0.997
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+47.189
+</td>
+<td style="text-align:right;">
+2.053
+</td>
+<td style="text-align:right;">
+0.030
+</td>
+<td style="text-align:right;">
+1.000
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ Batch + strength.all_study
+</td>
+<td style="text-align:right;">
+123.156
+</td>
+<td style="text-align:right;">
+2.630
+</td>
+<td style="text-align:right;">
+0.008
+</td>
+<td style="text-align:right;">
+0.160
+</td>
+<td style="text-align:right;">
+118.037
+</td>
+<td style="text-align:right;">
+4.366
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.074
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ Batch + mean_T
+</td>
+<td style="text-align:right;">
+123.156
+</td>
+<td style="text-align:right;">
+6.417
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.023
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1B
+</td>
+<td style="text-align:left;">
+~ Batch + strength.all_study
+</td>
+<td style="text-align:right;">
+1732.190
+</td>
+<td style="text-align:right;">
+0.188
+</td>
+<td style="text-align:right;">
+0.081
+</td>
+<td style="text-align:right;">
+0.447
+</td>
+<td style="text-align:right;">
+1814.603
+</td>
+<td style="text-align:right;">
+0.298
+</td>
+<td style="text-align:right;">
+0.030
+</td>
+<td style="text-align:right;">
+0.446
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+1725.149
+</td>
+<td style="text-align:right;">
+-0.661
+</td>
+<td style="text-align:right;">
+0.009
+</td>
+<td style="text-align:right;">
+0.433
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR2
+</td>
+<td style="text-align:left;">
+~ Batch + strength.all_study
+</td>
+<td style="text-align:right;">
+14.951
+</td>
+<td style="text-align:right;">
+-0.591
+</td>
+<td style="text-align:right;">
+0.038
+</td>
+<td style="text-align:right;">
+0.336
+</td>
+<td style="text-align:right;">
+15.496
+</td>
+<td style="text-align:right;">
+-0.735
+</td>
+<td style="text-align:right;">
+0.043
+</td>
+<td style="text-align:right;">
+0.509
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXT
+</td>
+<td style="text-align:left;">
+~ Batch + strength.all_study
+</td>
+<td style="text-align:right;">
+107.249
+</td>
+<td style="text-align:right;">
+2.121
+</td>
+<td style="text-align:right;">
+0.021
+</td>
+<td style="text-align:right;">
+0.259
+</td>
+<td style="text-align:right;">
+62.816
+</td>
+<td style="text-align:right;">
+3.493
+</td>
+<td style="text-align:right;">
+0.004
+</td>
+<td style="text-align:right;">
+0.211
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXT
+</td>
+<td style="text-align:left;">
+~ Batch + mean_T
+</td>
+<td style="text-align:right;">
+107.249
+</td>
+<td style="text-align:right;">
+4.522
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.190
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRL
+</td>
+<td style="text-align:left;">
+~ Batch + strength.all_study
+</td>
+<td style="text-align:right;">
+370352.282
+</td>
+<td style="text-align:right;">
+-0.431
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.016
+</td>
+<td style="text-align:right;">
+379818.057
+</td>
+<td style="text-align:right;">
+-0.553
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.031
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1
+</td>
+<td style="text-align:left;">
+~ Batch + strength.all_study
+</td>
+<td style="text-align:right;">
+918.679
+</td>
+<td style="text-align:right;">
+-0.504
+</td>
+<td style="text-align:right;">
+0.002
+</td>
+<td style="text-align:right;">
+0.083
+</td>
+<td style="text-align:right;">
+974.371
+</td>
+<td style="text-align:right;">
+-0.321
+</td>
+<td style="text-align:right;">
+0.151
+</td>
+<td style="text-align:right;">
+0.682
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR2
+</td>
+<td style="text-align:left;">
+~ Batch + strength.all_study
+</td>
+<td style="text-align:right;">
+322.934
+</td>
+<td style="text-align:right;">
+-0.394
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.058
+</td>
+<td style="text-align:right;">
+335.526
+</td>
+<td style="text-align:right;">
+-0.426
+</td>
+<td style="text-align:right;">
+0.008
+</td>
+<td style="text-align:right;">
+0.279
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR2
+</td>
+<td style="text-align:left;">
+~ Batch + mean_T
+</td>
+<td style="text-align:right;">
+322.934
+</td>
+<td style="text-align:right;">
+-0.519
+</td>
+<td style="text-align:right;">
+0.017
+</td>
+<td style="text-align:right;">
+0.632
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
+<div id="exploring-status-specific-expression-1" class="section level2"
+number="2.1">
+<h2><span class="header-section-number">2.1</span> Exploring status
+specific expression</h2>
+<div id="batch-1" class="section level3" number="2.1.1">
+<h3><span class="header-section-number">2.1.1</span> Batch</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Batch variable results for PIT
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+112.321
+</td>
+<td style="text-align:right;">
+-1.095
+</td>
+<td style="text-align:right;">
+0.039
+</td>
+<td style="text-align:right;">
+0.144
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1725.149
+</td>
+<td style="text-align:right;">
+0.545
+</td>
+<td style="text-align:right;">
+0.014
+</td>
+<td style="text-align:right;">
+0.077
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1B
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1732.190
+</td>
+<td style="text-align:right;">
+-0.774
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRL
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+370352.282
+</td>
+<td style="text-align:right;">
+1.018
+</td>
+<td style="text-align:right;">
+0.022
+</td>
+<td style="text-align:right;">
+0.102
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXT
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+107.249
+</td>
+<td style="text-align:right;">
+-4.846
+</td>
+<td style="text-align:right;">
+0.038
+</td>
+<td style="text-align:right;">
+0.143
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+123.156
+</td>
+<td style="text-align:right;">
+-12.764
+</td>
+<td style="text-align:right;">
+0.027
+</td>
+<td style="text-align:right;">
+0.115
+</td>
+</tr>
+</tbody>
+</table>
+<p>Batch is important for AVP.</p>
+</div>
+<div id="alternate-models-1" class="section level3" number="2.1.2">
+<h3><span class="header-section-number">2.1.2</span> Alternate
+models</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Results from alternate models for interaction inPIT
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+123.156
+</td>
+<td style="text-align:right;">
+-11.531
+</td>
+<td style="text-align:right;">
+0.028
+</td>
+<td style="text-align:right;">
+0.924
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+123.156
+</td>
+<td style="text-align:right;">
+-12.764
+</td>
+<td style="text-align:right;">
+0.018
+</td>
+<td style="text-align:right;">
+0.997
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+47.189
+</td>
+<td style="text-align:right;">
+2.053
+</td>
+<td style="text-align:right;">
+0.030
+</td>
+<td style="text-align:right;">
+1.000
+</td>
+</tr>
+</tbody>
+</table>
+<p>Looks like AVPR1A is not stable to model form, and while AVP is
+stable to model form, the gene plots for this gene are rubbish (see
+below). I’m still going to plot it but likely going to exclude it.</p>
+</div>
+<div id="aic-1" class="section level3" number="2.1.3">
+<h3><span class="header-section-number">2.1.3</span> AIC</h3>
+<div id="avpr1a" class="section level4" number="2.1.3.1">
+<h4><span class="header-section-number">2.1.3.1</span> AVPR1A</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the pitads for PIT where full lm model is ~ Batch +
+Status + mean_T + Status:mean_T, but DESeq p is from full models tested
+in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AVPR1A ~ Batch
+</td>
+<td style="text-align:right;">
+115.1184
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+0.9089612
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A ~ Batch + Status
+</td>
+<td style="text-align:right;">
+117.0048
+</td>
+<td style="text-align:right;">
+-1.8863751
+</td>
+<td style="text-align:right;">
+0.7764506
+</td>
+<td style="text-align:right;">
+0.7861074
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A ~ Batch + mean T
+</td>
+<td style="text-align:right;">
+115.9911
+</td>
+<td style="text-align:right;">
+-0.8727381
+</td>
+<td style="text-align:right;">
+0.3710296
+</td>
+<td style="text-align:right;">
+0.5124718
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A ~ Batch + Status * mean T
+</td>
+<td style="text-align:right;">
+113.1438
+</td>
+<td style="text-align:right;">
+1.9745992
+</td>
+<td style="text-align:right;">
+0.0726925
+</td>
+<td style="text-align:right;">
+0.0300191
+</td>
+</tr>
+</tbody>
+</table>
+<p>Not going to accept AVPR1A, doesn’t beat AIC test and is sensitive to
+inclusion of Batch.</p>
+</div>
+<div id="vipr2-1" class="section level4" number="2.1.3.2">
+<h4><span class="header-section-number">2.1.3.2</span> VIPR2</h4>
+<p>VIPR2 was found to be associated with both mean_T and strength.</p>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the pitads for PIT where full lm model is ~
+strength.all_study, but DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIPR2 ~ 1
+</td>
+<td style="text-align:right;">
+150.6496
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+*VIPR2 ~ Strength
+</td>
+<td style="text-align:right;">
+144.7318
+</td>
+<td style="text-align:right;">
+5.917786
+</td>
+<td style="text-align:right;">
+0.0121093
+</td>
+<td style="text-align:right;">
+0.0013403
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR2 ~ mean T
+</td>
+<td style="text-align:right;">
+147.0481
+</td>
+<td style="text-align:right;">
+3.601481
+</td>
+<td style="text-align:right;">
+0.0349093
+</td>
+<td style="text-align:right;">
+0.0172009
+</td>
+</tr>
+</tbody>
+</table>
+<p><img src="04_candidate_gene_analysis_files/figure-html/PIT%20AIC%20VIPR-1.png" width="672" style="display: block; margin: auto;" /><img src="04_candidate_gene_analysis_files/figure-html/PIT%20AIC%20VIPR-2.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+</div>
+<div id="final-res-1" class="section level2" number="2.2">
+<h2><span class="header-section-number">2.2</span> Final Res</h2>
+<p>I’m excluding AVP and OXT owing to errant expression patterns, I’m
+excluding ESR1 because of an influential observation, VIPR1 and AVPR1B
+because results don’t hold after removal of PFT3, and AVPR1A because it
+failed the AIC and model parameter tests.</p>
+</div>
+<div id="gene-plots-1" class="section level2" number="2.3">
+<h2><span class="header-section-number">2.3</span> Gene Plots</h2>
+<p><img src="04_candidate_gene_analysis_files/figure-html/PIT%20plotting-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="ventromedial-hypothalamus-vmh" class="section level1"
+number="3">
+<h1><span class="header-section-number">3</span> Ventromedial
+Hypothalamus (VMH)</h1>
+<p>This tissue used additional samples for the Status comparison - thus
+the code used to plot these figures is presented.</p>
+<div class="sourceCode" id="cb3"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" tabindex="-1"></a><span class="fu">rm</span>(<span class="at">list=</span> <span class="fu">ls</span>()[<span class="sc">!</span>(<span class="fu">ls</span>() <span class="sc">%in%</span> keep)])</span>
+<span id="cb3-2"><a href="#cb3-2" tabindex="-1"></a>tissue<span class="ot">=</span><span class="st">&quot;VMH&quot;</span></span>
+<span id="cb3-3"><a href="#cb3-3" tabindex="-1"></a>vmh_key<span class="ot">&lt;-</span> <span class="fu">subset</span>(key_behav, Tissue<span class="sc">==</span><span class="st">&quot;VMH&quot;</span>)</span>
+<span id="cb3-4"><a href="#cb3-4" tabindex="-1"></a>vmh_key<span class="ot">&lt;-</span> <span class="fu">droplevels</span>(vmh_key)</span>
+<span id="cb3-5"><a href="#cb3-5" tabindex="-1"></a></span>
+<span id="cb3-6"><a href="#cb3-6" tabindex="-1"></a></span>
+<span id="cb3-7"><a href="#cb3-7" tabindex="-1"></a>vmh_data<span class="ot">&lt;-</span> data[,<span class="fu">colnames</span>(data) <span class="sc">%in%</span> <span class="fu">rownames</span>(vmh_key)]</span>
+<span id="cb3-8"><a href="#cb3-8" tabindex="-1"></a></span>
+<span id="cb3-9"><a href="#cb3-9" tabindex="-1"></a><span class="co">#remove genes with less than 5 reads</span></span>
+<span id="cb3-10"><a href="#cb3-10" tabindex="-1"></a>vmh_data<span class="sc">$</span>avg_count<span class="ot">&lt;-</span> <span class="fu">apply</span>(vmh_data, <span class="dv">1</span>, mean)</span>
+<span id="cb3-11"><a href="#cb3-11" tabindex="-1"></a>vmh_data<span class="ot">&lt;-</span> vmh_data[vmh_data<span class="sc">$</span>avg_count<span class="sc">&gt;</span><span class="dv">5</span>,]</span>
+<span id="cb3-12"><a href="#cb3-12" tabindex="-1"></a>vmh_data<span class="sc">$</span>avg_count<span class="ot">&lt;-</span><span class="cn">NULL</span></span>
+<span id="cb3-13"><a href="#cb3-13" tabindex="-1"></a></span>
+<span id="cb3-14"><a href="#cb3-14" tabindex="-1"></a></span>
+<span id="cb3-15"><a href="#cb3-15" tabindex="-1"></a><span class="co">#remove genes where &gt;50% of samples have 0 gene expression</span></span>
+<span id="cb3-16"><a href="#cb3-16" tabindex="-1"></a>vmh_data<span class="sc">$</span>percent_0<span class="ot">&lt;-</span> <span class="fu">apply</span>(vmh_data, <span class="dv">1</span>, <span class="cf">function</span>(x)<span class="fu">length</span>(x[x<span class="sc">==</span><span class="dv">0</span>]))</span>
+<span id="cb3-17"><a href="#cb3-17" tabindex="-1"></a>thresh<span class="ot">&lt;-</span> <span class="fu">ncol</span>(vmh_data)<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb3-18"><a href="#cb3-18" tabindex="-1"></a>vmh_data<span class="ot">&lt;-</span> vmh_data[vmh_data<span class="sc">$</span>percent_0<span class="sc">&lt;=</span>thresh,]</span>
+<span id="cb3-19"><a href="#cb3-19" tabindex="-1"></a>vmh_data<span class="sc">$</span>percent_0<span class="ot">&lt;-</span><span class="cn">NULL</span></span>
+<span id="cb3-20"><a href="#cb3-20" tabindex="-1"></a></span>
+<span id="cb3-21"><a href="#cb3-21" tabindex="-1"></a>dd<span class="ot">&lt;-</span> <span class="fu">DESeqDataSetFromMatrix</span>(<span class="at">countData=</span>vmh_data, <span class="at">colData=</span>vmh_key, <span class="at">design=</span> <span class="sc">~</span> Batch)</span>
+<span id="cb3-22"><a href="#cb3-22" tabindex="-1"></a>dd<span class="ot">&lt;-</span> <span class="fu">DESeq</span>(dd)</span>
+<span id="cb3-23"><a href="#cb3-23" tabindex="-1"></a></span>
+<span id="cb3-24"><a href="#cb3-24" tabindex="-1"></a></span>
+<span id="cb3-25"><a href="#cb3-25" tabindex="-1"></a>vmh_norm<span class="ot">&lt;-</span> norm_data[[<span class="dv">12</span>]]</span>
+<span id="cb3-26"><a href="#cb3-26" tabindex="-1"></a><span class="fu">rownames</span>(vmh_norm)<span class="ot">&lt;-</span> vmh_norm<span class="sc">$</span>X</span>
+<span id="cb3-27"><a href="#cb3-27" tabindex="-1"></a>vmh_norm<span class="sc">$</span>X<span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb3-28"><a href="#cb3-28" tabindex="-1"></a>vmh_norm<span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">t</span>(vmh_norm))</span>
+<span id="cb3-29"><a href="#cb3-29" tabindex="-1"></a>vmh_norm<span class="ot">&lt;-</span> vmh_norm[,<span class="fu">colnames</span>(vmh_norm) <span class="sc">%in%</span> candidates2]</span>
+<span id="cb3-30"><a href="#cb3-30" tabindex="-1"></a>vmh_norm<span class="sc">$</span>sampleID<span class="ot">&lt;-</span> <span class="fu">rownames</span>(vmh_norm)</span>
+<span id="cb3-31"><a href="#cb3-31" tabindex="-1"></a>vmh_norm<span class="ot">&lt;-</span> <span class="fu">merge</span>(vmh_norm, vmh_key, <span class="at">by=</span><span class="st">&quot;sampleID&quot;</span>)</span>
+<span id="cb3-32"><a href="#cb3-32" tabindex="-1"></a></span>
+<span id="cb3-33"><a href="#cb3-33" tabindex="-1"></a>gd<span class="ot">&lt;-</span> <span class="fu">counts</span>(dd,<span class="at">normalized=</span><span class="cn">TRUE</span>)</span>
+<span id="cb3-34"><a href="#cb3-34" tabindex="-1"></a>status_results<span class="ot">&lt;-</span> gd[<span class="fu">rownames</span>(gd) <span class="sc">%in%</span> candidates2,]</span>
+<span id="cb3-35"><a href="#cb3-35" tabindex="-1"></a>status_results<span class="ot">&lt;-</span> <span class="fu">as.data.frame</span>(<span class="fu">t</span>(status_results))</span>
+<span id="cb3-36"><a href="#cb3-36" tabindex="-1"></a>status_results<span class="sc">$</span>sampleID<span class="ot">&lt;-</span> <span class="fu">rownames</span>(status_results)</span>
+<span id="cb3-37"><a href="#cb3-37" tabindex="-1"></a>status_results<span class="ot">&lt;-</span> <span class="fu">merge</span>(vmh_key, status_results, <span class="at">by=</span><span class="st">&quot;sampleID&quot;</span>)</span></code></pre></div>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant results from DESeq2 before FDR correction in the VMH. Where
+pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected
+p-value (for the number of genes in the sample per model)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+GNRH1
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+40.945
+</td>
+<td style="text-align:right;">
+7.854
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.064
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+131.759
+</td>
+<td style="text-align:right;">
+2.227
+</td>
+<td style="text-align:right;">
+0.003
+</td>
+<td style="text-align:right;">
+0.455
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+751.303
+</td>
+<td style="text-align:right;">
+-1.048
+</td>
+<td style="text-align:right;">
+0.005
+</td>
+<td style="text-align:right;">
+0.608
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Batch + Year + strength.all_study
+</td>
+<td style="text-align:right;">
+951.594
+</td>
+<td style="text-align:right;">
+0.632
+</td>
+<td style="text-align:right;">
+0.010
+</td>
+<td style="text-align:right;">
+0.104
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ Batch + Year + mean_T
+</td>
+<td style="text-align:right;">
+1481.917
+</td>
+<td style="text-align:right;">
+2.511
+</td>
+<td style="text-align:right;">
+0.002
+</td>
+<td style="text-align:right;">
+0.327
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR2
+</td>
+<td style="text-align:left;">
+~ Batch + Year + mean_T
+</td>
+<td style="text-align:right;">
+10.815
+</td>
+<td style="text-align:right;">
+-1.125
+</td>
+<td style="text-align:right;">
+0.008
+</td>
+<td style="text-align:right;">
+0.588
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR2
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+944.935
+</td>
+<td style="text-align:right;">
+-0.445
+</td>
+<td style="text-align:right;">
+0.003
+</td>
+<td style="text-align:right;">
+0.660
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GNRH1
+</td>
+<td style="text-align:left;">
+~ Batch + Year + strength.all_study
+</td>
+<td style="text-align:right;">
+40.945
+</td>
+<td style="text-align:right;">
+2.786
+</td>
+<td style="text-align:right;">
+0.034
+</td>
+<td style="text-align:right;">
+0.281
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXT
+</td>
+<td style="text-align:left;">
+~ Batch + Year + mean_T
+</td>
+<td style="text-align:right;">
+1460.675
+</td>
+<td style="text-align:right;">
+3.140
+</td>
+<td style="text-align:right;">
+0.004
+</td>
+<td style="text-align:right;">
+0.394
+</td>
+</tr>
+</tbody>
+</table>
+<div id="exploring-status-specific-expression-2" class="section level2"
+number="3.1">
+<h2><span class="header-section-number">3.1</span> Exploring status
+specific expression</h2>
+<p>A reviewer had a concern about overparameterizing the interaction
+models. Therefore, for the interaction models we ran an alternate set of
+models to test whether number of model parameters influenced whether we
+got a significant result on that gene. So we ran reduced models to test
+whether we still those effects in reduced models, and whether batch had
+a significant effect on any candidate genes. The latter will decide
+whether I need to also include the batch variables in follow up lms and
+AIC.</p>
+<div id="batch-2" class="section level3" number="3.1.1">
+<h3><span class="header-section-number">3.1.1</span> Batch</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Batch variable results for VMH
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+GNRH1
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+40.945
+</td>
+<td style="text-align:right;">
+7.854
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+131.759
+</td>
+<td style="text-align:right;">
+2.227
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.061
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+951.594
+</td>
+<td style="text-align:right;">
+-0.783
+</td>
+<td style="text-align:right;">
+0.002
+</td>
+<td style="text-align:right;">
+0.090
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CYP19A1
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+5683.253
+</td>
+<td style="text-align:right;">
+-1.395
+</td>
+<td style="text-align:right;">
+0.013
+</td>
+<td style="text-align:right;">
+0.254
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1186.689
+</td>
+<td style="text-align:right;">
+-0.522
+</td>
+<td style="text-align:right;">
+0.014
+</td>
+<td style="text-align:right;">
+0.258
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+751.303
+</td>
+<td style="text-align:right;">
+-1.048
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.005
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR2
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+820.721
+</td>
+<td style="text-align:right;">
+0.026
+</td>
+<td style="text-align:right;">
+0.023
+</td>
+<td style="text-align:right;">
+0.329
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="alternate-models-2" class="section level3" number="3.1.2">
+<h3><span class="header-section-number">3.1.2</span> Alternate
+models</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Results from alternate models for interaction inVMH
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+GNRH1
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+40.945
+</td>
+<td style="text-align:right;">
+7.854
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.064
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+131.759
+</td>
+<td style="text-align:right;">
+2.227
+</td>
+<td style="text-align:right;">
+0.003
+</td>
+<td style="text-align:right;">
+0.455
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+751.303
+</td>
+<td style="text-align:right;">
+-1.048
+</td>
+<td style="text-align:right;">
+0.005
+</td>
+<td style="text-align:right;">
+0.608
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
+<p>Batch + Year seems to be important</p>
+</div>
+<div id="aic-2" class="section level3" number="3.1.3">
+<h3><span class="header-section-number">3.1.3</span> AIC</h3>
+<div id="gnrh1" class="section level4" number="3.1.3.1">
+<h4><span class="header-section-number">3.1.3.1</span> GNRH1</h4>
+<img src="04_candidate_gene_analysis_files/figure-html/VMH%20AIC%20GNRH1-1.png" width="672" style="display: block; margin: auto;" />
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in VMH where full lm model is ~ Batch + Year + Status
++ mean_T + Status:mean_T, but DESeq p is from full models tested in
+DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+GNRH1 ~ 1
+</td>
+<td style="text-align:right;">
+141.5179
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GNRH1 ~ Batch + Year + Status
+</td>
+<td style="text-align:right;">
+142.6422
+</td>
+<td style="text-align:right;">
+-1.124297
+</td>
+<td style="text-align:right;">
+0.0745542
+</td>
+<td style="text-align:right;">
+0.8201317
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GNRH1 ~ Batch + Year + mean T
+</td>
+<td style="text-align:right;">
+137.9502
+</td>
+<td style="text-align:right;">
+3.567625
+</td>
+<td style="text-align:right;">
+0.0373972
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GNRH1 ~ Batch + Year + Status + mean T + Status:meanT
+</td>
+<td style="text-align:right;">
+136.7399
+</td>
+<td style="text-align:right;">
+4.777916
+</td>
+<td style="text-align:right;">
+0.3478811
+</td>
+<td style="text-align:right;">
+0.0000989
+</td>
+</tr>
+</tbody>
+</table>
+<p>Rubbish</p>
+</div>
+<div id="avpr1a-1" class="section level4" number="3.1.3.2">
+<h4><span class="header-section-number">3.1.3.2</span> AVPR1A</h4>
+<p><img src="04_candidate_gene_analysis_files/figure-html/VMH%20AIC%20AVPR1A-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>Rubbish plot, and requires batch + year parameters to be significant.
+OVERPARAMETERIZATION.</p>
+</div>
+<div id="pgr" class="section level4" number="3.1.3.3">
+<h4><span class="header-section-number">3.1.3.3</span> PGR</h4>
+<p><img src="04_candidate_gene_analysis_files/figure-html/VMH%20AIC%20PGR-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>Rubbish plot, and requires batch + year parameters to be significant.
+OVERPARAMETERIZATION.</p>
+</div>
+</div>
+</div>
+<div id="final-res-2" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> Final Res</h2>
+<p>Note these decisions are made after the plotting below, but I am
+including a decision element in the plotting so that’s why it’s
+above.</p>
+<p>I am excluding AR on account of low Rsq,GNRH1, AVP and OXT on account
+of influential observations and overparameterization.</p>
+</div>
+<div id="gene-plots-2" class="section level2" number="3.3">
+<h2><span class="header-section-number">3.3</span> Gene Plots</h2>
+<p><img src="04_candidate_gene_analysis_files/figure-html/VMH%20plotting-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="anterior-hypothalamus-ah" class="section level1" number="4">
+<h1><span class="header-section-number">4</span> Anterior Hypothalamus
+(AH)</h1>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant results from DESeq2 before FDR correction in the AH. Where
+pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected
+p-value (for the number of genes in the sample per model)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+GNRH1
+</td>
+<td style="text-align:left;">
+~ Status
+</td>
+<td style="text-align:right;">
+5.334
+</td>
+<td style="text-align:right;">
+1.749
+</td>
+<td style="text-align:right;">
+0.04
+</td>
+<td style="text-align:right;">
+0.581
+</td>
+</tr>
+</tbody>
+</table>
+<p>In the latest revision, I realized there was a mistake in the code
+for AH so the results are slightly different for this nucleus and then
+this means we have a significant gene! But still no interaction
+effects.</p>
+<div id="gene-plots-3" class="section level2" number="4.1">
+<h2><span class="header-section-number">4.1</span> Gene Plots</h2>
+</div>
+</div>
+<div id="paraventricular-nucleus-pvn" class="section level1" number="5">
+<h1><span class="header-section-number">5</span> Paraventricular Nucleus
+(PVN)</h1>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant results from DESeq2 before FDR correction in the PVN. Where
+pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected
+p-value (for the number of genes in the sample per model)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+543.241
+</td>
+<td style="text-align:right;">
+-0.724
+</td>
+<td style="text-align:right;">
+0.007
+</td>
+<td style="text-align:right;">
+0.842
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXT
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+32779.237
+</td>
+<td style="text-align:right;">
+1.204
+</td>
+<td style="text-align:right;">
+0.033
+</td>
+<td style="text-align:right;">
+0.979
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ mean_T
+</td>
+<td style="text-align:right;">
+543.241
+</td>
+<td style="text-align:right;">
+0.353
+</td>
+<td style="text-align:right;">
+0.016
+</td>
+<td style="text-align:right;">
+0.552
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ strength.all_study
+</td>
+<td style="text-align:right;">
+543.241
+</td>
+<td style="text-align:right;">
+0.192
+</td>
+<td style="text-align:right;">
+0.035
+</td>
+<td style="text-align:right;">
+0.584
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ strength.all_study
+</td>
+<td style="text-align:right;">
+30862.339
+</td>
+<td style="text-align:right;">
+-0.504
+</td>
+<td style="text-align:right;">
+0.027
+</td>
+<td style="text-align:right;">
+0.581
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR2
+</td>
+<td style="text-align:left;">
+~ strength.all_study
+</td>
+<td style="text-align:right;">
+14.871
+</td>
+<td style="text-align:right;">
+0.498
+</td>
+<td style="text-align:right;">
+0.024
+</td>
+<td style="text-align:right;">
+0.581
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR2
+</td>
+<td style="text-align:left;">
+~ Status
+</td>
+<td style="text-align:right;">
+818.718
+</td>
+<td style="text-align:right;">
+-0.641
+</td>
+<td style="text-align:right;">
+0.006
+</td>
+<td style="text-align:right;">
+0.177
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXT
+</td>
+<td style="text-align:left;">
+~ strength.all_study
+</td>
+<td style="text-align:right;">
+32779.237
+</td>
+<td style="text-align:right;">
+-0.331
+</td>
+<td style="text-align:right;">
+0.036
+</td>
+<td style="text-align:right;">
+0.594
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1
+</td>
+<td style="text-align:left;">
+~ Status
+</td>
+<td style="text-align:right;">
+380.233
+</td>
+<td style="text-align:right;">
+0.307
+</td>
+<td style="text-align:right;">
+0.024
+</td>
+<td style="text-align:right;">
+0.358
+</td>
+</tr>
+</tbody>
+</table>
+<div id="exploring-status-specific-expression-3" class="section level2"
+number="5.1">
+<h2><span class="header-section-number">5.1</span> Exploring status
+specific expression</h2>
+<p>A reviewer had a concern about overparameterizing the interaction
+models. Therefore, for the interaction models we ran an alternate set of
+models to test whether number of model parameters influenced whether we
+got a significant result on that gene. So we ran reduced models to test
+whether we still those effects in reduced models, and whether batch had
+a significant effect on any candidate genes. The latter will decide
+whether I need to also include the batch variables in follow up lms and
+AIC.</p>
+<p>There were no relevant batch variables for PVN.</p>
+<div id="alternate-models-3" class="section level3" number="5.1.1">
+<h3><span class="header-section-number">5.1.1</span> Alternate
+models</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Results from alternate models for interaction inPVN
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+543.241
+</td>
+<td style="text-align:right;">
+-0.724
+</td>
+<td style="text-align:right;">
+0.007
+</td>
+<td style="text-align:right;">
+0.842
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXT
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+32779.237
+</td>
+<td style="text-align:right;">
+1.204
+</td>
+<td style="text-align:right;">
+0.033
+</td>
+<td style="text-align:right;">
+0.979
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="aic-3" class="section level3" number="5.1.2">
+<h3><span class="header-section-number">5.1.2</span> AIC</h3>
+<div id="ar" class="section level4" number="5.1.2.1">
+<h4><span class="header-section-number">5.1.2.1</span> AR</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the pvnads for PVN where full lm model is ~ Status
++ mean_T + Status:mean_T, but DESeq p is from full models tested in
+DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AR ~ 1
+</td>
+<td style="text-align:right;">
+157.9406
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR ~ Status
+</td>
+<td style="text-align:right;">
+159.9100
+</td>
+<td style="text-align:right;">
+-1.969347
+</td>
+<td style="text-align:right;">
+0.8761214
+</td>
+<td style="text-align:right;">
+0.8465120
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR ~ mean T
+</td>
+<td style="text-align:right;">
+156.5464
+</td>
+<td style="text-align:right;">
+1.394159
+</td>
+<td style="text-align:right;">
+0.1007234
+</td>
+<td style="text-align:right;">
+0.0157966
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+*AR ~ Status + mean T + Status:meanT
+</td>
+<td style="text-align:right;">
+152.1256
+</td>
+<td style="text-align:right;">
+5.815050
+</td>
+<td style="text-align:right;">
+0.0391226
+</td>
+<td style="text-align:right;">
+0.0071692
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR ~ Strength
+</td>
+<td style="text-align:right;">
+155.4736
+</td>
+<td style="text-align:right;">
+2.467020
+</td>
+<td style="text-align:right;">
+0.0596537
+</td>
+<td style="text-align:right;">
+0.0345817
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="oxt" class="section level4" number="5.1.2.2">
+<h4><span class="header-section-number">5.1.2.2</span> OXT</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in PVN where full lm model is ~ Status + mean_T +
+Status:mean_T, but DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+OXT ~ 1
+</td>
+<td style="text-align:right;">
+263.5999
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXT ~ Status
+</td>
+<td style="text-align:right;">
+264.9400
+</td>
+<td style="text-align:right;">
+-1.3400716
+</td>
+<td style="text-align:right;">
+0.4694425
+</td>
+<td style="text-align:right;">
+0.4351629
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXT ~ mean T
+</td>
+<td style="text-align:right;">
+265.5424
+</td>
+<td style="text-align:right;">
+-1.9425292
+</td>
+<td style="text-align:right;">
+0.8309753
+</td>
+<td style="text-align:right;">
+0.8499582
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXT ~ Status + mean T + Status:meanT
+</td>
+<td style="text-align:right;">
+264.4340
+</td>
+<td style="text-align:right;">
+-0.8340714
+</td>
+<td style="text-align:right;">
+0.1127561
+</td>
+<td style="text-align:right;">
+0.0328714
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXT ~ Strength
+</td>
+<td style="text-align:right;">
+262.2297
+</td>
+<td style="text-align:right;">
+1.3701415
+</td>
+<td style="text-align:right;">
+0.1019376
+</td>
+<td style="text-align:right;">
+0.0360569
+</td>
+</tr>
+</tbody>
+</table>
+<p><img src="04_candidate_gene_analysis_files/figure-html/PVN%20AIC%20OXT-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+</div>
+<div id="final-res-3" class="section level2" number="5.2">
+<h2><span class="header-section-number">5.2</span> Final Res</h2>
+<p>Note these decisions are made after the plotting below, but I am
+including a decision element in the plotting so that’s why it’s
+above.</p>
+<p>I am excluding OXT, AVP,</p>
+</div>
+<div id="gene-plots-4" class="section level2" number="5.3">
+<h2><span class="header-section-number">5.3</span> Gene Plots</h2>
+<p><img src="04_candidate_gene_analysis_files/figure-html/PVN%20plotting-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="medial-preoptic-area-pom" class="section level1" number="6">
+<h1><span class="header-section-number">6</span> Medial Preoptic Area
+(POM)</h1>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant results from DESeq2 before FDR correction in the POM. Where
+pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected
+p-value (for the number of genes in the sample per model)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+3497.113
+</td>
+<td style="text-align:right;">
+0.624
+</td>
+<td style="text-align:right;">
+0.002
+</td>
+<td style="text-align:right;">
+0.348
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ mean_T
+</td>
+<td style="text-align:right;">
+794.629
+</td>
+<td style="text-align:right;">
+0.665
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+828.546
+</td>
+<td style="text-align:right;">
+0.667
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.347
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CYP19A1
+</td>
+<td style="text-align:left;">
+~ mean_T
+</td>
+<td style="text-align:right;">
+1533.720
+</td>
+<td style="text-align:right;">
+0.546
+</td>
+<td style="text-align:right;">
+0.016
+</td>
+<td style="text-align:right;">
+0.370
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GNRH1
+</td>
+<td style="text-align:left;">
+~ mean_T
+</td>
+<td style="text-align:right;">
+1318.753
+</td>
+<td style="text-align:right;">
+0.399
+</td>
+<td style="text-align:right;">
+0.006
+</td>
+<td style="text-align:right;">
+0.208
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+1060.152
+</td>
+<td style="text-align:right;">
+0.443
+</td>
+<td style="text-align:right;">
+0.006
+</td>
+<td style="text-align:right;">
+0.701
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR
+</td>
+<td style="text-align:left;">
+~ mean_T
+</td>
+<td style="text-align:right;">
+4007.589
+</td>
+<td style="text-align:right;">
+0.254
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.054
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+4693.061
+</td>
+<td style="text-align:right;">
+0.232
+</td>
+<td style="text-align:right;">
+0.016
+</td>
+<td style="text-align:right;">
+0.910
+</td>
+</tr>
+</tbody>
+</table>
+<div id="exploring-status-specific-expression-4" class="section level2"
+number="6.1">
+<h2><span class="header-section-number">6.1</span> Exploring status
+specific expression</h2>
+<p>A reviewer had a concern about overparameterizing the interaction
+models. Therefore, for the interaction models we ran an alternate set of
+models to test whether number of model parameters influenced whether we
+got a significant result on that gene. So we ran reduced models to test
+whether we still those effects in reduced models, and whether batch had
+a significant effect on any candidate genes. The latter will decide
+whether I need to also include the batch variables in follow up lms and
+AIC.</p>
+<div id="batch-3" class="section level3" number="6.1.1">
+<h3><span class="header-section-number">6.1.1</span> Batch</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Batch variable results for POM
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+</tr>
+</tbody>
+</table>
+<p>Batch wasn’t important for anyone!</p>
+</div>
+<div id="alternate-models-4" class="section level3" number="6.1.2">
+<h3><span class="header-section-number">6.1.2</span> Alternate
+models</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Results from alternate models for interaction in POM
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+3497.113
+</td>
+<td style="text-align:right;">
+0.624
+</td>
+<td style="text-align:right;">
+0.002
+</td>
+<td style="text-align:right;">
+0.348
+</td>
+</tr>
+</tbody>
+</table>
+<p>VIP still looks good in the reduced model.</p>
+</div>
+<div id="aic-4" class="section level3" number="6.1.3">
+<h3><span class="header-section-number">6.1.3</span> AIC</h3>
+<div id="vip" class="section level4" number="6.1.3.1">
+<h4><span class="header-section-number">6.1.3.1</span> VIP</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the pomads for POM where full lm model is ~ Status
++ mean_T + Status:mean_T, but DESeq p is from full models tested in
+DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIP ~ 1
+</td>
+<td style="text-align:right;">
+175.5976
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP ~ Status
+</td>
+<td style="text-align:right;">
+177.5578
+</td>
+<td style="text-align:right;">
+-1.960239
+</td>
+<td style="text-align:right;">
+0.8607376
+</td>
+<td style="text-align:right;">
+0.6559350
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP ~ mean T
+</td>
+<td style="text-align:right;">
+177.5926
+</td>
+<td style="text-align:right;">
+-1.995031
+</td>
+<td style="text-align:right;">
+0.9505483
+</td>
+<td style="text-align:right;">
+0.9479884
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP ~ Status + mean T + Status:mean T
+</td>
+<td style="text-align:right;">
+173.8064
+</td>
+<td style="text-align:right;">
+1.791169
+</td>
+<td style="text-align:right;">
+0.0321337
+</td>
+<td style="text-align:right;">
+0.0024520
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div id="ar-1" class="section level4" number="6.1.3.2">
+<h4><span class="header-section-number">6.1.3.2</span> AR</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the pomads for POM where full lm model is ~ Status
++ mean_T + Status:mean_T, but DESeq p is from full models tested in
+DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AR ~ 1
+</td>
+<td style="text-align:right;">
+157.3320
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR ~ Status
+</td>
+<td style="text-align:right;">
+155.3120
+</td>
+<td style="text-align:right;">
+2.019918
+</td>
+<td style="text-align:right;">
+0.0774724
+</td>
+<td style="text-align:right;">
+0.0004304
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+*AR ~ mean T
+</td>
+<td style="text-align:right;">
+144.9675
+</td>
+<td style="text-align:right;">
+12.364422
+</td>
+<td style="text-align:right;">
+0.0008233
+</td>
+<td style="text-align:right;">
+0.0000002
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR ~ Status * mean T
+</td>
+<td style="text-align:right;">
+147.2258
+</td>
+<td style="text-align:right;">
+10.106137
+</td>
+<td style="text-align:right;">
+0.4983141
+</td>
+<td style="text-align:right;">
+0.9714454
+</td>
+</tr>
+</tbody>
+</table>
+<p>picking mean T</p>
+</div>
+<div id="prlr" class="section level4" number="6.1.3.3">
+<h4><span class="header-section-number">6.1.3.3</span> PRLR</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the POM where full lm model is ~ Status + mean_T +
+Status:mean_T, but DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+PRLR ~ 1
+</td>
+<td style="text-align:right;">
+175.7063
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR ~ Status
+</td>
+<td style="text-align:right;">
+175.7720
+</td>
+<td style="text-align:right;">
+-0.065642
+</td>
+<td style="text-align:right;">
+0.2208905
+</td>
+<td style="text-align:right;">
+0.0158496
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+*PRLR ~ mean T
+</td>
+<td style="text-align:right;">
+168.4998
+</td>
+<td style="text-align:right;">
+7.206540
+</td>
+<td style="text-align:right;">
+0.0074753
+</td>
+<td style="text-align:right;">
+0.0007807
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR ~ Status * mean T
+</td>
+<td style="text-align:right;">
+169.4355
+</td>
+<td style="text-align:right;">
+6.270816
+</td>
+<td style="text-align:right;">
+0.1794988
+</td>
+<td style="text-align:right;">
+0.1864921
+</td>
+</tr>
+</tbody>
+</table>
+<p>picking meanT</p>
+</div>
+</div>
+</div>
+<div id="final-res-4" class="section level2" number="6.2">
+<h2><span class="header-section-number">6.2</span> Final Res</h2>
+<p>Note these decisions are made after the plotting below, but I am
+including a decision element in the plotting so that’s why it’s above.
+I’m dropping VIP, AR (Status) + PRLR (Status)</p>
+</div>
+<div id="gene-plots-5" class="section level2" number="6.3">
+<h2><span class="header-section-number">6.3</span> Gene Plots</h2>
+<p><img src="04_candidate_gene_analysis_files/figure-html/POM%20plotting-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="dorsomedial-intercollicular-nucleus-ico" class="section level1"
+number="7">
+<h1><span class="header-section-number">7</span> Dorsomedial
+Intercollicular Nucleus (ICo)</h1>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant results from DESeq2 before FDR correction in the ICO. Where
+pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected
+p-value (for the number of genes in the sample per model)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+OXTR
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+23.858
+</td>
+<td style="text-align:right;">
+3.536
+</td>
+<td style="text-align:right;">
+0.024
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR2
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+233.803
+</td>
+<td style="text-align:right;">
+-0.910
+</td>
+<td style="text-align:right;">
+0.035
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+85.431
+</td>
+<td style="text-align:right;">
+2.132
+</td>
+<td style="text-align:right;">
+0.036
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Batch + Year + mean_T
+</td>
+<td style="text-align:right;">
+405.910
+</td>
+<td style="text-align:right;">
+-0.983
+</td>
+<td style="text-align:right;">
+0.011
+</td>
+<td style="text-align:right;">
+0.172
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR2
+</td>
+<td style="text-align:left;">
+~ Batch + Year + strength.all_study
+</td>
+<td style="text-align:right;">
+150.055
+</td>
+<td style="text-align:right;">
+-0.351
+</td>
+<td style="text-align:right;">
+0.016
+</td>
+<td style="text-align:right;">
+0.195
+</td>
+</tr>
+</tbody>
+</table>
+<div id="exploring-status-specific-expression-5" class="section level2"
+number="7.1">
+<h2><span class="header-section-number">7.1</span> Exploring status
+specific expression</h2>
+<p>A reviewer had a concern about overparameterizing the interaction
+models. Therefore, for the interaction models we ran an alternate set of
+models to test whether number of model parameters influenced whether we
+got a significant result on that gene. So we ran reduced models to test
+whether we still those effects in reduced models, and whether batch had
+a significant effect on any candidate genes. The latter will decide
+whether I need to also include the batch variables in follow up lms and
+AIC.</p>
+<div id="batch-4" class="section level3" number="7.1.1">
+<h3><span class="header-section-number">7.1.1</span> Batch</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Batch variable results for ICO
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+PRLR
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1680.946
+</td>
+<td style="text-align:right;">
+0.4
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.193
+</td>
+</tr>
+</tbody>
+</table>
+<p>Batch wasn’t important for anyone identified as being significant for
+our interest variables.</p>
+</div>
+<div id="alternate-models-5" class="section level3" number="7.1.2">
+<h3><span class="header-section-number">7.1.2</span> Alternate
+models</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Results from alternate models for interaction in ICO
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AVPR1A
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+85.431
+</td>
+<td style="text-align:right;">
+1.814
+</td>
+<td style="text-align:right;">
+0.019
+</td>
+<td style="text-align:right;">
+1.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SRD5A2
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+159.287
+</td>
+<td style="text-align:right;">
+-0.790
+</td>
+<td style="text-align:right;">
+0.028
+</td>
+<td style="text-align:right;">
+1.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXTR
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+23.858
+</td>
+<td style="text-align:right;">
+3.535
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.638
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+44.992
+</td>
+<td style="text-align:right;">
+1.757
+</td>
+<td style="text-align:right;">
+0.009
+</td>
+<td style="text-align:right;">
+0.861
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXTR
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+23.858
+</td>
+<td style="text-align:right;">
+3.536
+</td>
+<td style="text-align:right;">
+0.024
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR2
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+233.803
+</td>
+<td style="text-align:right;">
+-0.910
+</td>
+<td style="text-align:right;">
+0.035
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A
+</td>
+<td style="text-align:left;">
+~ Batch + Year + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+85.431
+</td>
+<td style="text-align:right;">
+2.132
+</td>
+<td style="text-align:right;">
+0.036
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+</tr>
+</tbody>
+</table>
+<p>OXTR and AVPR1A are robust to model choice.</p>
+</div>
+<div id="aic-5" class="section level3" number="7.1.3">
+<h3><span class="header-section-number">7.1.3</span> AIC</h3>
+<div id="oxtr" class="section level4" number="7.1.3.1">
+<h4><span class="header-section-number">7.1.3.1</span> OXTR</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in ICO where full lm model is ~ Status + mean_T +
+Status:mean_T, but DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+OXTR ~ 1
+</td>
+<td style="text-align:right;">
+109.2379
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXTR ~ Status
+</td>
+<td style="text-align:right;">
+111.1880
+</td>
+<td style="text-align:right;">
+-1.9500375
+</td>
+<td style="text-align:right;">
+0.8440949
+</td>
+<td style="text-align:right;">
+0.8310673
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXTR ~ mean T
+</td>
+<td style="text-align:right;">
+108.5720
+</td>
+<td style="text-align:right;">
+0.6658985
+</td>
+<td style="text-align:right;">
+0.1506183
+</td>
+<td style="text-align:right;">
+0.2864778
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXTR ~ Status + meanT + Status:meanT
+</td>
+<td style="text-align:right;">
+107.1228
+</td>
+<td style="text-align:right;">
+2.1151169
+</td>
+<td style="text-align:right;">
+0.0756889
+</td>
+<td style="text-align:right;">
+0.0014851
+</td>
+</tr>
+</tbody>
+</table>
+<p>Influential observations</p>
+</div>
+<div id="avpr1a-2" class="section level4" number="7.1.3.2">
+<h4><span class="header-section-number">7.1.3.2</span> AVPR1A</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the icoads for ICO where full lm model is ~ Status
++ mean_T + Status:mean_T, but DESeq p is from full models tested in
+DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AVPR1A ~ 1
+</td>
+<td style="text-align:right;">
+119.4667
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A ~ Status
+</td>
+<td style="text-align:right;">
+121.0788
+</td>
+<td style="text-align:right;">
+-1.6120640
+</td>
+<td style="text-align:right;">
+0.5836725
+</td>
+<td style="text-align:right;">
+0.7029493
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A ~ mean T
+</td>
+<td style="text-align:right;">
+121.0556
+</td>
+<td style="text-align:right;">
+-1.5888843
+</td>
+<td style="text-align:right;">
+0.5726409
+</td>
+<td style="text-align:right;">
+0.6493596
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A ~ Status + meanT + Status:meanT
+</td>
+<td style="text-align:right;">
+119.2868
+</td>
+<td style="text-align:right;">
+0.1799397
+</td>
+<td style="text-align:right;">
+0.0877082
+</td>
+<td style="text-align:right;">
+0.0185961
+</td>
+</tr>
+</tbody>
+</table>
+<p><img src="04_candidate_gene_analysis_files/figure-html/ico%20AIC%20AVPR1A-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+</div>
+<div id="final-res-5" class="section level2" number="7.2">
+<h2><span class="header-section-number">7.2</span> Final Res</h2>
+<p>Reject ESR2 because it was sensitive to batch parameters. OXTR
+because of the influential observations and AVPR1A because it didn’t
+make the AIC test.</p>
+<p>Note these decisions are made after the plotting below, but I am
+including a decision element in the plotting so that’s why it’s
+above.</p>
+</div>
+<div id="gene-plots-6" class="section level2" number="7.3">
+<h2><span class="header-section-number">7.3</span> Gene Plots</h2>
+</div>
+</div>
+<div id="midbrain-central-gray-gct" class="section level1" number="8">
+<h1><span class="header-section-number">8</span> Midbrain Central Gray
+(GCT)</h1>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant results from DESeq2 before FDR correction in the GCT. Where
+pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected
+p-value (for the number of genes in the sample per model)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+PGR
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+36.895
+</td>
+<td style="text-align:right;">
+1.861
+</td>
+<td style="text-align:right;">
+0.005
+</td>
+<td style="text-align:right;">
+0.132
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1047.430
+</td>
+<td style="text-align:right;">
+1.588
+</td>
+<td style="text-align:right;">
+0.006
+</td>
+<td style="text-align:right;">
+0.143
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+734.935
+</td>
+<td style="text-align:right;">
+0.703
+</td>
+<td style="text-align:right;">
+0.011
+</td>
+<td style="text-align:right;">
+0.200
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+76.686
+</td>
+<td style="text-align:right;">
+1.102
+</td>
+<td style="text-align:right;">
+0.041
+</td>
+<td style="text-align:right;">
+0.359
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Batch + strength.all_study
+</td>
+<td style="text-align:right;">
+149.977
+</td>
+<td style="text-align:right;">
+0.215
+</td>
+<td style="text-align:right;">
+0.032
+</td>
+<td style="text-align:right;">
+0.530
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CYP19A1
+</td>
+<td style="text-align:left;">
+~ Batch + mean_T
+</td>
+<td style="text-align:right;">
+17.704
+</td>
+<td style="text-align:right;">
+-1.269
+</td>
+<td style="text-align:right;">
+0.002
+</td>
+<td style="text-align:right;">
+0.347
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+OXT
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+8.100
+</td>
+<td style="text-align:right;">
+-3.087
+</td>
+<td style="text-align:right;">
+0.005
+</td>
+<td style="text-align:right;">
+0.175
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR
+</td>
+<td style="text-align:left;">
+~ Batch + mean_T
+</td>
+<td style="text-align:right;">
+36.895
+</td>
+<td style="text-align:right;">
+-0.801
+</td>
+<td style="text-align:right;">
+0.014
+</td>
+<td style="text-align:right;">
+0.710
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR
+</td>
+<td style="text-align:left;">
+~ Batch + strength.all_study
+</td>
+<td style="text-align:right;">
+36.895
+</td>
+<td style="text-align:right;">
+-0.656
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.138
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Batch + mean_T
+</td>
+<td style="text-align:right;">
+1047.430
+</td>
+<td style="text-align:right;">
+-0.831
+</td>
+<td style="text-align:right;">
+0.009
+</td>
+<td style="text-align:right;">
+0.589
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+1036.449
+</td>
+<td style="text-align:right;">
+-0.852
+</td>
+<td style="text-align:right;">
+0.046
+</td>
+<td style="text-align:right;">
+0.637
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Batch + strength.all_study
+</td>
+<td style="text-align:right;">
+1047.430
+</td>
+<td style="text-align:right;">
+-0.555
+</td>
+<td style="text-align:right;">
+0.007
+</td>
+<td style="text-align:right;">
+0.340
+</td>
+</tr>
+</tbody>
+</table>
+<div id="exploring-status-specific-expression-6" class="section level2"
+number="8.1">
+<h2><span class="header-section-number">8.1</span> Exploring status
+specific expression</h2>
+<p>A reviewer had a concern about overparameterizing the interaction
+models. Therefore, for the interaction models we ran an alternate set of
+models to test whether number of model parameters influenced whether we
+got a significant result on that gene. So we ran reduced models to test
+whether we still those effects in reduced models, and whether batch had
+a significant effect on any candidate genes. The latter will decide
+whether I need to also include the batch variables in follow up lms and
+AIC.</p>
+<div id="batch-5" class="section level3" number="8.1.1">
+<h3><span class="header-section-number">8.1.1</span> Batch</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Batch variable results for GCT
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+SRD5A2
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+116.627
+</td>
+<td style="text-align:right;">
+-0.259
+</td>
+<td style="text-align:right;">
+0.036
+</td>
+<td style="text-align:right;">
+0.170
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+149.977
+</td>
+<td style="text-align:right;">
+-0.200
+</td>
+<td style="text-align:right;">
+0.027
+</td>
+<td style="text-align:right;">
+0.144
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+667.695
+</td>
+<td style="text-align:right;">
+0.291
+</td>
+<td style="text-align:right;">
+0.011
+</td>
+<td style="text-align:right;">
+0.086
+</td>
+</tr>
+</tbody>
+</table>
+<p>Batch isn’t important for VIP, ESR1, PGR, PRLR.</p>
+</div>
+<div id="alternate-models-6" class="section level3" number="8.1.2">
+<h3><span class="header-section-number">8.1.2</span> Alternate
+models</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Results from alternate models for interaction in GCT
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1047.430
+</td>
+<td style="text-align:right;">
+1.722
+</td>
+<td style="text-align:right;">
+0.007
+</td>
+<td style="text-align:right;">
+0.350
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+76.686
+</td>
+<td style="text-align:right;">
+1.079
+</td>
+<td style="text-align:right;">
+0.037
+</td>
+<td style="text-align:right;">
+0.579
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+36.895
+</td>
+<td style="text-align:right;">
+1.886
+</td>
+<td style="text-align:right;">
+0.003
+</td>
+<td style="text-align:right;">
+0.244
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+734.935
+</td>
+<td style="text-align:right;">
+0.629
+</td>
+<td style="text-align:right;">
+0.030
+</td>
+<td style="text-align:right;">
+0.538
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+36.895
+</td>
+<td style="text-align:right;">
+1.861
+</td>
+<td style="text-align:right;">
+0.005
+</td>
+<td style="text-align:right;">
+0.132
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1047.430
+</td>
+<td style="text-align:right;">
+1.588
+</td>
+<td style="text-align:right;">
+0.006
+</td>
+<td style="text-align:right;">
+0.143
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+734.935
+</td>
+<td style="text-align:right;">
+0.703
+</td>
+<td style="text-align:right;">
+0.011
+</td>
+<td style="text-align:right;">
+0.200
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+76.686
+</td>
+<td style="text-align:right;">
+1.102
+</td>
+<td style="text-align:right;">
+0.041
+</td>
+<td style="text-align:right;">
+0.359
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
+<p>All are robust to batch parameter.</p>
+</div>
+<div id="aic-6" class="section level3" number="8.1.3">
+<h3><span class="header-section-number">8.1.3</span> AIC</h3>
+<div id="vip-1" class="section level4" number="8.1.3.1">
+<h4><span class="header-section-number">8.1.3.1</span> VIP</h4>
+<img src="04_candidate_gene_analysis_files/figure-html/GCT%20AIC%20VIP-1.png" width="672" style="display: block; margin: auto;" />
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the gctads for GCT where full lm model is ~ Status
++ mean_T + Status:mean_T, but DESeq p is from full models tested in
+DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIP ~ 1
+</td>
+<td style="text-align:right;">
+190.5764
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP ~ Status
+</td>
+<td style="text-align:right;">
+188.6497
+</td>
+<td style="text-align:right;">
+1.926707
+</td>
+<td style="text-align:right;">
+0.0774627
+</td>
+<td style="text-align:right;">
+0.0460933
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP ~ mean T
+</td>
+<td style="text-align:right;">
+186.6658
+</td>
+<td style="text-align:right;">
+3.910552
+</td>
+<td style="text-align:right;">
+0.0302392
+</td>
+<td style="text-align:right;">
+0.0085652
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+*VIP ~ Status + mean T + Status:meanT
+</td>
+<td style="text-align:right;">
+179.7510
+</td>
+<td style="text-align:right;">
+10.825368
+</td>
+<td style="text-align:right;">
+0.0153550
+</td>
+<td style="text-align:right;">
+0.0069405
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP ~ Strength
+</td>
+<td style="text-align:right;">
+188.2206
+</td>
+<td style="text-align:right;">
+2.355806
+</td>
+<td style="text-align:right;">
+0.0629259
+</td>
+<td style="text-align:right;">
+0.0072800
+</td>
+</tr>
+</tbody>
+</table>
+<p>Keep VIP</p>
+</div>
+<div id="pgr-1" class="section level4" number="8.1.3.2">
+<h4><span class="header-section-number">8.1.3.2</span> PGR</h4>
+<img src="04_candidate_gene_analysis_files/figure-html/GCT%20AIC%20PGR-1.png" width="672" style="display: block; margin: auto;" />
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in GCT where full lm model is ~ Status + mean_T +
+Status:mean_T, but DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+PGR ~ 1
+</td>
+<td style="text-align:right;">
+109.73814
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR ~ Status
+</td>
+<td style="text-align:right;">
+109.55316
+</td>
+<td style="text-align:right;">
+0.1849763
+</td>
+<td style="text-align:right;">
+0.1879611
+</td>
+<td style="text-align:right;">
+0.1458070
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR ~ mean T
+</td>
+<td style="text-align:right;">
+105.36688
+</td>
+<td style="text-align:right;">
+4.3712592
+</td>
+<td style="text-align:right;">
+0.0244492
+</td>
+<td style="text-align:right;">
+0.0143142
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+*PGR ~ Status + mean T + Status:meanT
+</td>
+<td style="text-align:right;">
+93.92302
+</td>
+<td style="text-align:right;">
+15.8151142
+</td>
+<td style="text-align:right;">
+0.0020329
+</td>
+<td style="text-align:right;">
+0.0027643
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR ~ Strength
+</td>
+<td style="text-align:right;">
+105.76276
+</td>
+<td style="text-align:right;">
+3.9753773
+</td>
+<td style="text-align:right;">
+0.0293451
+</td>
+<td style="text-align:right;">
+0.0007425
+</td>
+</tr>
+</tbody>
+</table>
+<p>Keep PGR.</p>
+</div>
+<div id="esr1" class="section level4" number="8.1.3.3">
+<h4><span class="header-section-number">8.1.3.3</span> ESR1</h4>
+<img src="04_candidate_gene_analysis_files/figure-html/GCT%20AIC%20ESR1-1.png" width="672" style="display: block; margin: auto;" />
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the gctads for GCT where full lm model is ~ Status
++ mean_T + Status:mean_T, but DESeq p is from full models tested in
+DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ESR1 ~ 1
+</td>
+<td style="text-align:right;">
+115.4497
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1 ~ Status
+</td>
+<td style="text-align:right;">
+117.4082
+</td>
+<td style="text-align:right;">
+-1.9584865
+</td>
+<td style="text-align:right;">
+0.8560436
+</td>
+<td style="text-align:right;">
+0.8211006
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1 ~ mean T
+</td>
+<td style="text-align:right;">
+116.0079
+</td>
+<td style="text-align:right;">
+-0.5581844
+</td>
+<td style="text-align:right;">
+0.2848915
+</td>
+<td style="text-align:right;">
+0.4275540
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+*ESR1 ~ Status + mean T + Status:mean T
+</td>
+<td style="text-align:right;">
+111.5403
+</td>
+<td style="text-align:right;">
+3.9094611
+</td>
+<td style="text-align:right;">
+0.0280822
+</td>
+<td style="text-align:right;">
+0.0371658
+</td>
+</tr>
+</tbody>
+</table>
+<p>Keep ESR1</p>
+</div>
+<div id="prlr-1" class="section level4" number="8.1.3.4">
+<h4><span class="header-section-number">8.1.3.4</span> PRLR</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the gctads for GCT where full lm model is ~ Status
++ mean_T + Status:mean_T, but DESeq p is from full models tested in
+DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+PRLR ~ 1
+</td>
+<td style="text-align:right;">
+157.7165
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR ~ Status
+</td>
+<td style="text-align:right;">
+159.2028
+</td>
+<td style="text-align:right;">
+-1.4862765
+</td>
+<td style="text-align:right;">
+0.5233260
+</td>
+<td style="text-align:right;">
+0.5416420
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR ~ mean T
+</td>
+<td style="text-align:right;">
+159.4392
+</td>
+<td style="text-align:right;">
+-1.7226358
+</td>
+<td style="text-align:right;">
+0.6391128
+</td>
+<td style="text-align:right;">
+0.5345264
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR ~ Status + mean T + Status:mean T
+</td>
+<td style="text-align:right;">
+157.0247
+</td>
+<td style="text-align:right;">
+0.6918305
+</td>
+<td style="text-align:right;">
+0.0709455
+</td>
+<td style="text-align:right;">
+0.0300391
+</td>
+</tr>
+</tbody>
+</table>
+<p>Pass all except PRLR</p>
+</div>
+</div>
+</div>
+<div id="final-res-6" class="section level2" number="8.2">
+<h2><span class="header-section-number">8.2</span> Final Res</h2>
+<p>Note these decisions are made after the plotting below, but I am
+including a decision element in the plotting so that’s why it’s
+above.</p>
+<p>Exclude PRLR, AR strength, and PGR in mean T and strength and VIP in
+status, mean T and Strength, OXT due to outliers</p>
+</div>
+<div id="gene-plots-7" class="section level2" number="8.3">
+<h2><span class="header-section-number">8.3</span> Gene Plots</h2>
+<p><img src="04_candidate_gene_analysis_files/figure-html/GCT%20plotting-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="nucleus-taenia-tna" class="section level1" number="9">
+<h1><span class="header-section-number">9</span> Nucleus Taenia
+(TnA)</h1>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant results from DESeq2 before FDR correction in the TNA. Where
+pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected
+p-value (for the number of genes in the sample per model)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+PRLR
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1446.966
+</td>
+<td style="text-align:right;">
+0.710
+</td>
+<td style="text-align:right;">
+0.014
+</td>
+<td style="text-align:right;">
+0.536
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+562.184
+</td>
+<td style="text-align:right;">
+-0.750
+</td>
+<td style="text-align:right;">
+0.032
+</td>
+<td style="text-align:right;">
+0.628
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+104.473
+</td>
+<td style="text-align:right;">
+1.010
+</td>
+<td style="text-align:right;">
+0.032
+</td>
+<td style="text-align:right;">
+0.628
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CYP19A1
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1146.073
+</td>
+<td style="text-align:right;">
+-0.780
+</td>
+<td style="text-align:right;">
+0.048
+</td>
+<td style="text-align:right;">
+0.679
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+604.216
+</td>
+<td style="text-align:right;">
+-0.420
+</td>
+<td style="text-align:right;">
+0.023
+</td>
+<td style="text-align:right;">
+0.521
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ Batch + mean_T
+</td>
+<td style="text-align:right;">
+65.301
+</td>
+<td style="text-align:right;">
+0.835
+</td>
+<td style="text-align:right;">
+0.050
+</td>
+<td style="text-align:right;">
+0.480
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+67.903
+</td>
+<td style="text-align:right;">
+0.831
+</td>
+<td style="text-align:right;">
+0.043
+</td>
+<td style="text-align:right;">
+0.592
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVPR1A
+</td>
+<td style="text-align:left;">
+~ Batch + strength.all_study
+</td>
+<td style="text-align:right;">
+172.360
+</td>
+<td style="text-align:right;">
+-0.708
+</td>
+<td style="text-align:right;">
+0.043
+</td>
+<td style="text-align:right;">
+0.605
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR2
+</td>
+<td style="text-align:left;">
+~ Batch + mean_T
+</td>
+<td style="text-align:right;">
+182.462
+</td>
+<td style="text-align:right;">
+0.810
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.079
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR
+</td>
+<td style="text-align:left;">
+~ Batch + strength.all_study
+</td>
+<td style="text-align:right;">
+27.859
+</td>
+<td style="text-align:right;">
+-0.353
+</td>
+<td style="text-align:right;">
+0.041
+</td>
+<td style="text-align:right;">
+0.595
+</td>
+</tr>
+</tbody>
+</table>
+<div id="exploring-status-specific-expression-7" class="section level2"
+number="9.1">
+<h2><span class="header-section-number">9.1</span> Exploring status
+specific expression</h2>
+<p>A reviewer had a concern about overparameterizing the interaction
+models. Therefore, for the interaction models we ran an alternate set of
+models to test whether number of model parameters influenced whether we
+got a significant result on that gene. So we ran reduced models to test
+whether we still those effects in reduced models, and whether batch had
+a significant effect on any candidate genes. The latter will decide
+whether I need to also include the batch variables in follow up lms and
+AIC.</p>
+<div id="batch-6" class="section level3" number="9.1.1">
+<h3><span class="header-section-number">9.1.1</span> Batch</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Batch variable results for TNA
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIPR2
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1970.939
+</td>
+<td style="text-align:right;">
+-0.155
+</td>
+<td style="text-align:right;">
+0.040
+</td>
+<td style="text-align:right;">
+0.237
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+655.560
+</td>
+<td style="text-align:right;">
+0.436
+</td>
+<td style="text-align:right;">
+0.039
+</td>
+<td style="text-align:right;">
+0.233
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+46.675
+</td>
+<td style="text-align:right;">
+0.068
+</td>
+<td style="text-align:right;">
+0.013
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR2
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+182.462
+</td>
+<td style="text-align:right;">
+0.553
+</td>
+<td style="text-align:right;">
+0.023
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
+<p>Batch wasn’t important for any of the significant interaction
+models</p>
+</div>
+<div id="alternate-models-7" class="section level3" number="9.1.2">
+<h3><span class="header-section-number">9.1.2</span> Alternate
+models</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Results from alternate models for interaction in TNA
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+CYP19A1
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1146.073
+</td>
+<td style="text-align:right;">
+-0.781
+</td>
+<td style="text-align:right;">
+0.045
+</td>
+<td style="text-align:right;">
+0.827
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+562.184
+</td>
+<td style="text-align:right;">
+-0.754
+</td>
+<td style="text-align:right;">
+0.032
+</td>
+<td style="text-align:right;">
+0.787
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+104.473
+</td>
+<td style="text-align:right;">
+1.015
+</td>
+<td style="text-align:right;">
+0.025
+</td>
+<td style="text-align:right;">
+0.768
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1446.966
+</td>
+<td style="text-align:right;">
+0.707
+</td>
+<td style="text-align:right;">
+0.026
+</td>
+<td style="text-align:right;">
+0.771
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1446.966
+</td>
+<td style="text-align:right;">
+0.710
+</td>
+<td style="text-align:right;">
+0.014
+</td>
+<td style="text-align:right;">
+0.536
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+562.184
+</td>
+<td style="text-align:right;">
+-0.750
+</td>
+<td style="text-align:right;">
+0.032
+</td>
+<td style="text-align:right;">
+0.628
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+104.473
+</td>
+<td style="text-align:right;">
+1.010
+</td>
+<td style="text-align:right;">
+0.032
+</td>
+<td style="text-align:right;">
+0.628
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CYP19A1
+</td>
+<td style="text-align:left;">
+~ Batch + Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+1146.073
+</td>
+<td style="text-align:right;">
+-0.780
+</td>
+<td style="text-align:right;">
+0.048
+</td>
+<td style="text-align:right;">
+0.679
+</td>
+</tr>
+</tbody>
+</table>
+<p>All the interaction genes were stable in the reduced model.</p>
+<p>PRLR, VIP VIPR1, CYP19A1.</p>
+</div>
+<div id="aic-7" class="section level3" number="9.1.3">
+<h3><span class="header-section-number">9.1.3</span> AIC</h3>
+<div id="cyp19a1" class="section level4" number="9.1.3.1">
+<h4><span class="header-section-number">9.1.3.1</span> CYP19A1</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the tnaads for TNA where full lm model is ~ Status
++ mean_T + Status:mean_T, but DESeq p is from full models tested in
+DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+CYP19A1 ~ 1
+</td>
+<td style="text-align:right;">
+178.7782
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CYP19A1 ~ Status
+</td>
+<td style="text-align:right;">
+178.6238
+</td>
+<td style="text-align:right;">
+0.1544437
+</td>
+<td style="text-align:right;">
+0.1910783
+</td>
+<td style="text-align:right;">
+0.5105279
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CYP19A1 ~ mean T
+</td>
+<td style="text-align:right;">
+180.3132
+</td>
+<td style="text-align:right;">
+-1.5350499
+</td>
+<td style="text-align:right;">
+0.5437386
+</td>
+<td style="text-align:right;">
+0.3376376
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+CYP19A1 ~ Status + mean T + Status:mean T
+</td>
+<td style="text-align:right;">
+178.9365
+</td>
+<td style="text-align:right;">
+-0.1583199
+</td>
+<td style="text-align:right;">
+0.1283528
+</td>
+<td style="text-align:right;">
+0.0453733
+</td>
+</tr>
+</tbody>
+</table>
+<p>Does not pass AIC test.</p>
+</div>
+<div id="prlr-2" class="section level4" number="9.1.3.2">
+<h4><span class="header-section-number">9.1.3.2</span> PRLR</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the tnaads for TNA where full lm model is ~ Status
++ mean_T + Status:mean_T, but DESeq p is from full models tested in
+DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+PRLR ~ 1
+</td>
+<td style="text-align:right;">
+182.6308
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR ~ Status
+</td>
+<td style="text-align:right;">
+181.4537
+</td>
+<td style="text-align:right;">
+1.177132
+</td>
+<td style="text-align:right;">
+0.1122971
+</td>
+<td style="text-align:right;">
+0.3475519
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR ~ mean T
+</td>
+<td style="text-align:right;">
+184.5552
+</td>
+<td style="text-align:right;">
+-1.924359
+</td>
+<td style="text-align:right;">
+0.8065483
+</td>
+<td style="text-align:right;">
+0.5702039
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR ~ Status + mean T + Status:mean T
+</td>
+<td style="text-align:right;">
+179.3094
+</td>
+<td style="text-align:right;">
+3.321437
+</td>
+<td style="text-align:right;">
+0.1030935
+</td>
+<td style="text-align:right;">
+0.0262885
+</td>
+</tr>
+</tbody>
+</table>
+<p>Reject PRLR due to not sig in lm</p>
+</div>
+<div id="vip-2" class="section level4" number="9.1.3.3">
+<h4><span class="header-section-number">9.1.3.3</span> VIP</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in the tnaads for TNA where full lm model is ~ Status
++ mean_T + Status:mean_T, but DESeq p is from full models tested in
+DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIP ~ 1
+</td>
+<td style="text-align:right;">
+158.3812
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP ~ Status
+</td>
+<td style="text-align:right;">
+159.7353
+</td>
+<td style="text-align:right;">
+-1.354124
+</td>
+<td style="text-align:right;">
+0.4742129
+</td>
+<td style="text-align:right;">
+0.2119499
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP ~ mean T
+</td>
+<td style="text-align:right;">
+156.6485
+</td>
+<td style="text-align:right;">
+1.732704
+</td>
+<td style="text-align:right;">
+0.0851830
+</td>
+<td style="text-align:right;">
+0.0668693
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP ~ Status + mean T + Status:mean T
+</td>
+<td style="text-align:right;">
+156.7909
+</td>
+<td style="text-align:right;">
+1.590313
+</td>
+<td style="text-align:right;">
+0.1197970
+</td>
+<td style="text-align:right;">
+0.0319905
+</td>
+</tr>
+</tbody>
+</table>
+<p>Reject VIP</p>
+</div>
+<div id="vipr1" class="section level4" number="9.1.3.4">
+<h4><span class="header-section-number">9.1.3.4</span> VIPR1</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in TNA where full lm model is ~ Status + mean_T +
+Status:mean_T, but DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIPR1 ~ 1
+</td>
+<td style="text-align:right;">
+130.2985
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1 ~ Status
+</td>
+<td style="text-align:right;">
+132.2583
+</td>
+<td style="text-align:right;">
+-1.959784
+</td>
+<td style="text-align:right;">
+0.8582871
+</td>
+<td style="text-align:right;">
+0.3738059
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1 ~ mean T
+</td>
+<td style="text-align:right;">
+128.9045
+</td>
+<td style="text-align:right;">
+1.394020
+</td>
+<td style="text-align:right;">
+0.1007304
+</td>
+<td style="text-align:right;">
+0.1297460
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1 ~ Status + mean T + Status:mean T
+</td>
+<td style="text-align:right;">
+127.3370
+</td>
+<td style="text-align:right;">
+2.961535
+</td>
+<td style="text-align:right;">
+0.0769308
+</td>
+<td style="text-align:right;">
+0.0254472
+</td>
+</tr>
+</tbody>
+</table>
+<p><img src="04_candidate_gene_analysis_files/figure-html/TNA%20AIC%20VIPR1-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>Reject VIPR1.</p>
+</div>
+</div>
+</div>
+<div id="final-res-7" class="section level2" number="9.2">
+<h2><span class="header-section-number">9.2</span> Final Res</h2>
+<p>Note these decisions are made after the plotting below, but I am
+including a decision element in the plotting so that’s why it’s
+above.</p>
+<p>Reject VIP, CYP19A1 due to not passing the AIC tests, AR &amp; AVP
+due to influential observations and PGR due to low R^2.</p>
+</div>
+<div id="gene-plots-8" class="section level2" number="9.3">
+<h2><span class="header-section-number">9.3</span> Gene Plots</h2>
+<p><img src="04_candidate_gene_analysis_files/figure-html/TNA%20plotting-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="arcopallium-intermedium-ai" class="section level1" number="10">
+<h1><span class="header-section-number">10</span> Arcopallium
+Intermedium (Ai)</h1>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant results from DESeq2 before FDR correction in the AI. Where
+pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected
+p-value (for the number of genes in the sample per model)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIPR1
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+71.329
+</td>
+<td style="text-align:right;">
+0.997
+</td>
+<td style="text-align:right;">
+0.038
+</td>
+<td style="text-align:right;">
+0.828
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+136.395
+</td>
+<td style="text-align:right;">
+2.063
+</td>
+<td style="text-align:right;">
+0.041
+</td>
+<td style="text-align:right;">
+0.834
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR
+</td>
+<td style="text-align:left;">
+~ mean_T
+</td>
+<td style="text-align:right;">
+28.989
+</td>
+<td style="text-align:right;">
+-0.530
+</td>
+<td style="text-align:right;">
+0.025
+</td>
+<td style="text-align:right;">
+0.499
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PRLR
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+259.391
+</td>
+<td style="text-align:right;">
+-0.423
+</td>
+<td style="text-align:right;">
+0.034
+</td>
+<td style="text-align:right;">
+0.592
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ mean_T
+</td>
+<td style="text-align:right;">
+251.548
+</td>
+<td style="text-align:right;">
+0.373
+</td>
+<td style="text-align:right;">
+0.019
+</td>
+<td style="text-align:right;">
+0.427
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ strength.all_study
+</td>
+<td style="text-align:right;">
+251.548
+</td>
+<td style="text-align:right;">
+0.229
+</td>
+<td style="text-align:right;">
+0.027
+</td>
+<td style="text-align:right;">
+0.427
+</td>
+</tr>
+</tbody>
+</table>
+<div id="exploring-status-specific-expression-8" class="section level2"
+number="10.1">
+<h2><span class="header-section-number">10.1</span> Exploring status
+specific expression</h2>
+<div id="batch-7" class="section level3" number="10.1.1">
+<h3><span class="header-section-number">10.1.1</span> Batch</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Batch variable results for AI
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+</tr>
+</tbody>
+</table>
+<p>Batch wasn’t important for anyone!</p>
+</div>
+<div id="alternate-models-8" class="section level3" number="10.1.2">
+<h3><span class="header-section-number">10.1.2</span> Alternate
+models</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Results from alternate models for interaction in AI
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIPR1
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+71.329
+</td>
+<td style="text-align:right;">
+0.997
+</td>
+<td style="text-align:right;">
+0.038
+</td>
+<td style="text-align:right;">
+0.828
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+136.395
+</td>
+<td style="text-align:right;">
+2.063
+</td>
+<td style="text-align:right;">
+0.041
+</td>
+<td style="text-align:right;">
+0.834
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:left;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+</tbody>
+</table>
+<p>VIPR is stable to model parameterization.</p>
+</div>
+<div id="aic-8" class="section level3" number="10.1.3">
+<h3><span class="header-section-number">10.1.3</span> AIC</h3>
+<div id="vipr1-1" class="section level4" number="10.1.3.1">
+<h4><span class="header-section-number">10.1.3.1</span> VIPR1</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in AI where full lm model is ~ Status + mean_T +
+Status:mean_T, but DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIPR1 ~ 1
+</td>
+<td style="text-align:right;">
+97.59544
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1 ~ Status
+</td>
+<td style="text-align:right;">
+99.28283
+</td>
+<td style="text-align:right;">
+-1.687393
+</td>
+<td style="text-align:right;">
+0.6227596
+</td>
+<td style="text-align:right;">
+0.6922684
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1 ~ mean T
+</td>
+<td style="text-align:right;">
+96.28066
+</td>
+<td style="text-align:right;">
+1.314780
+</td>
+<td style="text-align:right;">
+0.1089373
+</td>
+<td style="text-align:right;">
+0.1295430
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIPR1 ~ Status + meanT + Status:meanT
+</td>
+<td style="text-align:right;">
+92.12277
+</td>
+<td style="text-align:right;">
+5.472665
+</td>
+<td style="text-align:right;">
+0.0313361
+</td>
+<td style="text-align:right;">
+0.0375837
+</td>
+</tr>
+</tbody>
+</table>
+<p>Passed AIC, and lm, but really hinges on a single observation due to
+reduced sample size in Ai.</p>
+</div>
+<div id="avp" class="section level4" number="10.1.3.2">
+<h4><span class="header-section-number">10.1.3.2</span> AVP</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in AI where full lm model is ~ Status + mean_T +
+Status:mean_T, but DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AVP ~ 1
+</td>
+<td style="text-align:right;">
+129.4430
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP ~ Status
+</td>
+<td style="text-align:right;">
+131.2984
+</td>
+<td style="text-align:right;">
+-1.855359
+</td>
+<td style="text-align:right;">
+0.7379153
+</td>
+<td style="text-align:right;">
+0.8425880
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP ~ mean T
+</td>
+<td style="text-align:right;">
+131.1302
+</td>
+<td style="text-align:right;">
+-1.687228
+</td>
+<td style="text-align:right;">
+0.6226676
+</td>
+<td style="text-align:right;">
+0.6442814
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AVP ~ Status + meanT + Status:meanT
+</td>
+<td style="text-align:right;">
+131.9397
+</td>
+<td style="text-align:right;">
+-2.496703
+</td>
+<td style="text-align:right;">
+0.1690636
+</td>
+<td style="text-align:right;">
+0.0412750
+</td>
+</tr>
+</tbody>
+</table>
+<p>FAIL</p>
+</div>
+<div id="vip-3" class="section level4" number="10.1.3.3">
+<h4><span class="header-section-number">10.1.3.3</span> VIP</h4>
+<p>distinguish between mean_T and strength</p>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in AI where full lm model is ~ strength.all_study, but
+DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+VIP ~ 1
+</td>
+<td style="text-align:right;">
+125.3597
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP ~ Status
+</td>
+<td style="text-align:right;">
+125.4163
+</td>
+<td style="text-align:right;">
+-0.0566066
+</td>
+<td style="text-align:right;">
+0.2198144
+</td>
+<td style="text-align:right;">
+0.9998643
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+?VIP ~ mean T
+</td>
+<td style="text-align:right;">
+121.3852
+</td>
+<td style="text-align:right;">
+3.9744202
+</td>
+<td style="text-align:right;">
+0.0312957
+</td>
+<td style="text-align:right;">
+0.0185179
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP ~ Status + meanT + Status:meanT
+</td>
+<td style="text-align:right;">
+123.9862
+</td>
+<td style="text-align:right;">
+1.3734434
+</td>
+<td style="text-align:right;">
+0.3660956
+</td>
+<td style="text-align:right;">
+0.2425596
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+?VIP ~ Strength
+</td>
+<td style="text-align:right;">
+122.2898
+</td>
+<td style="text-align:right;">
+3.0698251
+</td>
+<td style="text-align:right;">
+0.0473453
+</td>
+<td style="text-align:right;">
+0.0265363
+</td>
+</tr>
+</tbody>
+</table>
+<p><img src="04_candidate_gene_analysis_files/figure-html/AI%20AIC%20vIP-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>cannot distinguish between them. keep both.</p>
+</div>
+</div>
+</div>
+<div id="final-res-8" class="section level2" number="10.2">
+<h2><span class="header-section-number">10.2</span> Final Res</h2>
+<p>Note these decisions are made after the plotting below, but I am
+including a decision element in the plotting so that’s why it’s above.
+Exclude VIPR1,AVP, and PRLR</p>
+</div>
+<div id="gene-plots-9" class="section level2" number="10.3">
+<h2><span class="header-section-number">10.3</span> Gene Plots</h2>
+<p><img src="04_candidate_gene_analysis_files/figure-html/AI%20plotting-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="lateral-septum-ls" class="section level1" number="11">
+<h1><span class="header-section-number">11</span> Lateral Septum
+(LS)</h1>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant results from DESeq2 before FDR correction in the LS. Where
+pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected
+p-value (for the number of genes in the sample per model)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+357.892
+</td>
+<td style="text-align:right;">
+-1.083
+</td>
+<td style="text-align:right;">
+0.005
+</td>
+<td style="text-align:right;">
+0.279
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GNRH1
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+22.089
+</td>
+<td style="text-align:right;">
+1.383
+</td>
+<td style="text-align:right;">
+0.044
+</td>
+<td style="text-align:right;">
+0.927
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+GNRH1
+</td>
+<td style="text-align:left;">
+~ strength.all_study
+</td>
+<td style="text-align:right;">
+23.067
+</td>
+<td style="text-align:right;">
+1.126
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+SRD5A2
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+83.943
+</td>
+<td style="text-align:right;">
+0.670
+</td>
+<td style="text-align:right;">
+0.000
+</td>
+<td style="text-align:right;">
+0.365
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+VIP
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+19.078
+</td>
+<td style="text-align:right;">
+-1.440
+</td>
+<td style="text-align:right;">
+0.034
+</td>
+<td style="text-align:right;">
+0.895
+</td>
+</tr>
+</tbody>
+</table>
+<div id="exploring-status-specific-expression-9" class="section level2"
+number="11.1">
+<h2><span class="header-section-number">11.1</span> Exploring status
+specific expression</h2>
+<div id="batch-8" class="section level3" number="11.1.1">
+<h3><span class="header-section-number">11.1.1</span> Batch</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Batch variable results for LS
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+</tr>
+</tbody>
+</table>
+<p>Batch wasn’t important for anyone!</p>
+</div>
+<div id="alternate-models-9" class="section level3" number="11.1.2">
+<h3><span class="header-section-number">11.1.2</span> Alternate
+models</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Results from alternate models for interaction in LS
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+357.892
+</td>
+<td style="text-align:right;">
+-1.083
+</td>
+<td style="text-align:right;">
+0.005
+</td>
+<td style="text-align:right;">
+0.279
+</td>
+</tr>
+</tbody>
+</table>
+<p>AR was stable under a 1 parameter reduced model.</p>
+</div>
+<div id="aic-9" class="section level3" number="11.1.3">
+<h3><span class="header-section-number">11.1.3</span> AIC</h3>
+<div id="ar-2" class="section level4" number="11.1.3.1">
+<h4><span class="header-section-number">11.1.3.1</span> AR</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in LS where full lm model is ~ Status + mean_T +
+Status:mean_T, but DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+AR ~ 1
+</td>
+<td style="text-align:right;">
+150.1382
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR ~ Status
+</td>
+<td style="text-align:right;">
+151.0962
+</td>
+<td style="text-align:right;">
+-0.9579925
+</td>
+<td style="text-align:right;">
+0.3633241
+</td>
+<td style="text-align:right;">
+0.3237018
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR ~ mean T
+</td>
+<td style="text-align:right;">
+152.1373
+</td>
+<td style="text-align:right;">
+-1.9990700
+</td>
+<td style="text-align:right;">
+0.9783384
+</td>
+<td style="text-align:right;">
+0.9756612
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR ~ Status + meanT + Status:meanT
+</td>
+<td style="text-align:right;">
+148.3358
+</td>
+<td style="text-align:right;">
+1.8024519
+</td>
+<td style="text-align:right;">
+0.0444352
+</td>
+<td style="text-align:right;">
+0.0045555
+</td>
+</tr>
+</tbody>
+</table>
+<p><img src="04_candidate_gene_analysis_files/figure-html/LS%20AIC%20AR-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>fail</p>
+</div>
+</div>
+</div>
+<div id="final-res-9" class="section level2" number="11.2">
+<h2><span class="header-section-number">11.2</span> Final Res</h2>
+<p>Note these decisions are made after the plotting below, but I am
+including a decision element in the plotting so that’s why it’s
+above.</p>
+<p>AR failed tests above, GNRH1 and VIP have influential
+observations.</p>
+</div>
+<div id="gene-plots-10" class="section level2" number="11.3">
+<h2><span class="header-section-number">11.3</span> Gene Plots</h2>
+<p><img src="04_candidate_gene_analysis_files/figure-html/LS%20plotting-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="bed-nucleus-of-the-stria-terminalis-bstm"
+class="section level1" number="12">
+<h1><span class="header-section-number">12</span> Bed Nucleus of the
+Stria Terminalis (BSTm)</h1>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Significant results from DESeq2 before FDR correction in the BSTm. Where
+pvalue is the raw DESeq2 p-value, padj is the DESeq2 FDR-corrected
+p-value (for the number of genes in the sample per model)
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ESR2
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+381.353
+</td>
+<td style="text-align:right;">
+1.296
+</td>
+<td style="text-align:right;">
+0.006
+</td>
+<td style="text-align:right;">
+0.602
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+731.751
+</td>
+<td style="text-align:right;">
+0.862
+</td>
+<td style="text-align:right;">
+0.041
+</td>
+<td style="text-align:right;">
+0.880
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+AR
+</td>
+<td style="text-align:left;">
+~ Batch + Status
+</td>
+<td style="text-align:right;">
+691.964
+</td>
+<td style="text-align:right;">
+0.567
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.210
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR2
+</td>
+<td style="text-align:left;">
+~ strength.all_study
+</td>
+<td style="text-align:right;">
+381.353
+</td>
+<td style="text-align:right;">
+-0.299
+</td>
+<td style="text-align:right;">
+0.047
+</td>
+<td style="text-align:right;">
+0.604
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+PGR
+</td>
+<td style="text-align:left;">
+~ strength.all_study
+</td>
+<td style="text-align:right;">
+174.573
+</td>
+<td style="text-align:right;">
+-0.334
+</td>
+<td style="text-align:right;">
+0.001
+</td>
+<td style="text-align:right;">
+0.152
+</td>
+</tr>
+</tbody>
+</table>
+<div id="exploring-status-specific-expression-10" class="section level2"
+number="12.1">
+<h2><span class="header-section-number">12.1</span> Exploring status
+specific expression</h2>
+<p>A reviewer had a concern about overparameterizing the interaction
+models. Therefore, for the interaction models we ran an alternate set of
+models to test whether number of model parameters influenced whether we
+got a significant result on that gene. So we ran reduced models to test
+whether we still those effects in reduced models, and whether batch had
+a significant effect on any candidate genes. The latter will decide
+whether I need to also include the batch variables in follow up lms and
+AIC.</p>
+<div id="batch-9" class="section level3" number="12.1.1">
+<h3><span class="header-section-number">12.1.1</span> Batch</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Batch variable results for BSTm
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+</tr>
+</tbody>
+</table>
+<p>Batch wasn’t important for anyone!</p>
+</div>
+<div id="alternate-models-10" class="section level3" number="12.1.2">
+<h3><span class="header-section-number">12.1.2</span> Alternate
+models</h3>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Results from alternate models for interaction in BSTm
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+gene
+</th>
+<th style="text-align:left;">
+design
+</th>
+<th style="text-align:right;">
+baseMean
+</th>
+<th style="text-align:right;">
+log2FoldChange
+</th>
+<th style="text-align:right;">
+pvalue
+</th>
+<th style="text-align:right;">
+padj
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ESR2
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+381.353
+</td>
+<td style="text-align:right;">
+1.296
+</td>
+<td style="text-align:right;">
+0.006
+</td>
+<td style="text-align:right;">
+0.602
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1
+</td>
+<td style="text-align:left;">
+~ Status + mean_T + Status:mean_T
+</td>
+<td style="text-align:right;">
+731.751
+</td>
+<td style="text-align:right;">
+0.862
+</td>
+<td style="text-align:right;">
+0.041
+</td>
+<td style="text-align:right;">
+0.880
+</td>
+</tr>
+</tbody>
+</table>
+<p>Both ESR1 and ESR2 pass the model stability test.</p>
+</div>
+<div id="aic-10" class="section level3" number="12.1.3">
+<h3><span class="header-section-number">12.1.3</span> AIC</h3>
+<div id="esr1-1" class="section level4" number="12.1.3.1">
+<h4><span class="header-section-number">12.1.3.1</span> ESR1</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in BSTm where full lm model is ~ Status + mean_T +
+Status:mean_T, but DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ESR1 ~ 1
+</td>
+<td style="text-align:right;">
+168.2636
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1 ~ Status
+</td>
+<td style="text-align:right;">
+169.9795
+</td>
+<td style="text-align:right;">
+-1.7158867
+</td>
+<td style="text-align:right;">
+0.6350640
+</td>
+<td style="text-align:right;">
+0.6664170
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1 ~ mean T
+</td>
+<td style="text-align:right;">
+167.7585
+</td>
+<td style="text-align:right;">
+0.5050749
+</td>
+<td style="text-align:right;">
+0.1585796
+</td>
+<td style="text-align:right;">
+0.1668334
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR1 ~ Status + meanT + Status:meanT
+</td>
+<td style="text-align:right;">
+167.4537
+</td>
+<td style="text-align:right;">
+0.8098858
+</td>
+<td style="text-align:right;">
+0.1017418
+</td>
+<td style="text-align:right;">
+0.0411355
+</td>
+</tr>
+</tbody>
+</table>
+<p>Fail AIC test</p>
+</div>
+<div id="esr2" class="section level4" number="12.1.3.2">
+<h4><span class="header-section-number">12.1.3.2</span> ESR2</h4>
+<table class="table" style="margin-left: auto; margin-right: auto;">
+<caption>
+Model comparisons in BSTm where full lm model is ~ Status + mean_T +
+Status:mean_T, but DESeq p is from full models tested in DESeq2
+</caption>
+<thead>
+<tr>
+<th style="text-align:left;">
+model
+</th>
+<th style="text-align:right;">
+AIC
+</th>
+<th style="text-align:right;">
+deltaAIC
+</th>
+<th style="text-align:right;">
+lm_p
+</th>
+<th style="text-align:right;">
+DESeq2_raw_p
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+ESR2 ~ 1
+</td>
+<td style="text-align:right;">
+158.9387
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+<td style="text-align:right;">
+NA
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR2 ~ Status
+</td>
+<td style="text-align:right;">
+160.5990
+</td>
+<td style="text-align:right;">
+-1.6602298
+</td>
+<td style="text-align:right;">
+0.6037424
+</td>
+<td style="text-align:right;">
+0.4084309
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR2 ~ mean T
+</td>
+<td style="text-align:right;">
+158.1410
+</td>
+<td style="text-align:right;">
+0.7977555
+</td>
+<td style="text-align:right;">
+0.1362164
+</td>
+<td style="text-align:right;">
+0.1609957
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+*ESR2 ~ Status + meanT + Status:meanT
+</td>
+<td style="text-align:right;">
+155.8964
+</td>
+<td style="text-align:right;">
+3.0423268
+</td>
+<td style="text-align:right;">
+0.0482144
+</td>
+<td style="text-align:right;">
+0.0060760
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+ESR2 ~ Strength
+</td>
+<td style="text-align:right;">
+158.3010
+</td>
+<td style="text-align:right;">
+0.6377549
+</td>
+<td style="text-align:right;">
+0.1479658
+</td>
+<td style="text-align:right;">
+0.0467527
+</td>
+</tr>
+</tbody>
+</table>
+<p><img src="04_candidate_gene_analysis_files/figure-html/BSTm%20AIC%20ESR2-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+</div>
+<div id="final-res-10" class="section level2" number="12.2">
+<h2><span class="header-section-number">12.2</span> Final Res</h2>
+<p>Note these decisions are made after the plotting below, but I am
+including a decision element in the plotting so that’s why it’s above.
+Excluding strength ESR2 due to low R^2</p>
+</div>
+<div id="gene-plots-11" class="section level2" number="12.3">
+<h2><span class="header-section-number">12.3</span> Gene Plots</h2>
+<p><img src="04_candidate_gene_analysis_files/figure-html/BSTm%20plotting-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="heat-map-of-all-candidate-genes" class="section level1"
+number="13">
+<h1><span class="header-section-number">13</span> Heat map of all
+candidate genes</h1>
+<p>Scaled according to individual gene’s expression.</p>
+<p><img src="04_candidate_gene_analysis_files/figure-html/unnamed-chunk-12-1.png" width="2880" style="display: block; margin: auto;" /></p>
+<pre><code>FALSE png 
+FALSE   2</code></pre>
+<div id="average-expression-plot" class="section level2" number="13.1">
+<h2><span class="header-section-number">13.1</span> Average expression
+plot</h2>
+<p><img src="04_candidate_gene_analysis_files/figure-html/unnamed-chunk-13-1.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+</div>
+<div id="final-results-heatmaps" class="section level1" number="14">
+<h1><span class="header-section-number">14</span> Final Results
+Heatmaps</h1>
+<pre><code>FALSE R version 4.0.2 (2020-06-22)
+FALSE Platform: x86_64-w64-mingw32/x64 (64-bit)
+FALSE Running under: Windows 10 x64 (build 19045)
+FALSE 
+FALSE Matrix products: default
+FALSE 
+FALSE locale:
+FALSE [1] LC_COLLATE=English_Australia.1252  LC_CTYPE=English_Australia.1252   
+FALSE [3] LC_MONETARY=English_Australia.1252 LC_NUMERIC=C                      
+FALSE [5] LC_TIME=English_Australia.1252    
+FALSE 
+FALSE attached base packages:
+FALSE  [1] grid      parallel  stats4    stats     graphics  grDevices utils    
+FALSE  [8] datasets  methods   base     
+FALSE 
+FALSE other attached packages:
+FALSE  [1] viridis_0.6.1               viridisLite_0.4.0          
+FALSE  [3] WGCNA_1.69                  fastcluster_1.1.25         
+FALSE  [5] dynamicTreeCut_1.63-1       RColorBrewer_1.1-2         
+FALSE  [7] pheatmap_1.0.12             MASS_7.3-51.6              
+FALSE  [9] VennDiagram_1.6.20          futile.logger_1.4.3        
+FALSE [11] kableExtra_1.3.1            DESeq2_1.28.1              
+FALSE [13] SummarizedExperiment_1.18.1 DelayedArray_0.14.0        
+FALSE [15] matrixStats_0.56.0          Biobase_2.48.0             
+FALSE [17] GenomicRanges_1.40.0        GenomeInfoDb_1.24.0        
+FALSE [19] IRanges_2.22.2              S4Vectors_0.26.1           
+FALSE [21] BiocGenerics_0.34.0         stringr_1.4.0              
+FALSE [23] ggpubr_0.4.0                ggplot2_3.4.4              
+FALSE [25] reshape2_1.4.4              plyr_1.8.6                 
+FALSE 
+FALSE loaded via a namespace (and not attached):
+FALSE   [1] readxl_1.3.1           backports_1.1.7        Hmisc_4.4-0           
+FALSE   [4] systemfonts_1.0.3      splines_4.0.2          BiocParallel_1.22.0   
+FALSE   [7] digest_0.6.25          foreach_1.5.0          htmltools_0.5.2       
+FALSE  [10] GO.db_3.11.4           fansi_0.4.1            magrittr_2.0.1        
+FALSE  [13] checkmate_2.0.0        memoise_1.1.0          cluster_2.1.0         
+FALSE  [16] doParallel_1.0.15      openxlsx_4.1.5         annotate_1.66.0       
+FALSE  [19] jpeg_0.1-8.1           colorspace_1.4-1       blob_1.2.1            
+FALSE  [22] rvest_1.0.2            textshaping_0.3.6      haven_2.3.1           
+FALSE  [25] xfun_0.29              dplyr_1.0.7            crayon_1.4.2          
+FALSE  [28] RCurl_1.98-1.2         genefilter_1.70.0      impute_1.62.0         
+FALSE  [31] survival_3.2-3         iterators_1.0.12       glue_1.5.1            
+FALSE  [34] gtable_0.3.0           zlibbioc_1.34.0        XVector_0.28.0        
+FALSE  [37] webshot_0.5.2          car_3.0-8              abind_1.4-5           
+FALSE  [40] scales_1.3.0           futile.options_1.0.1   DBI_1.1.0             
+FALSE  [43] rstatix_0.7.0          Rcpp_1.0.7             xtable_1.8-4          
+FALSE  [46] htmlTable_2.0.1        foreign_0.8-80         bit_4.0.4             
+FALSE  [49] preprocessCore_1.50.0  Formula_1.2-3          htmlwidgets_1.5.3     
+FALSE  [52] httr_1.4.2             acepack_1.4.1          ellipsis_0.3.2        
+FALSE  [55] pkgconfig_2.0.3        XML_3.99-0.5           farver_2.0.3          
+FALSE  [58] nnet_7.3-14            locfit_1.5-9.4         utf8_1.1.4            
+FALSE  [61] tidyselect_1.1.0       labeling_0.3           rlang_1.1.2           
+FALSE  [64] AnnotationDbi_1.50.0   munsell_0.5.0          cellranger_1.1.0      
+FALSE  [67] tools_4.0.2            cli_3.6.1              generics_0.0.2        
+FALSE  [70] RSQLite_2.2.0          broom_0.7.10           evaluate_0.14         
+FALSE  [73] fastmap_1.1.0          yaml_2.2.1             ragg_1.2.1            
+FALSE  [76] knitr_1.29             bit64_0.9-7            zip_2.0.4             
+FALSE  [79] purrr_0.3.4            nlme_3.1-148           formatR_1.8           
+FALSE  [82] xml2_1.3.2             compiler_4.0.2         rstudioapi_0.13       
+FALSE  [85] curl_4.3               png_0.1-7              ggsignif_0.6.0        
+FALSE  [88] tibble_3.1.6           geneplotter_1.66.0     stringi_1.4.6         
+FALSE  [91] highr_0.8              forcats_0.5.1          lattice_0.20-41       
+FALSE  [94] Matrix_1.6-4           vctrs_0.6.5            pillar_1.6.4          
+FALSE  [97] lifecycle_1.0.4        jquerylib_0.1.4        data.table_1.13.0     
+FALSE [100] cowplot_1.0.0          bitops_1.0-6           R6_2.4.1              
+FALSE [103] latticeExtra_0.6-29    gridExtra_2.3          rio_0.5.16            
+FALSE [106] codetools_0.2-16       lambda.r_1.2.4         assertthat_0.2.1      
+FALSE [109] withr_2.5.2            GenomeInfoDbData_1.2.3 mgcv_1.8-31           
+FALSE [112] hms_1.1.1              rpart_4.1-15           tidyr_1.1.4           
+FALSE [115] rmarkdown_2.11         carData_3.0-4          base64enc_0.1-3</code></pre>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

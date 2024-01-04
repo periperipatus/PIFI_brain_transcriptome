@@ -68,6 +68,14 @@ peri_figure <- theme(panel.background = element_blank(),
                                          b = 0,  # Bottom margin
                                          l = 0))
 
+
+save_pheatmap_png <- function(x, filename, width=1200, height=1000, res = 150) {
+  png(filename, width = width, height = height, res = res)
+  grid::grid.newpage()
+  grid::grid.draw(x$gtable)
+  dev.off()
+}
+
 ```
 
 ```{r, read in data}
@@ -129,10 +137,26 @@ data<- read.csv("../data_filtered/data_RawCounts_all_ReplicatesRemoved_antisense
 rownames(data)<- data$X
 data$X<- NULL
 
-keep<- c("candidates","tissue_order", "tissue_cols","tissue_colors", "topgenes", "go_terms","peri_theme","peri_figure", "go2gene_bp","go2gene_mf", "go_obo","go2name_bp", "go2name_mf","keep", "key_behav", "data", "dodge","status_cols")
+
+## annotating the LOC no
+genes_key<- read.csv("../GO_annotations/Maggies_annotations_modifiedR.csv")
+genes_key<- plyr::rename(genes_key, replace=c("GeneID"="gene"))
+genes_key$gene[genes_key$gene=="LOC113993669"] <- "CYP19A1"
+genes_key$gene[genes_key$gene=="LOC113983511"] <- "OXT"
+genes_key$gene[genes_key$gene=="LOC113983498"] <- "AVP"
+genes_key$gene[genes_key$gene=="LOC113982601"] <- "AVPR2"
+data_genes<- data.frame(gene=rownames(data))
+genes_key<- merge(data_genes, genes_key, by="gene", all.x=TRUE)
+#genes_key<- genes_key[which(grepl("LOC[0-9]+",genes_key$gene)),]
+
+genes_key$display_gene_ID<- ifelse(grepl("LOC[0-9]+", genes_key$gene) & !grepl("LOC[0-9]+",genes_key$best_anno) & !is.na(genes_key$best_anno), paste0(genes_key$gene," (",genes_key$best_anno,")"), as.character(genes_key$gene))
+genes_key<- genes_key[,c("gene","best_anno","display_gene_ID")]
+
+
+keep<- c("candidates","tissue_order", "tissue_cols","tissue_colors", "topgenes", "go_terms","peri_theme","peri_figure", "go2gene_bp","go2gene_mf", "go_obo","go2name_bp", "go2name_mf","keep", "key_behav", "data", "dodge","status_cols", "save_pheatmap_png", "genes_key", "geom_text.size")
+
+  
 ```
-
-
 
 
 # Social Status
@@ -176,10 +200,10 @@ for(i in tissue_order){
   rownames(tissue)<- 1:nrow(tissue)
   
   
-tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
-tissue$is_interesting<- tissue$interesting_genes==""
+#tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
+#tissue$is_interesting<- tissue$interesting_genes==""
 
-plots[[i]]<- ggplot(tissue, aes(x=log2FoldChange, y=-log10(padj), color=sig)) + geom_point(size=4) + geom_hline(yintercept=-log10(0.1), linetype="dashed", color = "grey70", size=1) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + geom_point(data=tissue[tissue$interesting_genes!="",], aes(fill=sig), pch=21,color="grey40", show.legend=FALSE, size=5) + scale_color_manual(values=tissue_cols[[i]]) + scale_fill_manual(values=tissue_cols[[i]][2:3]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + scale_x_continuous(limits=c(-4,4), breaks=c(-4,-3,-2,-1,0,1,2,3,4)) + scale_y_continuous(limits=c(0,5))
+#plots[[i]]<- ggplot(tissue, aes(x=log2FoldChange, y=-log10(padj), color=sig)) + geom_point(size=4) + geom_hline(yintercept=-log10(0.1), linetype="dashed", color = "grey70", size=1) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + geom_point(data=tissue[tissue$interesting_genes!="",], aes(fill=sig), pch=21,color="grey40", show.legend=FALSE, size=5) + scale_color_manual(values=tissue_cols[[i]]) + scale_fill_manual(values=tissue_cols[[i]][2:3]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + scale_x_continuous(limits=c(-4,4), breaks=c(-4,-3,-2,-1,0,1,2,3,4)) + scale_y_continuous(limits=c(0,5))
 
 
 tissue$X<- NULL
@@ -195,12 +219,12 @@ sub<- subset(sub, select=c("gene", "logP"))
 colnames(sub)[colnames(sub)=="logP"] <- i
 directionalp[[i]]<- sub
 }
-setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/analysis")
+setwd("../analysis/")
 
 ```
 
 
-```{r status volcano plots, fig.height= 20, fig.width=15, echo=TRUE}
+```{r status volcano plots, fig.height= 20, fig.width=15, eval=FALSE}
 g<- ggarrange(plotlist=plots,ncol=3, nrow=4, common.legend = TRUE)
 g<- annotate_figure(g, top=textGrob("Volcano plots by Status per tissue",gp=gpar(fontsize=22)), bottom=textGrob("LogFoldChange",gp=gpar(fontsize=20)), left=textGrob("-log10(p-adjusted)",gp=gpar(fontsize=20), rot = 90))
 g
@@ -224,7 +248,7 @@ de_genes<- pos_neg_out %>% group_by(tissue) %>% summarize(status_genes=sum(abs(r
 keep<- c(keep, "de_genes")
 ```
 
-```{r}
+```{r testing something COX, eval=FALSE}
 all_data<- data
 
 start<- nrow(all_data)
@@ -381,7 +405,9 @@ ann_cols<- list(tissue=tissue_colors, mean_logP=ps[1:52]) #Max mean_log pvalue i
 
 
 
-pheatmap(pvalue_cor, color=color[42:100], annotation_row=exp, border_color = NA, display_numbers = signif(pvalue_cor,1), annotation_colors = ann_cols, clustering_distance_cols = "correlation", clustering_distance_rows = "correlation", clustering_method="complete")
+p<- pheatmap(pvalue_cor, color=color[42:100], annotation_row=exp, border_color = NA, display_numbers = signif(pvalue_cor,1), annotation_colors = ann_cols, clustering_distance_cols = "euclidean", clustering_distance_rows = "euclidean", clustering_method="complete")
+p
+save_pheatmap_png(p, filename="../Overlap_results/heatmap_status", width=800, height=800)
 
 
 xy_status<-
@@ -389,7 +415,7 @@ ggplot(xy, aes(x=dist, fill=..x..)) + geom_histogram(color="grey80", size=0.3) +
             color="grey70", linetype="dashed", size=0.3) 
 keep<- c(keep, "xy_status")
 
-result <- pvclust(pvalue_cor, method.dist="cor", method.hclust="complete", nboot=1000, parallel=TRUE)
+result <- pvclust(pvalue_cor, method.dist="euclidean", method.hclust="complete", nboot=10000, parallel=TRUE)
 
 plot(result)
 pvrect(result, alpha=0.90)
@@ -400,7 +426,7 @@ This approach uses package 'RRHO2' and compares rank ordered gene lists against 
 
 The results reported in the paper are scaled to the largest log10 P-value in all of the pairwise comparisons, as a visual aid to help scale for multiple comparisons across tissues. However, we also present the unscaled versions too. 
 
-```{r RRHO2, eval=FALSE, echo=TRUE}
+```{r RRHO2,  eval=FALSE, echo=TRUE}
 RRHO_objects<- list()
 
 comparisons<- combn(tissue_order, 2)
@@ -428,9 +454,9 @@ save(RRHO_objects,file="../Overlap_results/RRHO2/RRHO2_Status.RData")
 ```
 
 
-```{r, echo=TRUE}
+```{r, eval=FALSE, echo=TRUE}
 
-load("../Overlap_results/RRHO2/RRHO2_Status.RData")
+#load("../Overlap_results/RRHO2/RRHO2_Status.RData")
 
 
 
@@ -466,7 +492,7 @@ plots_scaled[["legend"]]<- leg
 
 ```
 
-```{r, echo=TRUE, eval=FALSE}
+```{r, eval=FALSE, echo=TRUE}
 g<-arrangeGrob(grobs= plots_scaled, layout_matrix = m1)
 
 ggsave(file="../Overlap_results/RRHO2/figure_RRHO_status_scaled.pdf", g, units="in", width=20, height=20)
@@ -504,7 +530,7 @@ brain<- brain[complete.cases(brain),]
 brain$gene<- rownames(brain)
 brain_go<- merge(brain, go_terms, by="gene", all.x=TRUE)
 brain_go<- brain_go[order(brain_go$p_combo, decreasing=TRUE),]
-write.csv(brain,"../DE_results/results_brain_status.csv", row.names=FALSE)
+write.csv(brain,"../Overlap_results/results_brain_status.csv", row.names=FALSE)
 geneList<- brain_go$p_combo
 names(geneList)<- brain_go$gene
 
@@ -524,7 +550,7 @@ ggsave("../Overlap_results/figure_brain_GO_status.pdf", plot=p, device="pdf", he
 
 knitr::kable(y@result[1:10,], caption="BP enriched GO terms in the median p in the brain", row.names = FALSE) %>% kable_styling()
 
-write.csv(y@result,"../DE_results/GO_status_brain.csv", row.names=FALSE)
+write.csv(y@result,"../Overlap_results/GO_status_brain.csv", row.names=FALSE)
 
 
 
@@ -543,10 +569,40 @@ simMatrix <- calculateSimMatrix(ego2$ID,
                                 method="Rel")
 scores <- setNames(-log10(ego2$p.adjust), ego2$ID)
 reducedTerms <- reduceSimMatrix(simMatrix,
-                                scores,
+                               scores,
                                 threshold=0.7,
                                 orgdb="org.Hs.eg.db")
 treemapPlot(reducedTerms)
+
+
+#heatmapPlot(simMatrix,
+#            reducedTerms,
+#            annotateParent=TRUE,
+#            annotationLabel="parentTerm",
+#            fontsize=6)
+```
+
+
+
+```{r}
+#pos_cols<- c("#0D8CFF", "#AED9FF","#FF3300","#FFBBAA")
+genes<- brain[which(abs(brain$p_combo)>1.3),]
+genes_GO<- go2gene_bp[which(go2gene_bp$gene %in% genes$gene),]
+genes_GO<- genes_GO[which(genes_GO$GO_ID %in% ego2$ID[1:20]),]
+genes_GO<- merge(genes_GO, go2name_bp, by="GO_ID")
+genes_GO<- merge(genes_GO, genes, by="gene")
+genes_GO$gene_GO_combo<- paste0(genes_GO$gene, genes_GO$GO_ID)
+genes_GO<- genes_GO[!duplicated(genes_GO$gene_GO_combo),]
+genes_GO$pos_neg<- ifelse(genes_GO$p_combo<0, "neg","pos")
+genes_GO<- merge(genes_GO, genes_key, by="gene")
+colnames(genes_GO)[colnames(genes_GO)=="GO_ID"]<- "ID"
+genes_GO<- merge(genes_GO, ego2, by="ID")
+#genes_GO2<- genes_GO %>% group_by(name) %>% summarise()
+
+
+a<- ggplot(data=genes_GO, aes(x=name, y=p_combo, color=pos_neg, alpha=))  + geom_point(size=1) + scale_color_manual(values=c("#0D8CFF","#FF3300")) + coord_flip() + geom_text_repel(aes(label=display_gene_ID), size=geom_text.size) + peri_figure + labs(x="",y="expression direction x log10(p)") + theme(legend.position = "none")
+a
+ggsave(filename="../Overlap_results/figure_GO_status_top.png",a,height=2.60, width=4.60, units="in", device="png", bg="white")
 ```
 
 
@@ -554,7 +610,7 @@ treemapPlot(reducedTerms)
 tophits<- brain
 tophits$p_combo<- abs(tophits$p_combo)
 tophits<- tophits[order(tophits$p_combo, decreasing=TRUE),]
-tophits<- tophits$gene[1:6]
+tophits<- tophits$gene[1:10]
 out<- list()
 #i="POM"
 for(i in tissue_order){
@@ -602,29 +658,29 @@ res<- results(dd, alpha=0.1)
 
 gone<- plotCounts(dd, gene=row.names(res[tophits[1],]), intgroup=c("Tissue","Status"), returnData=TRUE)
 gtwo<- plotCounts(dd, gene=row.names(res[tophits[2],]), intgroup=c("Tissue","Status"), returnData=TRUE)
-#gthree<-  plotCounts(dd, gene=row.names(res[tophits[3],]), intgroup=c("Tissue","Status"), #returnData=TRUE)
-#gfour<-  plotCounts(dd, gene=row.names(res[tophits[4],]), intgroup=c("Tissue","Status"), returnData=TRUE)
-#gfive<-  plotCounts(dd, gene=row.names(res[tophits[5],]), intgroup=c("Tissue","Status"), returnData=TRUE)
-#gsix<-  plotCounts(dd, gene=row.names(res[tophits[6],]), intgroup=c("Tissue","Status"), returnData=TRUE)
-#vars<- list(gone,gtwo,gthree,gfour,gfive,gsix)
+gthree<-  plotCounts(dd, gene=row.names(res[tophits[3],]), intgroup=c("Tissue","Status"), returnData=TRUE)
+gfour<-  plotCounts(dd, gene=row.names(res[tophits[4],]), intgroup=c("Tissue","Status"), returnData=TRUE)
+gfive<-  plotCounts(dd, gene=row.names(res[tophits[5],]), intgroup=c("Tissue","Status"), returnData=TRUE)
+gsix<-  plotCounts(dd, gene=row.names(res[tophits[6],]), intgroup=c("Tissue","Status"), returnData=TRUE)
+vars<- list(gone,gtwo,gthree,gfour,gfive,gsix)
 #
-#plots<- list()
-##i=2
-#for(i in 1:6){
-#  dat<- vars[[i]]
-#  name<- tophits[i]
-#  result<- status_results_tophits[status_results_tophits$gene==name,]
-#  result$label<- paste0("LFC=",signif(result$lfc,2), "\np(raw)=", formatC(result$p,2,format="e"))
-#  result$x<- 1.5
-#  result$y<- max(dat$count)-30
-#  plots[[i]]<-  ggplot(dat, aes(x=Status, y=count)) + geom_point(size=2, position=dodge, #aes(color=Status)) + geom_boxplot(fill=NA, position=dodge, aes(color=Status)) + labs(title=paste0(name, " #p(median)=", formatC(10^-abs(brain_go$p_combo[brain_go$gene==name]),2, format="e")),x="", y="Normalised #Counts") + peri_theme + scale_colour_manual(values=status_cols[2:3]) + facet_wrap(. ~Tissue, ncol=5) + #geom_text(data=result, aes(x=x, y=y, label=label))
-#}
+plots<- list()
+#i=2
+for(i in 1:6){
+  dat<- vars[[i]]
+  name<- tophits[i]
+  result<- status_results_tophits[status_results_tophits$gene==name,]
+  result$label<- paste0("LFC=",signif(result$lfc,2), "\np(raw)=", formatC(result$p,2,format="e"))
+  result$x<- 1.5
+  result$y<- max(dat$count)-30
+  plots[[i]]<-  ggplot(dat, aes(x=Status, y=count)) + geom_point(size=2, position=dodge, aes(color=Status)) + geom_boxplot(fill=NA, position=dodge, aes(color=Status)) + labs(title=paste0(name, " p(median)=", formatC(10^-abs(brain_go$p_combo[brain_go$gene==name]),2, format="e")),x="", y="Normalised Counts") + peri_theme + scale_colour_manual(values=status_cols[2:3]) + facet_wrap(. ~Tissue, ncol=5) + geom_text(data=result, aes(x=x, y=y, label=label))
+}
 
 
-#g<- ggarrange(plotlist=plots[1:2],ncol=1, nrow=2, common.legend = TRUE, labels=c("A","B"))
-#g<- annotate_figure(g, top=textGrob("Top two genes consistently DE in brain with social status",gp=gpar(fontsize=22)), bottom=textGrob("social status",gp=gpar(fontsize=18)))
-#g
-ggexport(g, filename = "../DE_results/figure_braintop_status.png", width = 700,height = 900)
+g<- ggarrange(plotlist=plots[1:2],ncol=1, nrow=2, common.legend = TRUE, labels=c("A","B"))
+g<- annotate_figure(g, top=textGrob("Top two genes consistently DE in brain with social status",gp=gpar(fontsize=22)), bottom=textGrob("social status",gp=gpar(fontsize=18)))
+g
+ggexport(g, filename = "../Overlap_results/figure_braintop_status.png", width = 700,height = 900)
 
 hub=rownames(res[tophits[1],])
 gone$Tissue<- factor(gone$Tissue, levels=c("VMH","AH","PVN","POM","ICO","GCT","AI","TNA","LS", "BSTm"))
@@ -662,9 +718,123 @@ b
 
 p<- ggarrange(a,b, nrow=2)
 
-ggsave("../DE_results/figure_braintop_status.pdf", plot=p, device="pdf", height=3, width=5.5, units="in")
+ggsave("../Overlap_results/figure_braintop_status.pdf", plot=p, device="pdf", height=3, width=5.5, units="in")
 ```
 
+```{r}
+
+status_results_tophits<- merge(status_results_tophits, genes_key, by="gene")
+#status_results_tophits<- #status_results_tophits[grepl("ROBO4|POLD1|GRINA|LOC113988442|GAMT|FGFR4|LRRC25",status_results_tophits$display_gene_ID),]
+status_results_tophits$Tissue<- factor(status_results_tophits$Tissue, levels=c("VMH","AH","PVN","POM","ICO","GCT","AI","TNA","LS", "BSTm"))
+
+#ggplot(status_results_tophits, aes(x=Tissue,y=lfc, colour=display_gene_ID)) + geom_point(size=0.5) + peri_figure
+status_results_tophits$padj2<- ifelse(status_results_tophits$padj<0.1,"yes","no")
+#geom_text(aes(label=padj2),size=geom_text.size,color="black") + 
+g<- ggplot(status_results_tophits, aes(x=Tissue,y=display_gene_ID, fill=lfc)) + geom_tile(aes(color=padj2)) +  scale_color_manual(values=c("grey50","black")) + scale_fill_gradient2(low="#0D8CFF",high="#FF3300",mid="white") + theme(aspect.ratio = 1, axis.ticks=element_blank()) + labs(x="",y="") + theme(  axis.text.x = element_text(size =5, colour = "black", angle=90), axis.text.y = element_text(size = 5, colour = "black"),legend.text = element_text(size = 5), legend.title = element_text(size =5),legend.key.size=unit(3,"mm"),panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.background = element_blank())
+
+ggsave("../Overlap_results/figure_braintop10grid_status.pdf", plot=g, device="pdf", height=3, width=3, units="in")
+```
+
+
+
+## GO Overlap
+
+```{r status GO overlap}
+gos<- list.files(path="../DE_results/", pattern="GO_BP")
+gos<- gos[grepl("status",gos, ignore.case=TRUE)]
+setwd("../DE_results/")
+gos2<- lapply(gos, read.csv)
+setwd("G:/My Drive/Manakins/Pipra Brain/PIFI_brain_transcriptome/analysis")
+
+names(gos2)<- gos
+names(gos2)<- sub(".csv","", names(gos2))
+names(gos2)<- sub("GO_BP_", "",names(gos2))
+names(gos2)<- sub("_Status", "",names(gos2))
+gos2<- mapply(`[<-`, gos2, 'tissue', value = names(gos2), SIMPLIFY = FALSE)
+gos3<- do.call("rbind",gos2)
+gos3<- gos3[which(gos3$pvalue<0.05),]
+terms<- as.data.frame(table(gos3$Description))
+colnames(terms)<- c("Description","Freq")
+terms<- merge(terms, gos3[,c("ID","Description")], by="Description")
+terms<- terms[!duplicated(terms$Description),]
+terms<- terms[order(terms$Freq, decreasing=TRUE),]
+
+terms$Description<- factor(terms$Description, levels=terms$Description[order(terms$Freq, decreasing=TRUE)])
+
+ggplot(data=terms[1:20,], aes(x=Description, y=Freq)) + geom_bar(stat="identity", fill="darkturquoise") + theme(axis.text.x=element_text(angle=90)) + coord_flip() + peri_figure
+
+
+simMatrix <- calculateSimMatrix(gos3$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="BP",
+                                method="Rel")
+scores <- setNames(terms$Freq, terms$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                               scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+#scatterPlot(simMatrix , reducedTerms)
+
+red<- reducedTerms
+colnames(red)[colnames(red)=="go"]<- "ID"
+test<- merge(red, terms, by="ID")
+
+parents<- test %>% group_by(parentTerm) %>% summarize(parent_size=sum(score))
+test<- merge(parents, test, by="parentTerm")
+test<- test[order(test$parent_size, decreasing=TRUE),]
+write.csv(test,file="../Overlap_results/results_GO_overlap_rrvgo_status.csv", row.names=FALSE)
+tissues<- merge(gos3, test, by="ID")
+tissues2<- tissues %>% group_by(parentTerm,tissue) %>% summarise(n_term=(length(unique(ID))))
+
+tissues<- tissues %>% group_by(parentTerm) %>% summarize(n_tissue=length(unique(tissue)), n_terms=length(unique(ID)))
+
+tissues<- tissues[order(tissues$n_tissue, decreasing = TRUE),]
+tissues$parentTerm<- factor(tissues$parentTerm, levels=tissues$parentTerm[order(tissues$n_tissue, decreasing = TRUE)])
+
+
+
+p<- ggplot(data=tissues[1:20,], aes(x=parentTerm, y=n_tissue, fill=n_terms)) + geom_bar(stat="identity", colour="grey20", linewidth=0.2) + theme(axis.text.x=element_text(angle=90), legend.key.size=unit(3,"mm")) + coord_flip() + peri_figure + scale_fill_distiller(palette="Purples", direction=1, name="number GO terms") + scale_y_continuous(expand=c(0,0), limit=c(0,14), breaks=c(2,4,6,8,10,12)) + labs(x="parent GO term", y="Number of Tissues")
+p
+
+ggsave("../Overlap_results/figure_GOparent_overlap_status.pdf", plot=p, device="pdf", height=1.60, width=4.60, units="in")
+```
+
+
+
+```{r Status geom_tile}
+
+
+tissues3<- tissues2[tissues2$parentTerm %in% tissues$parentTerm[which(tissues$n_tissue>6)],]
+
+out<- list()
+for(i in tissues3$parentTerm){
+  #i="response to hypoxia"
+  term<- tissues3[tissues3$parentTerm==i,]
+  term<-droplevels(term)
+  term$tissue<- as.character(term$tissue)
+  if(any(!tissue_order %in% unique(term$tissue))){
+    tiss<- tissue_order[!tissue_order %in% unique(term$tissue)]
+    out[[i]]<- data.frame(parentTerm=i,tissue=tiss,n_term=NA)
+    
+  }
+  
+}
+out<- do.call("rbind",out)
+tissues3<- rbind(tissues3, out)
+tissues3<- merge(tissues3, tissues[,c("parentTerm","n_tissue")],by="parentTerm")
+
+tissues3$tissue<- factor(tissues3$tissue, levels=c("GON","PIT","VMH","AH","PVN","POM","ICO","GCT","TNA","AI","LS","BSTm"))
+tissues3<- tissues3[which(tissues3$n_tissue>8),]
+
+excl<- c("viral life cycle","SRP-dependent cotranslational protein targeting to membrane","nuclear-transcribed mRNA catabolic process, nonsense-mediated decay","negative regulation of Ras protein signal transduction","protein homotrimerization","positive regulation of cell-substrate adhesion")
+
+tissues3<- tissues3[!tissues3$parentTerm %in% excl,]
+
+p2<- ggplot(data=tissues3, aes(x=tissue, y=parentTerm, fill=n_term)) + geom_tile(colour="grey50") + scale_fill_viridis(option="A", na.value="white", direction=-1, name="Number Terms p<0.05") + theme(axis.ticks=element_blank()) + labs(x="",y="") + theme(  axis.text.x = element_text(size =5, colour = "black", angle=90), axis.text.y = element_text(size = 5, colour = "black"),legend.text = element_text(size = 5), legend.title = element_text(size =5),legend.key.size=unit(3,"mm"),panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.background = element_blank())
+p2
+ggsave("../Overlap_results/figure_GOparent_overlap_status_heatmap.pdf", plot=p2, device="pdf", height=2.0, width=5, units="in")
+```
 
 # Mean testosterone phenotype
 
@@ -704,9 +874,9 @@ for(i in tissue_order){
   rownames(tissue)<- 1:nrow(tissue)
   
   
-tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
-tissue$is_interesting<- tissue$interesting_genes==""
-plots[[i]]<- ggplot(tissue, aes(x=log2FoldChange, y=-log10(padj), color=sig)) + geom_point(size=4) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + geom_point(data=tissue[tissue$interesting_genes!="",], aes(fill=sig), pch=21,color="grey40", show.legend=FALSE, size=5) + scale_color_manual(values=tissue_cols[[i]]) + scale_fill_manual(values=tissue_cols[[i]][2:3]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + scale_x_continuous(limits=c(-5,6), breaks=c(-5,-4,-3,-2,-1,0,1,2,3,4,5,6)) + scale_y_continuous(limits=c(0,10)) + geom_hline(yintercept=-log10(0.1), linetype="dashed", color = "grey70", size=1)
+#tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
+#tissue$is_interesting<- tissue$interesting_genes==""
+#plots[[i]]<- ggplot(tissue, aes(x=log2FoldChange, y=-log10(padj), color=sig)) + geom_point(size=4) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + geom_point(data=tissue[tissue$interesting_genes!="",], aes(fill=sig), pch=21,color="grey40", show.legend=FALSE, size=5) + scale_color_manual(values=tissue_cols[[i]]) + scale_fill_manual(values=tissue_cols[[i]][2:3]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + scale_x_continuous(limits=c(-5,6), breaks=c(-5,-4,-3,-2,-1,0,1,2,3,4,5,6)) + scale_y_continuous(limits=c(0,10)) + geom_hline(yintercept=-log10(0.1), linetype="dashed", color = "grey70", size=1)
 tissue$X<- NULL
 tissue$pvalue<- ifelse(is.na(tissue$padj), NA, as.numeric(tissue$pvalue))
 sub<- subset(tissue, select=c("gene","log2FoldChange","pvalue"))
@@ -721,9 +891,9 @@ colnames(sub)[colnames(sub)=="logP"] <- i
 directionalp[[i]]<- sub
 
 }
-setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/analysis")
+setwd("../analysis/")
 ```
-```{r meanT volcano plotting, fig.height= 20, fig.width=15}
+```{r meanT volcano plotting, fig.height= 20, fig.width=15, eval=FALSE}
 g<- ggarrange(plotlist=plots,ncol=3, nrow=4, common.legend = TRUE)
 g<- annotate_figure(g, top=textGrob("Volcano plots by mean T per tissue",gp=gpar(fontsize=22)), bottom=textGrob("LogFoldChange",gp=gpar(fontsize=20)), left=textGrob("-log10(p-adjusted)",gp=gpar(fontsize=20), rot = 90))
 g
@@ -880,7 +1050,7 @@ ann_cols<- list(tissue=tissue_colors, mean_logP=ps[1:56])#Max mean_log pvalue is
 
 
 
-pheatmap(pvalue_cor, color=color[44:100], annotation_row=exp, border_color = NA, display_numbers = signif(pvalue_cor,1), annotation_colors = ann_cols, clustering_distance_cols = "euclidean", clustering_distance_rows = "euclidean", clustering_method="complete")
+pheatmap(pvalue_cor, color=color[44:100], annotation_row=exp, border_color = NA, display_numbers = signif(pvalue_cor,1), annotation_colors = ann_cols, clustering_distance_cols = "euclidean", clustering_distance_rows = "euclidean", clustering_method="complete")+theme(aspect.ratio=1)
 #ggsave("figure_heatmap_mean_T.png", device="png", width=9.5, height=9.5*1.25)
 
 xy_t<-
@@ -926,7 +1096,7 @@ save(RRHO_objects,file="../Overlap_results/RRHO2/RRHO2_meanT.RData")
 ```
 
 
-```{r}
+```{r, eval=FALSE}
 
 load("../Overlap_results/RRHO2/RRHO2_meanT.RData")
 
@@ -998,7 +1168,7 @@ ggsave("../Overlap_results/RRHO2/figure_meanT_results.png", plot=p, device="png"
 ```
 
 
-To view pdf versions of the p-value scaled (featured here), and raw unscaled data please visit the main branch of the github repository under "DE_results/RRHO2".
+To view pdf versions of the p-value scaled (featured here), and raw unscaled data please visit the main branch of the github repository under "Overlap_results/RRHO2".
 
 ## Overall brain patterns
 
@@ -1013,7 +1183,7 @@ brain<- brain[complete.cases(brain),]
 brain$gene<- rownames(brain)
 brain_go<- merge(brain, go_terms, by="gene", all.x=TRUE)
 brain_go<- brain_go[order(brain_go$p_combo, decreasing=TRUE),]
-write.csv(brain,"../DE_results/results_brain_meanT.csv", row.names=FALSE)
+write.csv(brain,"../Overlap_results/results_brain_meanT.csv", row.names=FALSE)
 geneList<- brain_go$p_combo
 names(geneList)<- brain_go$gene
 
@@ -1035,7 +1205,7 @@ ggplot(ego2[1:10,], aes(x=Description, y=GeneRatio2, fill=-qvalue)) + geom_bar(s
 
 knitr::kable(y@result[1:10,],caption="BP enriched GO terms in the median p in the brain for mean T", row.names = FALSE) %>% kable_styling()
 
-write.csv(y@result,"../DE_results/GO_meanT_brain.csv", row.names=FALSE)
+write.csv(y@result,"../Overlap_results/GO_meanT_brain.csv", row.names=FALSE)
 
 ego2<- as.data.frame(y@result$ID)
 colnames(ego2)<- "ID"
@@ -1055,11 +1225,34 @@ treemapPlot(reducedTerms)
 ```
 
 ```{r}
+#pos_cols<- c("#0D8CFF", "#AED9FF","#FF3300","#FFBBAA")
+genes<- brain[which(abs(brain$p_combo)>1.3),]
+genes_GO<- go2gene_bp[which(go2gene_bp$gene %in% genes$gene),]
+genes_GO<- genes_GO[which(genes_GO$GO_ID %in% ego2$ID[1:20]),]
+genes_GO<- merge(genes_GO, go2name_bp, by="GO_ID")
+genes_GO<- merge(genes_GO, genes, by="gene")
+genes_GO$gene_GO_combo<- paste0(genes_GO$gene, genes_GO$GO_ID)
+genes_GO<- genes_GO[!duplicated(genes_GO$gene_GO_combo),]
+genes_GO$pos_neg<- ifelse(genes_GO$p_combo<0, "neg","pos")
+genes_GO<- merge(genes_GO, genes_key, by="gene")
+colnames(genes_GO)[colnames(genes_GO)=="GO_ID"]<- "ID"
+genes_GO<- merge(genes_GO, ego2, by="ID")
+#genes_GO2<- genes_GO %>% group_by(name) %>% summarise()
+
+
+a<- ggplot(data=genes_GO, aes(x=name, y=p_combo, color=pos_neg, alpha=))  + geom_point(size=1) + scale_color_manual(values=c("#0D8CFF","#FF3300")) + coord_flip() + geom_text_repel(aes(label=display_gene_ID), size=geom_text.size) + peri_figure + labs(x="",y="expression direction x log10(p)") + theme(legend.position = "none")
+a
+ggsave(filename="../Overlap_results/figure_GO_meanT_top.png",a,height=2.60, width=4.60, units="in", device="png", bg="white")
+```
+
+
+
+```{r}
 
 tophits<- brain
 tophits$p_combo<- abs(tophits$p_combo)
 tophits<- tophits[order(tophits$p_combo, decreasing=TRUE),]
-tophits<- tophits$gene[1:6]
+tophits<- tophits$gene[1:10]
 out<- list()
 #i="POM"
 for(i in tissue_order){
@@ -1111,9 +1304,9 @@ gone<- plotCounts(dd, gene=row.names(res[tophits[1],]), intgroup=c("Tissue","mea
 gtwo<- plotCounts(dd, gene=row.names(res[tophits[2],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE)
 gthree<-  plotCounts(dd, gene=row.names(res[tophits[3],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE)
 gfour<-  plotCounts(dd, gene=row.names(res[tophits[4],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE)
-gfive<-  plotCounts(dd, gene=row.names(res[tophits[5],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE)
-#gsix<-  plotCounts(dd, gene=row.names(res[tophits[6],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE) #PLIN1 must have met one of the filtering criteria when filtering on all tissues. That's okay I don't look at more than the first two anyway
-vars<- list(gone,gtwo,gthree,gfour,gfive)
+#gfive<-  plotCounts(dd, gene=row.names(res[tophits[5],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE) #PLIN1 must have met one of the filtering criteria when filtering on all tissues. That's okay I don't look at more than the first two anyway
+gsix<-  plotCounts(dd, gene=row.names(res[tophits[6],]), intgroup=c("Tissue","mean_T","Status"), returnData=TRUE) 
+vars<- list(gone,gtwo,gthree,gfour,gsix)
 
 plots<- list()
 #i=1
@@ -1124,7 +1317,7 @@ for(i in 1:5){
   result$label<- paste0("LFC=",signif(result$lfc,2), "\np(raw)=", formatC(result$p,2,format="e"))
   result$x<- 0.5
   result$y<- max(dat$count)-70
-  plots[[i]]<-  ggplot(dat, aes(x=mean_T, y=count)) + geom_point(size=2, aes(color=Status)) + labs(title=paste0(name, " p(median)=", formatC(10^-abs(brain_go$p_combo[brain_go$gene==name]),2, format="e")),x="", y="Normalised Counts") + peri_figure + scale_colour_manual(values=status_cols[2:3]) + facet_wrap(. ~Tissue, ncol=5) + geom_text(data=result, aes(x=x, y=y, label=label))
+  plots[[i]]<-  ggplot(dat, aes(x=mean_T, y=count)) + geom_point(size=2, aes(color=Status)) + labs(title=paste0(name, " p(median)=", formatC(10^-abs(brain_go$p_combo[brain_go$gene==name]),2, format="e")),x="", y="Normalised Counts") + peri_theme + scale_colour_manual(values=status_cols[2:3]) + facet_wrap(. ~Tissue, ncol=5) + geom_text(data=result, aes(x=x, y=y, label=label))
 }
 
 ```
@@ -1137,10 +1330,121 @@ g
 
 ```
 
-```{r, eval=F}
-ggexport(g, filename = "../DE_results/figure_braintop_meanT.png", width = 700,height = 900)
+```{r}
+ggexport(g, filename = "../Overlap_results/figure_braintop_meanT.png", width = 700,height = 900)
 ```
 
+```{r}
+
+status_results_tophits<- merge(status_results_tophits, genes_key, by="gene")
+#status_results_tophits<- #status_results_tophits[grepl("ROBO4|POLD1|GRINA|LOC113988442|GAMT|FGFR4|LRRC25",status_results_tophits$display_gene_ID),]
+status_results_tophits$Tissue<- factor(status_results_tophits$Tissue, levels=c("VMH","AH","PVN","POM","ICO","GCT","AI","TNA","LS", "BSTm"))
+
+#ggplot(status_results_tophits, aes(x=Tissue,y=lfc, colour=display_gene_ID)) + geom_point(size=0.5) + peri_figure
+status_results_tophits$padj2<- ifelse(status_results_tophits$padj<0.1,"yes","no")
+#geom_text(aes(label=padj2),size=geom_text.size,color="black") + 
+g<- ggplot(status_results_tophits, aes(x=Tissue,y=display_gene_ID, fill=lfc)) + geom_tile(aes(color=padj2)) +  scale_color_manual(values=c("grey50","black")) + scale_fill_gradient2(low="#0D8CFF",high="#FF3300",mid="white") + theme(aspect.ratio = 1, axis.ticks=element_blank()) + labs(x="",y="") + theme(  axis.text.x = element_text(size =5, colour = "black", angle=90), axis.text.y = element_text(size = 5, colour = "black"),legend.text = element_text(size = 5), legend.title = element_text(size =5),legend.key.size=unit(3,"mm"),panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.background = element_blank())
+
+ggsave("../Overlap_results/figure_braintop10grid_meanT.pdf", plot=g, device="pdf", height=3, width=3, units="in")
+```
+
+## GO Overlap
+
+```{r mean TGO overlap}
+gos<- list.files(path="../DE_results/", pattern="GO_BP")
+gos<- gos[grepl("mean",gos, ignore.case=TRUE)]
+setwd("../DE_results/")
+gos2<- lapply(gos, read.csv)
+setwd("../analysis")
+
+names(gos2)<- gos
+names(gos2)<- sub(".csv","", names(gos2))
+names(gos2)<- sub("GO_BP_", "",names(gos2))
+names(gos2)<- sub("_mean_T", "",names(gos2))
+gos2<- mapply(`[<-`, gos2, 'tissue', value = names(gos2), SIMPLIFY = FALSE)
+gos3<- do.call("rbind",gos2)
+gos3<- gos3[which(gos3$pvalue<0.05),]
+terms<- as.data.frame(table(gos3$Description))
+colnames(terms)<- c("Description","Freq")
+terms<- merge(terms, gos3[,c("ID","Description")], by="Description")
+terms<- terms[!duplicated(terms$Description),]
+terms<- terms[order(terms$Freq, decreasing=TRUE),]
+
+terms$Description<- factor(terms$Description, levels=terms$Description[order(terms$Freq, decreasing=TRUE)])
+
+ggplot(data=terms[1:20,], aes(x=Description, y=Freq)) + geom_bar(stat="identity", fill="darkturquoise") + theme(axis.text.x=element_text(angle=90)) + coord_flip() + peri_figure
+
+
+simMatrix <- calculateSimMatrix(gos3$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="BP",
+                                method="Rel")
+scores <- setNames(terms$Freq, terms$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                               scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+#scatterPlot(simMatrix , reducedTerms)
+
+red<- reducedTerms
+colnames(red)[colnames(red)=="go"]<- "ID"
+test<- merge(red, terms, by="ID")
+write.csv(test,file="../Overlap_results/results_GO_overlap_rrvgo_mean_T.csv", row.names=FALSE)
+parents<- test %>% group_by(parentTerm) %>% summarize(parent_size=sum(score))
+test<- merge(parents, test, by="parentTerm")
+test<- test[order(test$parent_size, decreasing=TRUE),]
+tissues<- merge(gos3, test, by="ID")
+tissues2<- tissues %>% group_by(parentTerm,tissue) %>% summarise(n_term=(length(unique(ID))))
+
+tissues<- tissues %>% group_by(parentTerm) %>% summarize(n_tissue=length(unique(tissue)), n_terms=length(unique(ID)))
+
+tissues<- tissues[order(tissues$n_tissue, decreasing = TRUE),]
+tissues$parentTerm<- factor(tissues$parentTerm, levels=tissues$parentTerm[order(tissues$n_tissue, decreasing = TRUE)])
+
+
+
+p<- ggplot(data=tissues[1:20,], aes(x=parentTerm, y=n_tissue, fill=n_terms)) + geom_bar(stat="identity", colour="grey20", linewidth=0.2) + theme(axis.text.x=element_text(angle=90), legend.key.size=unit(3,"mm")) + coord_flip() + peri_figure + scale_fill_distiller(palette="Purples", direction=1, name="number GO terms") + scale_y_continuous(expand=c(0,0), limit=c(0,14), breaks=c(2,4,6,8,10,12)) + labs(x="parent GO term", y="Number of Tissues")
+p
+
+ggsave("../Overlap_results/figure_GOparent_overlap_mean_T.pdf", plot=p, device="pdf", height=1.60, width=4.60, units="in")
+```
+
+
+
+```{r meanT geom_tile}
+
+
+tissues3<- tissues2[tissues2$parentTerm %in% tissues$parentTerm[which(tissues$n_tissue>8)],]
+
+out<- list()
+for(i in tissues3$parentTerm){
+  #i="response to hypoxia"
+  term<- tissues3[tissues3$parentTerm==i,]
+  term<-droplevels(term)
+  term$tissue<- as.character(term$tissue)
+  if(any(!tissue_order %in% unique(term$tissue))){
+    tiss<- tissue_order[!tissue_order %in% unique(term$tissue)]
+    out[[i]]<- data.frame(parentTerm=i,tissue=tiss,n_term=NA)
+    
+  }
+  
+}
+out<- do.call("rbind",out)
+tissues3<- rbind(tissues3, out)
+tissues3<- merge(tissues3, tissues[,c("parentTerm","n_tissue")],by="parentTerm")
+
+tissues3$tissue<- factor(tissues3$tissue, levels=c("GON","PIT","VMH","AH","PVN","POM","ICO","GCT","TNA","AI","LS","BSTm"))
+tissues3<- tissues3[which(tissues3$n_tissue>9),]
+
+excl<- c("negative regulation of smooth muscle cell migration","positive regulation of vascular smooth muscle cell proliferation","relaxation of cardiac muscle","response to ethanol")
+
+tissues3<- tissues3[!tissues3$parentTerm %in% excl,]
+
+p2<- ggplot(data=tissues3, aes(x=tissue, y=parentTerm, fill=n_term)) + geom_tile(colour="grey50") + scale_fill_viridis(option="A", na.value="white", direction=-1, name="Number Terms p<0.05") + theme(axis.ticks=element_blank()) + labs(x="",y="") + theme(  axis.text.x = element_text(size =5, colour = "black", angle=90), axis.text.y = element_text(size = 5, colour = "black"),legend.text = element_text(size = 5), legend.title = element_text(size =5),legend.key.size=unit(3,"mm"),panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.background = element_blank())
+p2
+ggsave("../Overlap_results/figure_GOparent_overlap_mean_T_heatmap.pdf", plot=p2, device="pdf", height=2.0, width=5, units="in")
+```
 
 
 # Social network strength (Cooperative tendency)
@@ -1181,9 +1485,9 @@ for(i in tissue_order){
   rownames(tissue)<- 1:nrow(tissue)
   
   
-tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
-tissue$is_interesting<- tissue$interesting_genes==""
-plots[[i]]<- ggplot(tissue, aes(x=log2FoldChange, y=-log10(padj), color=sig)) + geom_point(size=4) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + geom_point(data=tissue[tissue$interesting_genes!="",], aes(fill=sig), pch=21,color="grey40", show.legend=FALSE, size=5) + scale_color_manual(values=tissue_cols[[i]]) + scale_fill_manual(values=tissue_cols[[i]][2:3]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + scale_x_continuous(limits=c(-4,4), breaks=c(-4,-3,-2,-1,0,1,2,3,4)) + scale_y_continuous(limits=c(0,6)) + geom_hline(yintercept=-log10(0.1), linetype="dashed", color = "grey70", size=1)
+#tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
+#tissue$is_interesting<- tissue$interesting_genes==""
+#plots[[i]]<- ggplot(tissue, aes(x=log2FoldChange, y=-log10(padj), color=sig)) + geom_point(size=4) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + geom_point(data=tissue[tissue$interesting_genes!="",], aes(fill=sig), pch=21,color="grey40", show.legend=FALSE, size=5) + scale_color_manual(values=tissue_cols[[i]]) + scale_fill_manual(values=tissue_cols[[i]][2:3]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + scale_x_continuous(limits=c(-4,4), breaks=c(-4,-3,-2,-1,0,1,2,3,4)) + scale_y_continuous(limits=c(0,6)) + geom_hline(yintercept=-log10(0.1), linetype="dashed", color = "grey70", size=1)
 tissue$X<- NULL
 tissue$pvalue<- ifelse(is.na(tissue$padj), NA, as.numeric(tissue$pvalue))
 sub<- subset(tissue, select=c("gene","log2FoldChange","pvalue"))
@@ -1197,9 +1501,9 @@ sub<- subset(sub, select=c("gene", "logP"))
 colnames(sub)[colnames(sub)=="logP"] <- i
 directionalp[[i]]<- sub
 }
-setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/analysis")
+setwd("../analysis/")
 ```
-```{r strength volcano plotting, fig.height= 20, fig.width=15}
+```{r strength volcano plotting, fig.height= 20, fig.width=15,eval=FALSE}
 g<- ggarrange(plotlist=plots,ncol=3, nrow=4, common.legend = TRUE)
 g<- annotate_figure(g, top=textGrob("Volcano plots by social network strength per tissue",gp=gpar(fontsize=22)), bottom=textGrob("LogFoldChange",gp=gpar(fontsize=20)), left=textGrob("-log10(p-adjusted)",gp=gpar(fontsize=20), rot = 90))
 g
@@ -1360,15 +1664,15 @@ m1<- m
 m1[1,11]<- 67
 plots_scaled[["legend"]]<- leg
 ```
-```{r, echo=FALSE, eval=FALSE}
+```{r, echo=FALSE}
 g<-arrangeGrob(grobs= plots_scaled, layout_matrix = m1)
 
 
-ggsave(file="../Overlap_results/RRHO2/figure_RRHO_strength_scaled.pdf", g, units="in", width=20, height=20)
+ggsave(file="../Overlap_results/RRHO2/figure_RRHO_strength_scaled.pdf", g, units="in", width=25, height=20)
 
 
 g<-grid.arrange(grobs= plots, layout_matrix = m)
-ggsave(file="../Overlap_results/RRHO2/figure_RRHO_strength_unscaled.pdf", g, units="in", width=25, height=10)
+ggsave(file="../Overlap_results/RRHO2/figure_RRHO_strength_unscaled.pdf", g, units="in", width=25, height=20)
 ```
 
 The scaled PDF is [HERE](https://github.com/periperipatus/PIFI_brain_transcriptome/blob/main/Overlap_results/RRHO2/figure_RRHO_strength_scaled.pdf), and the unscaled is [HERE](https://github.com/periperipatus/PIFI_brain_transcriptome/blob/main/Overlap_results/RRHO2/figure_RRHO_strength_unscaled.pdf).
@@ -1397,7 +1701,7 @@ brain<- brain[complete.cases(brain),]
 brain$gene<- rownames(brain)
 brain_go<- merge(brain, go_terms, by="gene", all.x=TRUE)
 brain_go<- brain_go[order(brain_go$p_combo, decreasing=TRUE),]
-write.csv(brain,"../DE_results/results_brain_strength.csv", row.names=FALSE)
+write.csv(brain,"../Overlap_results/results_brain_strength.csv", row.names=FALSE)
 geneList<- brain_go$p_combo
 names(geneList)<- brain_go$gene
 
@@ -1416,7 +1720,7 @@ ggplot(ego2[1:10,], aes(x=Description, y=GeneRatio2, fill=-qvalue)) + geom_bar(s
 
 knitr::kable(y@result[1:10,], caption="BP enriched GO terms in the median p in the brain for strength", row.names = FALSE) %>% kable_styling()
 
-write.csv(y@result,"../DE_results/GO_strength_brain.csv", row.names=FALSE)
+write.csv(y@result,"../Overlap_results/GO_strength_brain.csv", row.names=FALSE)
 
 ego2<- as.data.frame(y@result$ID)
 colnames(ego2)<- "ID"
@@ -1439,7 +1743,7 @@ treemapPlot(reducedTerms)
 tophits<- brain
 tophits$p_combo<- abs(tophits$p_combo)
 tophits<- tophits[order(tophits$p_combo, decreasing=TRUE),]
-tophits<- tophits$gene[1:6]
+tophits<- tophits$gene[1:10]
 out<- list()
 #i="POM"
 for(i in tissue_order){
@@ -1502,7 +1806,7 @@ for(i in 1:6){
   result$label<- paste0("LFC=",signif(result$lfc,2), "\np(raw)=", formatC(result$p,2,format="e"))
   result$x<- 0.5
   result$y<- max(dat$count)-100
-  plots[[i]]<-  ggplot(dat, aes(x=strength.all_study, y=count)) + geom_point(size=2, position=dodge, aes(color=Status)) + labs(title=paste0(name, " p(median)=", formatC(10^-abs(brain_go$p_combo[brain_go$gene==name]),2, format="e")),x="", y="Normalised Counts") + peri_figure + scale_colour_manual(values=status_cols[2:3]) + facet_wrap(. ~Tissue, ncol=5) + geom_text(data=result, aes(x=x, y=y, label=label))
+  plots[[i]]<-  ggplot(dat, aes(x=strength.all_study, y=count)) + geom_point(size=2, position=dodge, aes(color=Status)) + labs(title=paste0(name, " p(median)=", formatC(10^-abs(brain_go$p_combo[brain_go$gene==name]),2, format="e")),x="", y="Normalised Counts") + peri_theme + scale_colour_manual(values=status_cols[2:3]) + facet_wrap(. ~Tissue, ncol=5) + geom_text(data=result, aes(x=x, y=y, label=label))
 }
 
 ```
@@ -1513,10 +1817,43 @@ g<- ggarrange(plotlist=plots[1:2],ncol=1, nrow=2, common.legend = TRUE, labels=c
 g<- annotate_figure(g, top=textGrob("Top two genes consistently DE in brain with strength",gp=gpar(fontsize=22)), bottom=textGrob("social network strength",gp=gpar(fontsize=18)))
 
 g
-ggexport(g, filename = "../DE_results/figure_braintop_strength.png", width = 700,height = 900)
+ggexport(g, filename = "../Overlap_results/figure_braintop_strength.png", width = 700,height = 900)
 ```
 
+```{r}
+#pos_cols<- c("#0D8CFF", "#AED9FF","#FF3300","#FFBBAA")
+genes<- brain[which(abs(brain$p_combo)>1.3),]
+genes_GO<- go2gene_bp[which(go2gene_bp$gene %in% genes$gene),]
+genes_GO<- genes_GO[which(genes_GO$GO_ID %in% ego2$ID[1:20]),]
+genes_GO<- merge(genes_GO, go2name_bp, by="GO_ID")
+genes_GO<- merge(genes_GO, genes, by="gene")
+genes_GO$gene_GO_combo<- paste0(genes_GO$gene, genes_GO$GO_ID)
+genes_GO<- genes_GO[!duplicated(genes_GO$gene_GO_combo),]
+genes_GO$pos_neg<- ifelse(genes_GO$p_combo<0, "neg","pos")
+genes_GO<- merge(genes_GO, genes_key, by="gene")
+colnames(genes_GO)[colnames(genes_GO)=="GO_ID"]<- "ID"
+genes_GO<- merge(genes_GO, ego2, by="ID")
+#genes_GO2<- genes_GO %>% group_by(name) %>% summarise()
 
+
+a<- ggplot(data=genes_GO, aes(x=name, y=p_combo, color=pos_neg, alpha=))  + geom_point(size=1) + scale_color_manual(values=c("#0D8CFF","#FF3300")) + coord_flip() + geom_text_repel(aes(label=display_gene_ID), size=geom_text.size) + peri_figure + labs(x="",y="expression direction x log10(p)") + theme(legend.position = "none")
+a
+ggsave(filename="../Overlap_results/figure_GO_strength_top.png",a,height=2.60, width=4.60, units="in", device="png", bg="white")
+```
+
+```{r}
+
+status_results_tophits<- merge(status_results_tophits, genes_key, by="gene")
+#status_results_tophits<- #status_results_tophits[grepl("ROBO4|POLD1|GRINA|LOC113988442|GAMT|FGFR4|LRRC25",status_results_tophits$display_gene_ID),]
+status_results_tophits$Tissue<- factor(status_results_tophits$Tissue, levels=c("VMH","AH","PVN","POM","ICO","GCT","AI","TNA","LS", "BSTm"))
+
+#ggplot(status_results_tophits, aes(x=Tissue,y=lfc, colour=display_gene_ID)) + geom_point(size=0.5) + peri_figure
+status_results_tophits$padj2<- ifelse(status_results_tophits$padj<0.1,"yes","no")
+#geom_text(aes(label=padj2),size=geom_text.size,color="black") + 
+g<- ggplot(status_results_tophits, aes(x=Tissue,y=display_gene_ID, fill=lfc)) + geom_tile(aes(color=padj2)) +  scale_color_manual(values=c("grey50","black")) + scale_fill_gradient2(low="#0D8CFF",high="#FF3300",mid="white") + theme(aspect.ratio = 1, axis.ticks=element_blank()) + labs(x="",y="") + theme(  axis.text.x = element_text(size =5, colour = "black", angle=90), axis.text.y = element_text(size = 5, colour = "black"),legend.text = element_text(size = 5), legend.title = element_text(size =5),legend.key.size=unit(3,"mm"),panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.background = element_blank())
+
+ggsave("../Overlap_results/figure_braintop10grid_strength.pdf", plot=g, device="pdf", height=3, width=3, units="in")
+```
 
 ```{r plotting BSTm, eval=FALSE}
 BSTm_modules<- read.csv("../WGCNA/ByTissue_2021/BSTm_results_ModuleMembership.csv")
@@ -1556,98 +1893,107 @@ ggplot(tissue, aes(x=log2FoldChange, y=-log10(pvalue), color=color)) + geom_poin
 
 ```
 
+## GO Overlap
 
-
-# Interaction between Status * mean testosterone
-
-This is just for plotting the volcano plots - I did not do the other analyses here. 
-
-```{r,  fig.height= 20, fig.width=15}
+```{r Strength GO overlap}
+gos<- list.files(path="../DE_results/", pattern="GO_BP")
+gos<- gos[grepl("strength",gos, ignore.case=TRUE)]
 setwd("../DE_results/")
-files<- list.files(pattern="interactions_[a-zA-Z]*", ignore.case=TRUE)
-status_results<- lapply(files, read.csv)
-names(status_results)<- word(files, 2, sep="_")
+gos2<- lapply(gos, read.csv)
+setwd("../analysis")
+
+names(gos2)<- gos
+names(gos2)<- sub("_strength.csv","", names(gos2),ignore.case=TRUE)
+names(gos2)<- sub("GO_BP_", "",names(gos2))
+
+gos2<- mapply(`[<-`, gos2, 'tissue', value = names(gos2), SIMPLIFY = FALSE)
+gos3<- do.call("rbind",gos2)
+gos3<- gos3[which(gos3$pvalue<0.05),]
+terms<- as.data.frame(table(gos3$Description))
+colnames(terms)<- c("Description","Freq")
+terms<- merge(terms, gos3[,c("ID","Description")], by="Description")
+terms<- terms[!duplicated(terms$Description),]
+terms<- terms[order(terms$Freq, decreasing=TRUE),]
+
+terms$Description<- factor(terms$Description, levels=terms$Description[order(terms$Freq, decreasing=TRUE)])
+
+ggplot(data=terms[1:20,], aes(x=Description, y=Freq)) + geom_bar(stat="identity", fill="darkturquoise") + theme(axis.text.x=element_text(angle=90)) + coord_flip() + peri_figure
 
 
-output<- list()
-plots<- list()
-directionalp<- list()
-pos_neg<- list()
-for(i in tissue_order){
-  tissue<- status_results[[i]]
-  tissue<- tissue[!is.na(tissue$pvalue),]
-  ## counts of positive and negative genes
-  pos_out<- tissue
-  pos_out$neg_sig<- ifelse(pos_out$padj<0.1 & pos_out$log2FoldChange<0,1,0)
-  pos_out$neg_marg<- ifelse(pos_out$pvalue<0.05 & pos_out$padj>0.1 & pos_out$log2FoldChange<0,1,0)
-  pos_out$pos_sig<- ifelse(pos_out$padj<0.1 & pos_out$log2FoldChange>0,1,0)
-  pos_out$pos_marg<- ifelse(pos_out$pvalue<0.05 & pos_out$padj>0.1 & pos_out$log2FoldChange>0,1,0)
+simMatrix <- calculateSimMatrix(gos3$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="BP",
+                                method="Rel")
+scores <- setNames(terms$Freq, terms$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                               scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+#scatterPlot(simMatrix , reducedTerms)
 
-  pos_neg[[i]]<- data.frame(tissue=i, res=c(-sum(pos_out$neg_sig, na.rm=TRUE), -sum(pos_out$neg_marg, na.rm=TRUE), sum(pos_out$pos_sig, na.rm=TRUE), sum(pos_out$pos_marg, na.rm=TRUE)), type=c("negative significant", "negative marginal", "positive significant","positive marginal"))
-  
-  ##plots
-  tissue$gene<- plyr::revalue(tissue$gene, c("LOC113993669"="CYP19A1","LOC113983511"="OXT", "LOC113983498"="AVP","LOC113982601"="AVPR2"))
+red<- reducedTerms
+colnames(red)[colnames(red)=="go"]<- "ID"
+test<- merge(red, terms, by="ID")
+write.csv(test,file="../Overlap_results/results_GO_overlap_rrvgo_strength.csv", row.names=FALSE)
+parents<- test %>% group_by(parentTerm) %>% summarize(parent_size=sum(score))
+test<- merge(parents, test, by="parentTerm")
+test<- test[order(test$parent_size, decreasing=TRUE),]
+tissues<- merge(gos3, test, by="ID")
+tissues2<- tissues %>% group_by(parentTerm,tissue) %>% summarise(n_term=(length(unique(ID))))
 
-  tissue$sig<- ifelse(tissue$padj<0.1,"Q<0.1",ifelse(tissue$pvalue<0.05,"P<0.05","NS"))
-  
-  tissue<- tissue[order(tissue$padj),]
-  rownames(tissue)<- 1:nrow(tissue)
-  
-  
-tissue$interesting_genes<- ifelse((tissue$gene %in% candidates & tissue$pvalue<0.05) | rownames(tissue) %in% topgenes, as.character(tissue$gene), "")
-tissue$is_interesting<- tissue$interesting_genes==""
-plots[[i]]<- ggplot(tissue, aes(x=log2FoldChange, y=-log10(padj), color=sig)) + geom_point(size=4) + geom_text_repel(aes(label=interesting_genes), color="grey40",size=8, label.padding=1, force_pull=0, force=6) + peri_theme + geom_point(data=tissue[tissue$interesting_genes!="",], aes(fill=sig), pch=21,color="grey40", show.legend=FALSE, size=5) + scale_color_manual(values=tissue_cols[[i]]) + scale_fill_manual(values=tissue_cols[[i]][2:3]) + labs(title=i,subtitle=paste0(nrow(tissue),"/",nrow(tissue[which(tissue$pvalue<0.05),]),"/",nrow(tissue[which(tissue$padj<0.1),])),x="", y="") + scale_x_continuous(limits=c(-4,4), breaks=c(-4,-3,-2,-1,0,1,2,3,4)) + scale_y_continuous(limits=c(0,6)) + geom_hline(yintercept=-log10(0.1), linetype="dashed", color = "grey70", size=1)
-tissue$X<- NULL
-tissue$pvalue<- ifelse(is.na(tissue$padj), NA, as.numeric(tissue$pvalue))
-sub<- subset(tissue, select=c("gene","log2FoldChange","pvalue"))
-tissue<- subset(tissue, select=c("gene","pvalue"))
-colnames(tissue)[colnames(tissue)=="pvalue"] <- i
-output[[i]]<- tissue
+tissues<- tissues %>% group_by(parentTerm) %>% summarize(n_tissue=length(unique(tissue)), n_terms=length(unique(ID)))
 
-sub$logP<- -log(sub$pvalue, 10)
-sub$logP<- ifelse(sub$log2FoldChange<0, -(sub$logP), sub$logP)
-sub<- subset(sub, select=c("gene", "logP"))
-colnames(sub)[colnames(sub)=="logP"] <- i
-directionalp[[i]]<- sub
-}
-g<- ggarrange(plotlist=plots,ncol=3, nrow=4, common.legend = TRUE)
-g<- annotate_figure(g, top=textGrob("Volcano plots by status x mean T interaction per tissue",gp=gpar(fontsize=22)), bottom=textGrob("LogFoldChange",gp=gpar(fontsize=20)), left=textGrob("-log10(p-adjusted)",gp=gpar(fontsize=20), rot = 90))
-g
-ggexport(g, filename = "figure_volcanoes_interactions.png", width = 1500,height = 1500, pointsize=32)
-setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/PIFI_brain_transcriptome/analysis")
-```
+tissues<- tissues[order(tissues$n_tissue, decreasing = TRUE),]
+tissues$parentTerm<- factor(tissues$parentTerm, levels=tissues$parentTerm[order(tissues$n_tissue, decreasing = TRUE)])
 
 
-```{r, eval=FALSE}
-pos_neg_int<- do.call("rbind", pos_neg)
-pos_neg_int$type<- factor(pos_neg_int$type, levels=c("negative significant", "negative marginal","positive significant","positive marginal"))
-pos_neg_int$tissue<- factor(pos_neg_int$tissue, levels=tissue_order)
-pos_neg_int$abs_val<- ifelse(grepl("significant",pos_neg_int$type), abs(pos_neg_int$res), "")
-pos_cols<- c("#0D8CFF", "#AED9FF","#FF3300","#FFBBAA")
 
-p<- ggplot(pos_neg_int, aes(x=tissue, y=res, fill=type)) + geom_bar(stat="identity") + peri_theme + scale_y_continuous(expand=c(0,0), limits=c(-1200, 1200)) + labs(title="Status x mean T", x="", y="") + scale_fill_manual(values=pos_cols) + geom_hline(yintercept=0)+ theme(legend.position = "none") + geom_text(aes(label=abs_val),vjust=pos_neg_int$res < 0)+ theme(plot.margin = unit(c(1,1,0,0), "lines"))
+p<- ggplot(data=tissues[1:20,], aes(x=parentTerm, y=n_tissue, fill=n_terms)) + geom_bar(stat="identity", colour="grey20", linewidth=0.2) + theme(axis.text.x=element_text(angle=90), legend.key.size=unit(3,"mm")) + coord_flip() + peri_figure + scale_fill_distiller(palette="Purples", direction=1, name="number GO terms") + scale_y_continuous(expand=c(0,0), limit=c(0,14), breaks=c(2,4,6,8,10,12)) + labs(x="parent GO term", y="Number of Tissues")
 p
-ggsave("../Overlap_results/figure_StatusmeanT_bars.pdf", plot=p, device="pdf", height=1.75, width=1.75, units="in")
 
-```
-
-```{r}
-
-
+ggsave("../Overlap_results/figure_GOparent_overlap_strength.pdf", plot=p, device="pdf", height=1.60, width=4.60, units="in")
 ```
 
 
+```{r strength geom_tile}
 
-```{r histograms, eval=FALSE}
-#some code to test something for Chris
-histog<- ggarrange(xy_status, xy_t, xy_str, nrow=3)
-ggsave("../Overlap_results/figure_corr_hist.pdf", plot=histog, device="pdf", height=1.75, width=1.75, units="in")
 
+tissues3<- tissues2[tissues2$parentTerm %in% tissues$parentTerm[which(tissues$n_tissue>7)],]
+
+out<- list()
+for(i in tissues3$parentTerm){
+  #i="response to hypoxia"
+  term<- tissues3[tissues3$parentTerm==i,]
+  term<-droplevels(term)
+  term$tissue<- as.character(term$tissue)
+  if(any(!tissue_order %in% unique(term$tissue))){
+    tiss<- tissue_order[!tissue_order %in% unique(term$tissue)]
+    out[[i]]<- data.frame(parentTerm=i,tissue=tiss,n_term=NA)
+    
+  }
+  
+}
+out<- do.call("rbind",out)
+tissues3<- rbind(tissues3, out)
+tissues3<- merge(tissues3, tissues[,c("parentTerm","n_tissue")],by="parentTerm")
+
+tissues3$tissue<- factor(tissues3$tissue, levels=c("GON","PIT","VMH","AH","PVN","POM","ICO","GCT","TNA","AI","LS","BSTm"))
+#tissues3<- tissues3[which(tissues3$n_tissue>=8),]
+
+excl<- c("protein glycosylation","protein homotetramerization","negative regulation of cell death","negative regulation of epithelial cell proliferation","phosphatidylinositol-mediated signaling","cardiac conduction","cellular amino acid metabolic process","intermembrane lipid transfer","cell adhesion","negative regulation of angiogenesis")
+
+tissues3<- tissues3[!tissues3$parentTerm %in% excl,]
+
+p2<- ggplot(data=tissues3, aes(x=tissue, y=parentTerm, fill=n_term)) + geom_tile(colour="grey50") + scale_fill_viridis(option="A", na.value="white", direction=-1, name="Number Terms p<0.05") + theme(axis.ticks=element_blank()) + labs(x="",y="") + theme(  axis.text.x = element_text(size =5, colour = "black", angle=90), axis.text.y = element_text(size = 5, colour = "black"),legend.text = element_text(size = 5), legend.title = element_text(size =5),legend.key.size=unit(3,"mm"),panel.background = element_blank(), panel.grid.major = element_blank(), panel.grid.minor = element_blank(), plot.background = element_blank())
+p2
+ggsave("../Overlap_results/figure_GOparent_overlap_strength_heatmap.pdf", plot=p2, device="pdf",height=2.0, width=5, units="in")
 ```
 
 
-```{r number of DE genes, eval=FALSE}
+# Comparing all analyses
 
+```{r number of DE genes}
 meanT_status<- cor.test(de_genes$status_genes, de_genes$meanT_genes)
 meanT_strength<- cor.test(de_genes$meanT_genes, de_genes$strength_genes)
 status_strength<- cor.test(de_genes$status_genes, de_genes$strength_genes)
@@ -1659,7 +2005,7 @@ b<-ggplot(de_genes, aes(x=meanT_genes, y=strength_genes, color=tissue)) + geom_p
 c<-ggplot(de_genes,aes(x=status_genes, y=strength_genes, color=tissue)) + geom_point() + peri_figure + labs(title="Status x Strength",  subtitle=paste0("R=",signif(status_strength$estimate,2), ", p=", signif(status_strength$p.value,2))) + theme(aspect.ratio = 1)+ scale_y_continuous(limits=c(200,1500)) + labs(x="number DEGs by social status", y="number DEGs by social network strength")
 
 corrs<- ggarrange(a,b,c, ncol=3, common.legend = TRUE)
-ggsave("../Overlap_results/figure_corr_degs.png", plot=corrs, device="png", bg="white")
+ggsave("../Overlap_results/figure_corr_degs.png", plot=corrs, device="png", bg="white",width=1500,height=800,units="px")
 #ggsave("../Overlap_results/figure_corr_degs_sml.pdf", plot=corrs, device="pdf", height=1.15, width=2.445, units="in")
 ```
 
@@ -1704,8 +2050,92 @@ status_strength_out<- as.data.frame(do.call("rbind",status_strength_out))
 gene_correlations<- data.frame(tissue=c(rep(tissue_order,3)), comparison=c(rep("meanT_status",12), rep("meanT_strength",12), rep("status_strength",12)), R=c(meanT_status_out$V1,meanT_strength_out$V1, status_strength_out$V1))
 gene_correlations$R<- as.numeric(gene_correlations$R)                         
 
+gene_correlations$tissue<- factor(gene_correlations$tissue,levels=tissue_order)
 
-ggplot(gene_correlations, aes(x=tissue, y=R, fill=comparison)) + geom_bar(stat="identity",position=dodge) + scale_fill_manual
+p<- ggplot(gene_correlations, aes(x=tissue, y=R, fill=comparison)) + geom_bar(stat="identity",position=position_dodge(width=0.9),colour="grey20",linewidth=0.2) + peri_figure + theme(legend.key.size = unit(3,"mm"), axis.text.x=element_text(angle=90)) +scale_fill_viridis(discrete=TRUE)+theme(panel.grid.major.x = element_line(color="grey80", linetype="dashed",linewidth=0.2))
 
+ggsave("../Overlap_results/figure_corr_lists.png", plot=p, device="png", bg="white",width=900,height=800,units="px")
+ggsave("../Overlap_results/figure_corr_lists.pdf", plot=p, device="pdf", bg="white",height=2.0, width=3.5, units="in")
 ```
+
+```{r landscape landscapes1, eval=FALSE}
+
+
+status_meanT_shared<-list()
+for(i in tissue_order){
+  #i="GON"
+  comparison<- tissue_order[i]
+  p1<- data.frame(gene=row.names(logpvalue_meanT), mean_T=logpvalue_meanT[,i])
+  p1<- p1[which(p1$mean_T>abs(1.3)),]
+  p2<- data.frame(gene=row.names(logpvalue_status), status=logpvalue_status[,i])
+  p2<- p2[which(p2$status>abs(1.3)),]
+
+    status_meanT_shared[[i]]<- data.frame(tissue=i,n_shared=length(p1$gene[p1$gene %in% p2$gene]), n_p1=length(p1$gene),n_p2=length(p2$gene),comparison="meanT_status")
+}
+
+status_meanT_shared<- do.call("rbind",status_meanT_shared)
+
+meanT_strength_out<- list()
+meanT_strength_shared<- list()
+for(i in tissue_order){
+  #i="GON"
+  comparison<- tissue_order[i]
+  p1<- data.frame(gene=row.names(logpvalue_meanT), mean_T=logpvalue_meanT[,i])
+  p1<- p1[which(p1$mean_T>abs(1.3)),]
+  p2<- data.frame(gene=row.names(logpvalue_strength), strength=logpvalue_strength[,i])
+  p2<- p2[which(p2$strength>abs(1.3)),]
+ 
+    meanT_strength_shared[[i]]<- data.frame(tissue=i,n_shared=length(p1$gene[p1$gene %in% p2$gene]), n_p1=length(p1$gene),n_p2=length(p2$gene),comparison="meanT_strength")
+}
+meanT_strength_shared<- do.call("rbind",meanT_strength_shared)
+
+status_strength_out<- list()
+status_strength_shared<- list()
+for(i in tissue_order){
+  #i="GON"
+  comparison<- tissue_order[i]
+  p1<- data.frame(gene=row.names(logpvalue_status), status=logpvalue_status[,i])
+  p1<- p1[which(p1$status>abs(1.3)),]
+  p2<- data.frame(gene=row.names(logpvalue_strength), strength=logpvalue_strength[,i])
+  p2<- p2[which(p2$strength>abs(1.3)),]
+
+  
+  status_strength_shared[[i]]<- data.frame(tissue=i,n_shared=length(p1$gene[p1$gene %in% p2$gene]), n_p1=length(p1$gene),n_p2=length(p2$gene),comparison="status_strength")
+}
+status_strength_shared<- do.call("rbind",status_strength_shared)              
+genes_shared<- rbind(status_meanT_shared, meanT_strength_shared,status_strength_shared)              
+
+genes_shared$tissue<- factor(genes_shared$tissue,levels=tissue_order)
+
+genes_shared$perc<- ((genes_shared$n_shared)/(genes_shared$n_p1+genes_shared$n_p2))*100
+
+p<- ggplot(genes_shared, aes(x=tissue, y=perc, fill=comparison)) + geom_bar(stat="identity",position=position_dodge(width=0.9),colour="grey20",linewidth=0.2) + peri_figure + theme(legend.key.size = unit(3,"mm"), axis.text.x=element_text(angle=90)) +scale_fill_viridis(discrete=TRUE)+theme(panel.grid.major.x = element_line(color="grey80", linetype="dashed",linewidth=0.2)) + labs(y="percent p<0.05 genes shared",x="")
+
+ggsave("../Overlap_results/figure_corr_lists_sig.png", plot=p, device="png", bg="white",width=900,height=800,units="px")
+ggsave("../Overlap_results/figure_corr_lists_sig.pdf", plot=p, device="pdf", bg="white",height=2.0, width=3.5, units="in")
+```
+
+
+```{r}
+
+str<- read.csv("../Overlap_results/results_GO_overlap_rrvgo_strength.csv")
+str<- str[!duplicated(str$parentTerm),]
+t<- read.csv("../Overlap_results/results_GO_overlap_rrvgo_mean_T.csv")
+t<- t[!duplicated(t$parentTerm),]
+st<- read.csv("../Overlap_results/results_GO_overlap_rrvgo_status.csv")
+st<- st[!duplicated(st$parentTerm),]
+
+gl<- list(strength=str$parentTerm,mean_T=t$parentTerm,status=st$parentTerm)
+library(ggvenn)
+library(viridis)
+
+g<- ggvenn(gl, stroke_size=0.2, set_name_size=2,fill_color=c("#0073C2FF", "#EFC000FF", "#CD534CFF"),text_size=1) 
+ggsave(filename="../Overlap_results/figure_GO_overlap_all.pdf", plot=g, device="pdf", height=1.60, width=1.60, units="in")
+
+
+common<- str$parentTerm[which(str$parentTerm %in% t$parentTerm)]
+common<- common[which(common %in% st$parentTerm)]
+common
+```
+
 

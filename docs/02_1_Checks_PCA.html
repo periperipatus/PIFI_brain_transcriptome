@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+<meta name="author" content="Last Substantive change December 2023" />
+
+
+<title>Checks and PCA</title>
+
+<script src="site_libs/header-attrs-2.11/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/yeti.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+
+<style type="text/css">
+  code {
+    white-space: pre;
+  }
+  .sourceCode {
+    overflow: visible;
+  }
+</style>
+<style type="text/css" data-origin="pandoc">
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+    background-color: #ffffff;
+    color: #a0a0a0;
+  }
+pre.numberSource { margin-left: 3em; border-left: 1px solid #a0a0a0;  padding-left: 4px; }
+div.sourceCode
+  { color: #1f1c1b; background-color: #ffffff; }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+code span { color: #1f1c1b; } /* Normal */
+code span.al { color: #bf0303; background-color: #f7e6e6; font-weight: bold; } /* Alert */
+code span.an { color: #ca60ca; } /* Annotation */
+code span.at { color: #0057ae; } /* Attribute */
+code span.bn { color: #b08000; } /* BaseN */
+code span.bu { color: #644a9b; font-weight: bold; } /* BuiltIn */
+code span.cf { color: #1f1c1b; font-weight: bold; } /* ControlFlow */
+code span.ch { color: #924c9d; } /* Char */
+code span.cn { color: #aa5500; } /* Constant */
+code span.co { color: #898887; } /* Comment */
+code span.cv { color: #0095ff; } /* CommentVar */
+code span.do { color: #607880; } /* Documentation */
+code span.dt { color: #0057ae; } /* DataType */
+code span.dv { color: #b08000; } /* DecVal */
+code span.er { color: #bf0303; text-decoration: underline; } /* Error */
+code span.ex { color: #0095ff; font-weight: bold; } /* Extension */
+code span.fl { color: #b08000; } /* Float */
+code span.fu { color: #644a9b; } /* Function */
+code span.im { color: #ff5500; } /* Import */
+code span.in { color: #b08000; } /* Information */
+code span.kw { color: #1f1c1b; font-weight: bold; } /* Keyword */
+code span.op { color: #1f1c1b; } /* Operator */
+code span.ot { color: #006e28; } /* Other */
+code span.pp { color: #006e28; } /* Preprocessor */
+code span.re { color: #0057ae; background-color: #e0e9f8; } /* RegionMarker */
+code span.sc { color: #3daee9; } /* SpecialChar */
+code span.ss { color: #ff5500; } /* SpecialString */
+code span.st { color: #bf0303; } /* String */
+code span.va { color: #0057ae; } /* Variable */
+code span.vs { color: #bf0303; } /* VerbatimString */
+code span.wa { color: #bf0303; } /* Warning */
+
+</style>
+<script>
+// apply pandoc div.sourceCode style to pre.sourceCode instead
+(function() {
+  var sheets = document.styleSheets;
+  for (var i = 0; i < sheets.length; i++) {
+    if (sheets[i].ownerNode.dataset["origin"] !== "pandoc") continue;
+    try { var rules = sheets[i].cssRules; } catch (e) { continue; }
+    for (var j = 0; j < rules.length; j++) {
+      var rule = rules[j];
+      // check if there is a div.sourceCode rule
+      if (rule.type !== rule.STYLE_RULE || rule.selectorText !== "div.sourceCode") continue;
+      var style = rule.style.cssText;
+      // check if color or background-color is set
+      if (rule.style.color === '' && rule.style.backgroundColor === '') continue;
+      // replace div.sourceCode by a pre.sourceCode rule
+      sheets[i].deleteRule(j);
+      sheets[i].insertRule('pre.sourceCode{' + style + '}', j);
+    }
+  }
+})();
+</script>
+
+
+
+
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark it active
+  menuAnchor.tab('show');
+
+  // if it's got a parent navbar menu mark it active as well
+  menuAnchor.closest('li.dropdown').addClass('active');
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-inverse  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html">PIFI neurogenomics</a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" aria-expanded="false">
+    Analyses
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="./01_reading_QC.html">Data QC and filtering</a>
+    </li>
+    <li>
+      <a href="./02_1_Checks_PCA.html">All Tissues and Whole-Brain PCA</a>
+    </li>
+    <li>
+      <a href="./02_2_DESeq2.html">Differential Expression</a>
+    </li>
+    <li>
+      <a href="./03_WGCNA_wholebrain.html">Whole brain co-expression</a>
+    </li>
+    <li>
+      <a href="./04_WGCNA_single_tissue.html">Co-expression in each tissue</a>
+    </li>
+    <li>
+      <a href="./05_candidate_gene_analysis.html">Candidate Genes</a>
+    </li>
+    <li>
+      <a href="./06_tissue_summary_similarity.html">Summaries and overlap analyses</a>
+    </li>
+  </ul>
+</li>
+<li>
+  <a href="./contact.html">Contact</a>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        <li>
+  <a href="https://github.com/periperipatus/PIFI_brain_transcriptome">
+    <span class="fa fa-github fa-lg"></span>
+     
+  </a>
+</li>
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+
+
+<h1 class="title toc-ignore">Checks and PCA</h1>
+<h3 class="subtitle">For manuscript: Neurogenomic landscape of male
+cooperative behavior in a wild bird</h3>
+<h4 class="author">Last Substantive change December 2023</h4>
+<h4 class="date">Last Knit “2023-12-08”</h4>
+
+</div>
+
+
+<p>Here, I take the filtered dataset from the QC process, and run a
+whole brain analysis, as well as individual tissue analysis in the next
+markdown. Here, I also explore the relationships between our explanatory
+variables.</p>
+<div class="sourceCode" id="cb1"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" tabindex="-1"></a>key<span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;../data_filtered/data_key_Parsed_ReplicatesRemoved.csv&quot;</span>)</span>
+<span id="cb1-2"><a href="#cb1-2" tabindex="-1"></a>behav<span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;../data_unfiltered/PIPFIL_T_and_behav_data.csv&quot;</span>)</span>
+<span id="cb1-3"><a href="#cb1-3" tabindex="-1"></a><span class="fu">rownames</span>(key)<span class="ot">&lt;-</span> key<span class="sc">$</span>X</span>
+<span id="cb1-4"><a href="#cb1-4" tabindex="-1"></a></span>
+<span id="cb1-5"><a href="#cb1-5" tabindex="-1"></a>key<span class="sc">$</span>Color_ID<span class="ot">&lt;-</span> <span class="fu">sub</span>(<span class="st">&quot;/&quot;</span>,<span class="st">&quot;&quot;</span>, key<span class="sc">$</span>Color_ID)</span>
+<span id="cb1-6"><a href="#cb1-6" tabindex="-1"></a>key<span class="ot">&lt;-</span> plyr<span class="sc">::</span><span class="fu">rename</span>(key, <span class="at">replace=</span><span class="fu">c</span>(<span class="st">&quot;Color_ID&quot;</span><span class="ot">=</span><span class="st">&quot;colorID&quot;</span>))</span>
+<span id="cb1-7"><a href="#cb1-7" tabindex="-1"></a>behav<span class="sc">$</span>status<span class="ot">&lt;-</span> plyr<span class="sc">::</span><span class="fu">revalue</span>(behav<span class="sc">$</span>status, <span class="fu">c</span>(<span class="st">&quot;floa&quot;</span><span class="ot">=</span><span class="st">&quot;floater&quot;</span>, <span class="st">&quot;terr&quot;</span><span class="ot">=</span><span class="st">&quot;territorial&quot;</span>))</span>
+<span id="cb1-8"><a href="#cb1-8" tabindex="-1"></a>key_behav<span class="ot">&lt;-</span> <span class="fu">merge</span>(key, behav, <span class="at">by=</span><span class="st">&quot;colorID&quot;</span>)</span>
+<span id="cb1-9"><a href="#cb1-9" tabindex="-1"></a>key_behav<span class="ot">&lt;-</span> key_behav[<span class="sc">!</span><span class="fu">is.na</span>(key_behav<span class="sc">$</span>last_behav),]</span>
+<span id="cb1-10"><a href="#cb1-10" tabindex="-1"></a></span>
+<span id="cb1-11"><a href="#cb1-11" tabindex="-1"></a></span>
+<span id="cb1-12"><a href="#cb1-12" tabindex="-1"></a><span class="co">#create a data.frame with all of the observations. </span></span>
+<span id="cb1-13"><a href="#cb1-13" tabindex="-1"></a>not_in_behav<span class="ot">&lt;-</span> key[<span class="sc">!</span>key<span class="sc">$</span>X <span class="sc">%in%</span> key_behav<span class="sc">$</span>X,]</span>
+<span id="cb1-14"><a href="#cb1-14" tabindex="-1"></a>cols_not_key<span class="ot">&lt;-</span> <span class="fu">colnames</span>(key_behav)[<span class="sc">!</span><span class="fu">colnames</span>(key_behav) <span class="sc">%in%</span> <span class="fu">colnames</span>(key)]</span>
+<span id="cb1-15"><a href="#cb1-15" tabindex="-1"></a>cols_not_key_df<span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="fu">matrix</span>(<span class="cn">NA</span>, <span class="at">nrow =</span> <span class="fu">nrow</span>(not_in_behav), <span class="at">ncol =</span> <span class="fu">length</span>(cols_not_key)))</span>
+<span id="cb1-16"><a href="#cb1-16" tabindex="-1"></a><span class="fu">colnames</span>(cols_not_key_df)<span class="ot">&lt;-</span> cols_not_key</span>
+<span id="cb1-17"><a href="#cb1-17" tabindex="-1"></a>not_in_behav<span class="ot">&lt;-</span> <span class="fu">cbind</span>(not_in_behav, cols_not_key_df)</span>
+<span id="cb1-18"><a href="#cb1-18" tabindex="-1"></a></span>
+<span id="cb1-19"><a href="#cb1-19" tabindex="-1"></a>key_behav<span class="ot">&lt;-</span> <span class="fu">rbind</span>(key_behav, not_in_behav)</span>
+<span id="cb1-20"><a href="#cb1-20" tabindex="-1"></a></span>
+<span id="cb1-21"><a href="#cb1-21" tabindex="-1"></a><span class="fu">rownames</span>(key_behav)<span class="ot">&lt;-</span> key_behav<span class="sc">$</span>X</span>
+<span id="cb1-22"><a href="#cb1-22" tabindex="-1"></a></span>
+<span id="cb1-23"><a href="#cb1-23" tabindex="-1"></a></span>
+<span id="cb1-24"><a href="#cb1-24" tabindex="-1"></a>key_behav<span class="sc">$</span>Tissue<span class="ot">&lt;-</span> <span class="fu">factor</span>(key_behav<span class="sc">$</span>Tissue, <span class="at">levels=</span><span class="fu">c</span>(<span class="st">&quot;GON&quot;</span>,<span class="st">&quot;PIT&quot;</span>,<span class="st">&quot;VMH&quot;</span>,<span class="st">&quot;AH&quot;</span>,<span class="st">&quot;PVN&quot;</span>,<span class="st">&quot;POM&quot;</span>,<span class="st">&quot;ICO&quot;</span>,<span class="st">&quot;GCT&quot;</span>,<span class="st">&quot;AI&quot;</span>,<span class="st">&quot;TNA&quot;</span>,<span class="st">&quot;LS&quot;</span>, <span class="st">&quot;BSTm&quot;</span>))</span>
+<span id="cb1-25"><a href="#cb1-25" tabindex="-1"></a>key_behav<span class="ot">&lt;-</span> key_behav[<span class="fu">order</span>(<span class="fu">rownames</span>(key_behav)),]</span>
+<span id="cb1-26"><a href="#cb1-26" tabindex="-1"></a>key_behav<span class="sc">$</span>Class<span class="ot">&lt;-</span> <span class="fu">as.factor</span>(key_behav<span class="sc">$</span>Class)</span>
+<span id="cb1-27"><a href="#cb1-27" tabindex="-1"></a>key_behav<span class="sc">$</span>Class<span class="ot">&lt;-</span> <span class="fu">revalue</span>(key_behav<span class="sc">$</span>Class, <span class="at">replace=</span><span class="fu">c</span>(<span class="st">&quot;SCB floater&quot;</span><span class="ot">=</span><span class="st">&quot;Predefinitive floater&quot;</span>, <span class="st">&quot;DCB floater &quot;</span><span class="ot">=</span><span class="st">&quot;Definitive floater&quot;</span>, <span class="st">&quot;DCB territorial&quot;</span><span class="ot">=</span><span class="st">&quot;Territorial&quot;</span>))</span>
+<span id="cb1-28"><a href="#cb1-28" tabindex="-1"></a>key_behav<span class="sc">$</span>Class<span class="ot">&lt;-</span> <span class="fu">factor</span>(key_behav<span class="sc">$</span>Class, <span class="at">levels=</span><span class="fu">c</span>(<span class="st">&quot;Predefinitive floater&quot;</span>, <span class="st">&quot;Definitive floater&quot;</span>, <span class="st">&quot;Territorial&quot;</span>))</span>
+<span id="cb1-29"><a href="#cb1-29" tabindex="-1"></a><span class="fu">rownames</span>(key_behav)<span class="ot">&lt;-</span> key_behav<span class="sc">$</span>sampleID</span>
+<span id="cb1-30"><a href="#cb1-30" tabindex="-1"></a>key_behav<span class="ot">&lt;-</span> key_behav[<span class="fu">order</span>(key_behav<span class="sc">$</span>sampleID),]</span>
+<span id="cb1-31"><a href="#cb1-31" tabindex="-1"></a>key_behav<span class="sc">$</span>Year<span class="ot">&lt;-</span> <span class="fu">as.factor</span>(key_behav<span class="sc">$</span>Year)</span>
+<span id="cb1-32"><a href="#cb1-32" tabindex="-1"></a>key_behav<span class="sc">$</span>Batch<span class="ot">&lt;-</span> <span class="fu">as.factor</span>(key_behav<span class="sc">$</span>Batch)</span>
+<span id="cb1-33"><a href="#cb1-33" tabindex="-1"></a>key_behav<span class="sc">$</span>Status<span class="ot">&lt;-</span> <span class="fu">as.factor</span>(key_behav<span class="sc">$</span>Status)</span>
+<span id="cb1-34"><a href="#cb1-34" tabindex="-1"></a></span>
+<span id="cb1-35"><a href="#cb1-35" tabindex="-1"></a>key_behav_unique<span class="ot">&lt;-</span> key_behav[<span class="sc">!</span><span class="fu">duplicated</span>(key_behav<span class="sc">$</span>colorID),]</span>
+<span id="cb1-36"><a href="#cb1-36" tabindex="-1"></a></span>
+<span id="cb1-37"><a href="#cb1-37" tabindex="-1"></a></span>
+<span id="cb1-38"><a href="#cb1-38" tabindex="-1"></a></span>
+<span id="cb1-39"><a href="#cb1-39" tabindex="-1"></a><span class="co">#read the raw count data</span></span>
+<span id="cb1-40"><a href="#cb1-40" tabindex="-1"></a>data<span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;../data_filtered/data_RawCounts_all_ReplicatesRemoved_antisense_V2.csv&quot;</span>)</span>
+<span id="cb1-41"><a href="#cb1-41" tabindex="-1"></a></span>
+<span id="cb1-42"><a href="#cb1-42" tabindex="-1"></a><span class="fu">rownames</span>(data)<span class="ot">&lt;-</span> data<span class="sc">$</span>X</span>
+<span id="cb1-43"><a href="#cb1-43" tabindex="-1"></a>data<span class="sc">$</span>X<span class="ot">&lt;-</span> <span class="cn">NULL</span></span>
+<span id="cb1-44"><a href="#cb1-44" tabindex="-1"></a></span>
+<span id="cb1-45"><a href="#cb1-45" tabindex="-1"></a><span class="do">### Gene Ontology</span></span>
+<span id="cb1-46"><a href="#cb1-46" tabindex="-1"></a></span>
+<span id="cb1-47"><a href="#cb1-47" tabindex="-1"></a>go_key<span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;../GO_annotations/Maggies_annotations_modifiedR.csv&quot;</span>)</span>
+<span id="cb1-48"><a href="#cb1-48" tabindex="-1"></a>go_key<span class="ot">&lt;-</span> plyr<span class="sc">::</span><span class="fu">rename</span>(go_key, <span class="at">replace=</span><span class="fu">c</span>(<span class="st">&quot;GeneID&quot;</span><span class="ot">=</span><span class="st">&quot;gene&quot;</span>))</span>
+<span id="cb1-49"><a href="#cb1-49" tabindex="-1"></a></span>
+<span id="cb1-50"><a href="#cb1-50" tabindex="-1"></a>go_terms<span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;../GO_annotations/pfil_GO_key_raw.csv&quot;</span>)</span>
+<span id="cb1-51"><a href="#cb1-51" tabindex="-1"></a>go_terms<span class="ot">&lt;-</span> plyr<span class="sc">::</span><span class="fu">rename</span>(go_terms, <span class="at">replace=</span><span class="fu">c</span>(<span class="st">&quot;GeneID&quot;</span><span class="ot">=</span><span class="st">&quot;gene&quot;</span>))</span>
+<span id="cb1-52"><a href="#cb1-52" tabindex="-1"></a>go2gene_bp<span class="ot">&lt;-</span> go_terms[<span class="fu">which</span>(go_terms<span class="sc">$</span>Aspect<span class="sc">==</span><span class="st">&quot;P&quot;</span>),<span class="fu">c</span>(<span class="st">&quot;GO_ID&quot;</span>, <span class="st">&quot;gene&quot;</span>)]</span>
+<span id="cb1-53"><a href="#cb1-53" tabindex="-1"></a>go2gene_mf<span class="ot">&lt;-</span> go_terms[<span class="fu">which</span>(go_terms<span class="sc">$</span>Aspect<span class="sc">==</span><span class="st">&quot;F&quot;</span>),<span class="fu">c</span>(<span class="st">&quot;GO_ID&quot;</span>, <span class="st">&quot;gene&quot;</span>)]</span>
+<span id="cb1-54"><a href="#cb1-54" tabindex="-1"></a>go_obo<span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;../GO_annotations/ontology_obo_out.csv&quot;</span>)</span>
+<span id="cb1-55"><a href="#cb1-55" tabindex="-1"></a>go_obo<span class="ot">&lt;-</span> plyr<span class="sc">::</span><span class="fu">rename</span>(go_obo, <span class="at">replace=</span><span class="fu">c</span>(<span class="st">&quot;id&quot;</span><span class="ot">=</span><span class="st">&quot;GO_ID&quot;</span>))</span>
+<span id="cb1-56"><a href="#cb1-56" tabindex="-1"></a>go2name_bp<span class="ot">&lt;-</span> go_obo[<span class="fu">which</span>(go_obo<span class="sc">$</span>namespace<span class="sc">==</span><span class="st">&quot;biological_process&quot;</span>),<span class="fu">c</span>(<span class="st">&quot;GO_ID&quot;</span>, <span class="st">&quot;name&quot;</span>)]</span>
+<span id="cb1-57"><a href="#cb1-57" tabindex="-1"></a>go2name_mf<span class="ot">&lt;-</span> go_obo[<span class="fu">which</span>(go_obo<span class="sc">$</span>namespace<span class="sc">==</span><span class="st">&quot;molecular_function&quot;</span>),<span class="fu">c</span>(<span class="st">&quot;GO_ID&quot;</span>, <span class="st">&quot;name&quot;</span>)]</span>
+<span id="cb1-58"><a href="#cb1-58" tabindex="-1"></a></span>
+<span id="cb1-59"><a href="#cb1-59" tabindex="-1"></a></span>
+<span id="cb1-60"><a href="#cb1-60" tabindex="-1"></a>genes_key<span class="ot">&lt;-</span> <span class="fu">read.csv</span>(<span class="st">&quot;../GO_annotations/Maggies_annotations_modifiedR.csv&quot;</span>)</span>
+<span id="cb1-61"><a href="#cb1-61" tabindex="-1"></a>genes_key<span class="ot">&lt;-</span> plyr<span class="sc">::</span><span class="fu">rename</span>(genes_key, <span class="at">replace=</span><span class="fu">c</span>(<span class="st">&quot;GeneID&quot;</span><span class="ot">=</span><span class="st">&quot;gene&quot;</span>))</span>
+<span id="cb1-62"><a href="#cb1-62" tabindex="-1"></a>genes_key<span class="sc">$</span>gene[genes_key<span class="sc">$</span>gene<span class="sc">==</span><span class="st">&quot;LOC113993669&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;CYP19A1&quot;</span></span>
+<span id="cb1-63"><a href="#cb1-63" tabindex="-1"></a>genes_key<span class="sc">$</span>gene[genes_key<span class="sc">$</span>gene<span class="sc">==</span><span class="st">&quot;LOC113983511&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;OXT&quot;</span></span>
+<span id="cb1-64"><a href="#cb1-64" tabindex="-1"></a>genes_key<span class="sc">$</span>gene[genes_key<span class="sc">$</span>gene<span class="sc">==</span><span class="st">&quot;LOC113983498&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;AVP&quot;</span></span>
+<span id="cb1-65"><a href="#cb1-65" tabindex="-1"></a>genes_key<span class="sc">$</span>gene[genes_key<span class="sc">$</span>gene<span class="sc">==</span><span class="st">&quot;LOC113982601&quot;</span>] <span class="ot">&lt;-</span> <span class="st">&quot;AVPR2&quot;</span></span>
+<span id="cb1-66"><a href="#cb1-66" tabindex="-1"></a>data_genes<span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">gene=</span><span class="fu">rownames</span>(data))</span>
+<span id="cb1-67"><a href="#cb1-67" tabindex="-1"></a>genes_key<span class="ot">&lt;-</span> <span class="fu">merge</span>(data_genes, genes_key, <span class="at">by=</span><span class="st">&quot;gene&quot;</span>, <span class="at">all.x=</span><span class="cn">TRUE</span>)</span>
+<span id="cb1-68"><a href="#cb1-68" tabindex="-1"></a><span class="co">#genes_key&lt;- genes_key[which(grepl(&quot;LOC[0-9]+&quot;,genes_key$gene)),]</span></span>
+<span id="cb1-69"><a href="#cb1-69" tabindex="-1"></a></span>
+<span id="cb1-70"><a href="#cb1-70" tabindex="-1"></a>genes_key<span class="sc">$</span>display_gene_ID<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(<span class="fu">grepl</span>(<span class="st">&quot;LOC[0-9]+&quot;</span>, genes_key<span class="sc">$</span>gene) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">grepl</span>(<span class="st">&quot;LOC[0-9]+&quot;</span>,genes_key<span class="sc">$</span>best_anno) <span class="sc">&amp;</span> <span class="sc">!</span><span class="fu">is.na</span>(genes_key<span class="sc">$</span>best_anno), <span class="fu">paste0</span>(genes_key<span class="sc">$</span>gene,<span class="st">&quot; (&quot;</span>,genes_key<span class="sc">$</span>best_anno,<span class="st">&quot;)&quot;</span>), <span class="fu">as.character</span>(genes_key<span class="sc">$</span>gene))</span>
+<span id="cb1-71"><a href="#cb1-71" tabindex="-1"></a>genes_key<span class="ot">&lt;-</span> genes_key[,<span class="fu">c</span>(<span class="st">&quot;gene&quot;</span>,<span class="st">&quot;best_anno&quot;</span>,<span class="st">&quot;display_gene_ID&quot;</span>)]</span></code></pre></div>
+<p><br><br></p>
+<div id="exploration-of-the-behavioural-data" class="section level1"
+number="1">
+<h1><span class="header-section-number">1</span> Exploration of the
+behavioural data</h1>
+<p>We were concerned about the signal from the last few days outweighing
+the gene-expression signal from their overall phenotype, so we will
+explore how different these measures are from eachother.</p>
+<p><img src="02_1_Checks_PCA_files/figure-html/variable%20correlations-1.png" width="480" style="display: block; margin: auto;" /></p>
+<div id="associations-between-variables" class="section level2"
+number="1.1">
+<h2><span class="header-section-number">1.1</span> Associations between
+variables</h2>
+<p><img src="02_1_Checks_PCA_files/figure-html/unnamed-chunk-1-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>Given the significant relationship between degree and strength, I
+will only keep one of these variables - the strength. This was the most
+repeatable of the two sociality variables in Ryder et al. (2020).</p>
+<p><img src="02_1_Checks_PCA_files/figure-html/unnamed-chunk-2-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p><img src="02_1_Checks_PCA_files/figure-html/cor%20status-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p>All significance tests cited in the figure above are based on just
+territorial and floater, but colour-coded according to
+plumage*status.</p>
+<p><img src="02_1_Checks_PCA_files/figure-html/mean%20T%20and%20behav-1.png" width="480" style="display: block; margin: auto;" /></p>
+</div>
+<div id="nuisance-variables" class="section level2" number="1.2">
+<h2><span class="header-section-number">1.2</span> Nuisance
+variables</h2>
+<p>In the previous QC exploration I found substantial DEGs according to
+collection Year and Sequencing Batch. Here we explore how the continuous
+variables are distributed across sampling years. The tests find there is
+a difference in the medians between years for both our interest
+traits.</p>
+<p><img src="02_1_Checks_PCA_files/figure-html/variables%20according%20to%20Year-1.png" width="960" style="display: block; margin: auto;" /></p>
+<p><br><br></p>
+</div>
+</div>
+<div id="all-tissues-pca" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> All tissues PCA</h1>
+<p>Plotting all the tissues</p>
+<div class="sourceCode" id="cb2"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb2-1"><a href="#cb2-1" tabindex="-1"></a>all_data<span class="ot">&lt;-</span> data</span>
+<span id="cb2-2"><a href="#cb2-2" tabindex="-1"></a></span>
+<span id="cb2-3"><a href="#cb2-3" tabindex="-1"></a>start<span class="ot">&lt;-</span> <span class="fu">nrow</span>(all_data)</span>
+<span id="cb2-4"><a href="#cb2-4" tabindex="-1"></a><span class="co">#remove genes with avg read counts &lt;20</span></span>
+<span id="cb2-5"><a href="#cb2-5" tabindex="-1"></a>all_data<span class="sc">$</span>avg_count<span class="ot">&lt;-</span> <span class="fu">apply</span>(all_data, <span class="dv">1</span>, mean)</span>
+<span id="cb2-6"><a href="#cb2-6" tabindex="-1"></a>all_data<span class="ot">&lt;-</span> all_data[all_data<span class="sc">$</span>avg_count<span class="sc">&gt;</span><span class="dv">20</span>,]</span>
+<span id="cb2-7"><a href="#cb2-7" tabindex="-1"></a>all_data<span class="sc">$</span>avg_count<span class="ot">&lt;-</span><span class="cn">NULL</span></span>
+<span id="cb2-8"><a href="#cb2-8" tabindex="-1"></a></span>
+<span id="cb2-9"><a href="#cb2-9" tabindex="-1"></a></span>
+<span id="cb2-10"><a href="#cb2-10" tabindex="-1"></a><span class="co">#remove genes where &gt;50% of samples have 0 gene expression</span></span>
+<span id="cb2-11"><a href="#cb2-11" tabindex="-1"></a>all_data<span class="sc">$</span>percent_0<span class="ot">&lt;-</span> <span class="fu">apply</span>(all_data, <span class="dv">1</span>, <span class="cf">function</span>(x)<span class="fu">length</span>(x[x<span class="sc">==</span><span class="dv">0</span>]))</span>
+<span id="cb2-12"><a href="#cb2-12" tabindex="-1"></a>thresh<span class="ot">&lt;-</span> <span class="fu">ncol</span>(all_data)<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb2-13"><a href="#cb2-13" tabindex="-1"></a>all_data<span class="ot">&lt;-</span> all_data[all_data<span class="sc">$</span>percent_0<span class="sc">&lt;=</span>thresh,]</span>
+<span id="cb2-14"><a href="#cb2-14" tabindex="-1"></a>all_data<span class="sc">$</span>percent_0<span class="ot">&lt;-</span><span class="cn">NULL</span></span>
+<span id="cb2-15"><a href="#cb2-15" tabindex="-1"></a><span class="fu">nrow</span>(all_data)</span></code></pre></div>
+<pre><code>FALSE [1] 14414</code></pre>
+<div class="sourceCode" id="cb4"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" tabindex="-1"></a><span class="co">#14414 genes.</span></span></code></pre></div>
+<p><img src="02_1_Checks_PCA_files/figure-html/unnamed-chunk-3-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre><code>FALSE [1] &quot;Batch&quot;
+FALSE [1] &quot;Tissue&quot;
+FALSE [1] &quot;Status&quot;
+FALSE [1] &quot;Year&quot;</code></pre>
+<p><img src="02_1_Checks_PCA_files/figure-html/unnamed-chunk-4-1.png" width="960" style="display: block; margin: auto;" /></p>
+<p>Based on these results it seems like PC7 is associated with social
+Status. Let’s explore this PC further.</p>
+<div class="sourceCode" id="cb6"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb6-1"><a href="#cb6-1" tabindex="-1"></a><span class="co">#library(nlme)</span></span>
+<span id="cb6-2"><a href="#cb6-2" tabindex="-1"></a></span>
+<span id="cb6-3"><a href="#cb6-3" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" tabindex="-1"></a></span>
+<span id="cb6-5"><a href="#cb6-5" tabindex="-1"></a>test<span class="ot">&lt;-</span> <span class="fu">data.frame</span>(<span class="at">PC7=</span>p<span class="sc">$</span>rotated<span class="sc">$</span>PC7)</span>
+<span id="cb6-6"><a href="#cb6-6" tabindex="-1"></a>test<span class="ot">&lt;-</span> <span class="fu">cbind</span>(test, key_behav)</span>
+<span id="cb6-7"><a href="#cb6-7" tabindex="-1"></a></span>
+<span id="cb6-8"><a href="#cb6-8" tabindex="-1"></a><span class="co">#summary(lm(PC5 ~ Year + Tissue*Status,data=test ))</span></span>
+<span id="cb6-9"><a href="#cb6-9" tabindex="-1"></a><span class="co">#m1&lt;- lme(PC7 ~ Year + Tissue*Status, random=~1|Harvest_ID, data=test)</span></span>
+<span id="cb6-10"><a href="#cb6-10" tabindex="-1"></a>m1<span class="ot">&lt;-</span> <span class="fu">lm</span>(PC7 <span class="sc">~</span> Year <span class="sc">+</span> Tissue<span class="sc">*</span> Status, <span class="at">data=</span>test,<span class="at">contrasts=</span><span class="fu">list</span>(<span class="at">Tissue=</span>contr.sum, <span class="at">Status=</span>contr.sum))</span>
+<span id="cb6-11"><a href="#cb6-11" tabindex="-1"></a>pc7test<span class="ot">&lt;-</span> <span class="fu">Anova</span>(m1, <span class="at">type=</span><span class="dv">3</span>)</span>
+<span id="cb6-12"><a href="#cb6-12" tabindex="-1"></a><span class="fu">summary</span>(m1)</span></code></pre></div>
+<pre><code>FALSE 
+FALSE Call:
+FALSE lm(formula = PC7 ~ Year + Tissue * Status, data = test, contrasts = list(Tissue = contr.sum, 
+FALSE     Status = contr.sum))
+FALSE 
+FALSE Residuals:
+FALSE     Min      1Q  Median      3Q     Max 
+FALSE -33.171  -3.517   0.078   3.637  13.117 
+FALSE 
+FALSE Coefficients:
+FALSE                  Estimate Std. Error t value Pr(&gt;|t|)    
+FALSE (Intercept)       -8.0891     1.1692  -6.918 1.36e-10 ***
+FALSE Year2017           9.8424     1.3504   7.288 1.86e-11 ***
+FALSE Year2018           8.6339     1.4169   6.093 9.47e-09 ***
+FALSE Tissue1            1.0550     1.4854   0.710 0.478694    
+FALSE Tissue2            0.4278     1.7107   0.250 0.802901    
+FALSE Tissue3            4.8143     1.4854   3.241 0.001477 ** 
+FALSE Tissue4           -6.5077     1.8210  -3.574 0.000478 ***
+FALSE Tissue5           -5.0008     1.7107  -2.923 0.004021 ** 
+FALSE Tissue6           -0.7300     1.4854  -0.491 0.623830    
+FALSE Tissue7            4.6170     1.6259   2.840 0.005165 ** 
+FALSE Tissue8           -4.5599     1.6232  -2.809 0.005652 ** 
+FALSE Tissue9           11.8030     1.5790   7.475 6.73e-12 ***
+FALSE Tissue10         -11.4010     1.4854  -7.675 2.23e-12 ***
+FALSE Tissue11           2.8012     1.5425   1.816 0.071438 .  
+FALSE Status1           -1.3485     0.4789  -2.816 0.005548 ** 
+FALSE Tissue1:Status1    2.7386     1.4811   1.849 0.066497 .  
+FALSE Tissue2:Status1    0.9568     1.6978   0.564 0.573933    
+FALSE Tissue3:Status1   -0.5732     1.4811  -0.387 0.699333    
+FALSE Tissue4:Status1   -2.7275     1.8088  -1.508 0.133763    
+FALSE Tissue5:Status1    0.9737     1.6978   0.573 0.567198    
+FALSE Tissue6:Status1    0.4703     1.4811   0.318 0.751277    
+FALSE Tissue7:Status1   -1.3411     1.6255  -0.825 0.410711    
+FALSE Tissue8:Status1   -1.3142     1.6214  -0.810 0.418987    
+FALSE Tissue9:Status1   -0.5656     1.5801  -0.358 0.720914    
+FALSE Tissue10:Status1  -1.1510     1.4811  -0.777 0.438378    
+FALSE Tissue11:Status1   2.6198     1.5436   1.697 0.091796 .  
+FALSE ---
+FALSE Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+FALSE 
+FALSE Residual standard error: 6.095 on 145 degrees of freedom
+FALSE Multiple R-squared:  0.6072,  Adjusted R-squared:  0.5395 
+FALSE F-statistic: 8.966 on 25 and 145 DF,  p-value: &lt; 2.2e-16</code></pre>
+<div class="sourceCode" id="cb8"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb8-1"><a href="#cb8-1" tabindex="-1"></a><span class="co">#pc5test&lt;- summary(aov(test$PC5 ~ test$Year + test$Status))</span></span>
+<span id="cb8-2"><a href="#cb8-2" tabindex="-1"></a>pc5test_anova <span class="ot">&lt;-</span> <span class="fu">ggtexttable</span>(<span class="fu">signif</span>(pc7test,<span class="dv">2</span>),<span class="at">theme =</span> <span class="fu">ttheme</span>(<span class="at">base_size =</span> <span class="dv">6</span>,<span class="at">padding=</span><span class="fu">unit</span>(<span class="fu">c</span>(<span class="dv">4</span>,<span class="dv">10</span>),<span class="st">&quot;pt&quot;</span>)),<span class="at">rows=</span><span class="fu">rownames</span>(pc7test)) <span class="sc">%&gt;%</span> <span class="fu">tab_add_title</span>(<span class="at">text =</span> <span class="st">&quot;PC5 ~ Year + Tissue * Status, Type III ANOVA&quot;</span>, <span class="at">size=</span><span class="dv">6</span>, <span class="at">padding =</span> <span class="fu">unit</span>(<span class="fl">0.1</span>, <span class="st">&quot;line&quot;</span>))</span>
+<span id="cb8-3"><a href="#cb8-3" tabindex="-1"></a></span>
+<span id="cb8-4"><a href="#cb8-4" tabindex="-1"></a></span>
+<span id="cb8-5"><a href="#cb8-5" tabindex="-1"></a></span>
+<span id="cb8-6"><a href="#cb8-6" tabindex="-1"></a>e<span class="ot">&lt;-</span><span class="fu">biplot</span>(p, <span class="at">x=</span><span class="st">&quot;PC1&quot;</span>,<span class="at">y=</span><span class="st">&quot;PC7&quot;</span>, <span class="at">lab=</span><span class="cn">NULL</span>, <span class="at">colby=</span><span class="st">&quot;Tissue&quot;</span>, <span class="at">shape=</span><span class="st">&quot;Status&quot;</span>, <span class="at">legendPosition=</span><span class="st">&quot;right&quot;</span>, <span class="at">title=</span><span class="st">&quot;&quot;</span>) <span class="sc">+</span> peri_theme</span>
+<span id="cb8-7"><a href="#cb8-7" tabindex="-1"></a>f<span class="ot">&lt;-</span><span class="fu">ggplot</span>(test, <span class="fu">aes</span>(<span class="at">x=</span>Tissue, <span class="at">y=</span>PC7, <span class="at">colour=</span>Status)) <span class="sc">+</span> <span class="fu">geom_boxplot</span>(<span class="at">outlier.colour =</span> <span class="cn">NA</span>) <span class="sc">+</span> <span class="fu">geom_point</span>(<span class="at">position=</span>dodge) <span class="sc">+</span> peri_theme  <span class="sc">+</span> <span class="fu">theme</span>(<span class="at">legend.position=</span><span class="st">&quot;none&quot;</span>) <span class="sc">+</span> <span class="fu">scale_colour_manual</span>(<span class="at">values=</span>status_cols[<span class="dv">2</span><span class="sc">:</span><span class="dv">3</span>])  <span class="sc">+</span> <span class="fu">theme</span>(<span class="at">axis.text.x=</span><span class="fu">element_text</span>(<span class="at">angle=</span><span class="dv">90</span>))</span>
+<span id="cb8-8"><a href="#cb8-8" tabindex="-1"></a></span>
+<span id="cb8-9"><a href="#cb8-9" tabindex="-1"></a>g<span class="ot">&lt;-</span> <span class="fu">ggarrange</span>(<span class="fu">ggarrange</span>(f,pc5test_anova, <span class="at">ncol=</span><span class="dv">2</span>, <span class="at">labels=</span><span class="fu">c</span>(<span class="st">&quot;A&quot;</span>,<span class="st">&quot;B&quot;</span>)),c, <span class="at">ncol=</span><span class="dv">1</span>, <span class="at">nrow=</span><span class="dv">2</span>,<span class="at">labels=</span><span class="fu">c</span>(<span class="st">&quot;&quot;</span>,<span class="st">&quot;C&quot;</span>))</span>
+<span id="cb8-10"><a href="#cb8-10" tabindex="-1"></a>g</span></code></pre></div>
+<p><img src="02_1_Checks_PCA_files/figure-html/all%20tissues%20pc7-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<div class="sourceCode" id="cb9"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="st">&quot;../DE_results/figure_alltissues_PC7.pdf&quot;</span>,<span class="at">plot=</span>g, <span class="at">device=</span><span class="st">&quot;pdf&quot;</span>,<span class="at">height =</span><span class="dv">6</span> ,<span class="at">width=</span><span class="fl">7.5</span>, <span class="at">units=</span><span class="st">&quot;in&quot;</span>,<span class="at">bg=</span><span class="st">&quot;white&quot;</span>)</span>
+<span id="cb9-2"><a href="#cb9-2" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="st">&quot;../DE_results/figure_alltissues_PC7.png&quot;</span>, <span class="at">plot=</span>g,<span class="at">device=</span><span class="st">&quot;png&quot;</span>,<span class="at">height =</span><span class="dv">6</span> ,<span class="at">width=</span><span class="fl">7.5</span>, <span class="at">units=</span><span class="st">&quot;in&quot;</span>, <span class="at">bg=</span><span class="st">&quot;white&quot;</span>)</span></code></pre></div>
+<p>Let’s see what genes are associated with each principal component.
+See GitHub repository for larger version.</p>
+<div class="sourceCode" id="cb10"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" tabindex="-1"></a>loadings<span class="ot">&lt;-</span> p<span class="sc">$</span>loadings</span>
+<span id="cb10-2"><a href="#cb10-2" tabindex="-1"></a>loadings<span class="sc">$</span>gene<span class="ot">&lt;-</span> <span class="fu">rownames</span>(loadings)</span>
+<span id="cb10-3"><a href="#cb10-3" tabindex="-1"></a>loadings<span class="ot">&lt;-</span> <span class="fu">merge</span>(loadings, genes_key, <span class="at">by=</span><span class="st">&quot;gene&quot;</span>)</span>
+<span id="cb10-4"><a href="#cb10-4" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" tabindex="-1"></a></span>
+<span id="cb10-6"><a href="#cb10-6" tabindex="-1"></a>plots<span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb10-7"><a href="#cb10-7" tabindex="-1"></a>pcs<span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;PC&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>)</span>
+<span id="cb10-8"><a href="#cb10-8" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> pcs){</span>
+<span id="cb10-9"><a href="#cb10-9" tabindex="-1"></a>  <span class="co">#i=&quot;PC2&quot;</span></span>
+<span id="cb10-10"><a href="#cb10-10" tabindex="-1"></a>  sub<span class="ot">&lt;-</span> loadings[,<span class="fu">c</span>(i, <span class="st">&quot;display_gene_ID&quot;</span>,<span class="st">&quot;gene&quot;</span>)]</span>
+<span id="cb10-11"><a href="#cb10-11" tabindex="-1"></a>  sub<span class="ot">&lt;-</span> sub[<span class="fu">order</span>(sub[,i]),]</span>
+<span id="cb10-12"><a href="#cb10-12" tabindex="-1"></a>  top30<span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">head</span>(sub,<span class="dv">15</span>), <span class="fu">tail</span>(sub,<span class="dv">15</span>))</span>
+<span id="cb10-13"><a href="#cb10-13" tabindex="-1"></a>  top30<span class="sc">$</span>best_anno2<span class="ot">&lt;-</span> <span class="fu">factor</span>(top30<span class="sc">$</span>display_gene_ID, <span class="at">levels=</span><span class="fu">unique</span>(top30<span class="sc">$</span>display_gene_ID[<span class="fu">order</span>(top30[,i],top30<span class="sc">$</span>display_gene_ID)]), <span class="at">ordered=</span><span class="cn">TRUE</span>)</span>
+<span id="cb10-14"><a href="#cb10-14" tabindex="-1"></a>  top30<span class="sc">$</span>pos<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(top30[,i]<span class="sc">&lt;</span><span class="dv">0</span>, <span class="st">&quot;neg&quot;</span>, <span class="st">&quot;pos&quot;</span>)</span>
+<span id="cb10-15"><a href="#cb10-15" tabindex="-1"></a>  plots[[i]]<span class="ot">&lt;-</span><span class="fu">ggplot</span>(top30, <span class="fu">aes</span>(<span class="at">x=</span>best_anno2, <span class="at">y=</span>top30[,i], <span class="at">fill=</span>pos)) <span class="sc">+</span> <span class="fu">geom_bar</span>(<span class="at">stat=</span><span class="st">&quot;identity&quot;</span>)<span class="sc">+</span>  peri_theme <span class="sc">+</span> <span class="fu">coord_flip</span>() <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">x=</span><span class="st">&quot;gene&quot;</span>, <span class="at">y=</span><span class="fu">paste</span>(i,<span class="st">&quot;loading&quot;</span>)) <span class="sc">+</span> <span class="fu">scale_fill_manual</span>(<span class="at">values=</span><span class="fu">c</span>(<span class="st">&quot;#0D8CFF&quot;</span>,<span class="st">&quot;#FF3300&quot;</span>)) <span class="sc">+</span> <span class="fu">theme</span>(<span class="at">legend.position=</span><span class="st">&quot;none&quot;</span>)</span>
+<span id="cb10-16"><a href="#cb10-16" tabindex="-1"></a>} </span>
+<span id="cb10-17"><a href="#cb10-17" tabindex="-1"></a><span class="fu">ggarrange</span>(<span class="at">plotlist=</span>plots, <span class="at">ncol=</span><span class="dv">5</span>, <span class="at">nrow=</span><span class="dv">2</span>)</span></code></pre></div>
+<p><img src="02_1_Checks_PCA_files/figure-html/loadings%20all%20tissues-1.png" width="1920" style="display: block; margin: auto;" /></p>
+<div class="sourceCode" id="cb11"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb11-1"><a href="#cb11-1" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="st">&quot;../DE_results/figure_alltissue_loadings.pdf&quot;</span>, <span class="at">device=</span><span class="st">&quot;pdf&quot;</span>,<span class="at">height =</span><span class="fl">8.5</span> ,<span class="at">width=</span><span class="dv">16</span>, <span class="at">units=</span><span class="st">&quot;in&quot;</span>, <span class="at">bg=</span><span class="st">&quot;white&quot;</span>)</span>
+<span id="cb11-2"><a href="#cb11-2" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="st">&quot;../DE_results/figure_alltissue_loadings.png&quot;</span>, <span class="at">device=</span><span class="st">&quot;png&quot;</span>,<span class="at">height =</span><span class="fl">8.5</span> ,<span class="at">width=</span><span class="dv">16</span>, <span class="at">units=</span><span class="st">&quot;in&quot;</span>, <span class="at">bg=</span><span class="st">&quot;white&quot;</span>)</span></code></pre></div>
+<div id="pc7-gene-ontology" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> PC7 Gene
+Ontology</h2>
+<p>What are the gene ontology categories enriched in PC7?</p>
+<div class="sourceCode" id="cb12"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" tabindex="-1"></a>res_go<span class="ot">&lt;-</span> loadings[<span class="fu">c</span>(<span class="st">&quot;gene&quot;</span>,<span class="st">&quot;PC7&quot;</span>,<span class="st">&quot;best_anno&quot;</span>)]</span>
+<span id="cb12-2"><a href="#cb12-2" tabindex="-1"></a><span class="co">#res_go$logP&lt;- -log(abs(res_go$PC5), 10)</span></span>
+<span id="cb12-3"><a href="#cb12-3" tabindex="-1"></a><span class="co">#res_go$logP&lt;- ifelse(res_go$PC5&lt;0, -(res_go$logP), res_go$logP)</span></span>
+<span id="cb12-4"><a href="#cb12-4" tabindex="-1"></a>res_go<span class="ot">&lt;-</span> res_go[<span class="fu">order</span>(res_go<span class="sc">$</span>PC7, <span class="at">decreasing=</span><span class="cn">TRUE</span>),]</span>
+<span id="cb12-5"><a href="#cb12-5" tabindex="-1"></a></span>
+<span id="cb12-6"><a href="#cb12-6" tabindex="-1"></a></span>
+<span id="cb12-7"><a href="#cb12-7" tabindex="-1"></a>geneList<span class="ot">&lt;-</span> res_go<span class="sc">$</span>PC7</span>
+<span id="cb12-8"><a href="#cb12-8" tabindex="-1"></a><span class="fu">names</span>(geneList)<span class="ot">&lt;-</span> res_go<span class="sc">$</span>gene</span>
+<span id="cb12-9"><a href="#cb12-9" tabindex="-1"></a></span>
+<span id="cb12-10"><a href="#cb12-10" tabindex="-1"></a></span>
+<span id="cb12-11"><a href="#cb12-11" tabindex="-1"></a></span>
+<span id="cb12-12"><a href="#cb12-12" tabindex="-1"></a></span>
+<span id="cb12-13"><a href="#cb12-13" tabindex="-1"></a>y<span class="ot">&lt;-</span> <span class="fu">GSEA</span>(geneList, <span class="at">TERM2GENE =</span> go2gene_bp, <span class="at">TERM2NAME =</span> go2name_bp)</span>
+<span id="cb12-14"><a href="#cb12-14" tabindex="-1"></a></span>
+<span id="cb12-15"><a href="#cb12-15" tabindex="-1"></a><span class="fu">ridgeplot</span>(y,<span class="at">fill=</span><span class="st">&quot;pvalue&quot;</span>, <span class="at">showCategory=</span><span class="dv">20</span>) <span class="sc">+</span> <span class="fu">scale_fill_viridis</span>(<span class="at">direction=</span><span class="sc">-</span><span class="dv">1</span>) <span class="sc">+</span> peri_theme</span></code></pre></div>
+<p><img src="02_1_Checks_PCA_files/figure-html/PC7%20enrichment-1.png" width="1728" style="display: block; margin: auto;" /></p>
+<p><img src="02_1_Checks_PCA_files/figure-html/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;" /><img src="02_1_Checks_PCA_files/figure-html/unnamed-chunk-6-2.png" width="672" style="display: block; margin: auto;" /></p>
+<p><br><br></p>
+</div>
+</div>
+<div id="wholebrain-pca" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> Wholebrain PCA</h1>
+<div class="sourceCode" id="cb13"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" tabindex="-1"></a>outliers<span class="ot">=</span><span class="fu">c</span>(<span class="st">&quot;PFT2_POM_run1&quot;</span>)</span>
+<span id="cb13-2"><a href="#cb13-2" tabindex="-1"></a></span>
+<span id="cb13-3"><a href="#cb13-3" tabindex="-1"></a>brain_behav<span class="ot">&lt;-</span> <span class="fu">subset</span>(key_behav, Tissue<span class="sc">!=</span><span class="st">&quot;GON&quot;</span>)</span>
+<span id="cb13-4"><a href="#cb13-4" tabindex="-1"></a>brain_behav<span class="ot">&lt;-</span> <span class="fu">subset</span>(brain_behav, Tissue<span class="sc">!=</span><span class="st">&quot;PIT&quot;</span>)</span>
+<span id="cb13-5"><a href="#cb13-5" tabindex="-1"></a>brain_behav<span class="ot">&lt;-</span> brain_behav[<span class="sc">!</span><span class="fu">rownames</span>(brain_behav) <span class="sc">%in%</span> outliers,]</span>
+<span id="cb13-6"><a href="#cb13-6" tabindex="-1"></a>brain_behav<span class="ot">&lt;-</span> <span class="fu">droplevels</span>(brain_behav)</span>
+<span id="cb13-7"><a href="#cb13-7" tabindex="-1"></a></span>
+<span id="cb13-8"><a href="#cb13-8" tabindex="-1"></a></span>
+<span id="cb13-9"><a href="#cb13-9" tabindex="-1"></a>brain_data<span class="ot">&lt;-</span> data[,<span class="fu">colnames</span>(data) <span class="sc">%in%</span> <span class="fu">rownames</span>(brain_behav)]</span>
+<span id="cb13-10"><a href="#cb13-10" tabindex="-1"></a></span>
+<span id="cb13-11"><a href="#cb13-11" tabindex="-1"></a>start<span class="ot">&lt;-</span> <span class="fu">nrow</span>(brain_data)</span>
+<span id="cb13-12"><a href="#cb13-12" tabindex="-1"></a><span class="co">#remove genes with avg read counts &lt;20</span></span>
+<span id="cb13-13"><a href="#cb13-13" tabindex="-1"></a>brain_data<span class="sc">$</span>avg_count<span class="ot">&lt;-</span> <span class="fu">apply</span>(brain_data, <span class="dv">1</span>, mean)</span>
+<span id="cb13-14"><a href="#cb13-14" tabindex="-1"></a>brain_data<span class="ot">&lt;-</span> brain_data[brain_data<span class="sc">$</span>avg_count<span class="sc">&gt;</span><span class="dv">20</span>,]</span>
+<span id="cb13-15"><a href="#cb13-15" tabindex="-1"></a>brain_data<span class="sc">$</span>avg_count<span class="ot">&lt;-</span><span class="cn">NULL</span></span>
+<span id="cb13-16"><a href="#cb13-16" tabindex="-1"></a></span>
+<span id="cb13-17"><a href="#cb13-17" tabindex="-1"></a></span>
+<span id="cb13-18"><a href="#cb13-18" tabindex="-1"></a><span class="co">#remove genes where &gt;50% of samples have 0 gene expression</span></span>
+<span id="cb13-19"><a href="#cb13-19" tabindex="-1"></a>brain_data<span class="sc">$</span>percent_0<span class="ot">&lt;-</span> <span class="fu">apply</span>(brain_data, <span class="dv">1</span>, <span class="cf">function</span>(x)<span class="fu">length</span>(x[x<span class="sc">==</span><span class="dv">0</span>]))</span>
+<span id="cb13-20"><a href="#cb13-20" tabindex="-1"></a>thresh<span class="ot">&lt;-</span> <span class="fu">ncol</span>(brain_data)<span class="sc">/</span><span class="dv">2</span></span>
+<span id="cb13-21"><a href="#cb13-21" tabindex="-1"></a>brain_data<span class="ot">&lt;-</span> brain_data[brain_data<span class="sc">$</span>percent_0<span class="sc">&lt;=</span>thresh,]</span>
+<span id="cb13-22"><a href="#cb13-22" tabindex="-1"></a>brain_data<span class="sc">$</span>percent_0<span class="ot">&lt;-</span><span class="cn">NULL</span></span>
+<span id="cb13-23"><a href="#cb13-23" tabindex="-1"></a><span class="co">#13652 genes.</span></span></code></pre></div>
+<p>Looking for cohesive signatures across the whole brain. Overall,
+before this round of filtering for the brain dataset we have 16854
+genes. After filtering we have 13653 genes. This final document is the
+result of lots of work in single tissues to determine outlier status
+that were identified in the QC process. We are excluding PFT2_POM_run1
+because the analyses below indicated that it was an outlier within POM,
+other potentials identified in the QC process were not deemed
+outliers.</p>
+<pre><code>FALSE [1] &quot;Batch&quot;
+FALSE [1] &quot;Harvest_ID&quot;
+FALSE [1] &quot;Tissue&quot;
+FALSE [1] &quot;Status&quot;
+FALSE [1] &quot;Year&quot;</code></pre>
+<p><img src="02_1_Checks_PCA_files/figure-html/unnamed-chunk-7-1.png" width="1440" style="display: block; margin: auto;" /></p>
+<p>PC5 seems to be associated with our interest variables.</p>
+<pre><code>FALSE 
+FALSE Call:
+FALSE lm(formula = PC5 ~ Year + Tissue * Status, data = test, contrasts = list(Tissue = contr.sum, 
+FALSE     Status = contr.sum))
+FALSE 
+FALSE Residuals:
+FALSE     Min      1Q  Median      3Q     Max 
+FALSE -13.870  -3.921   0.333   3.443  13.186 
+FALSE 
+FALSE Coefficients:
+FALSE                  Estimate Std. Error t value Pr(&gt;|t|)    
+FALSE (Intercept)     -11.08566    1.18819  -9.330 6.79e-16 ***
+FALSE Year2017         12.92120    1.38572   9.325 6.99e-16 ***
+FALSE Year2018         12.49391    1.45234   8.603 3.53e-14 ***
+FALSE Tissue1           5.89343    1.40208   4.203 5.09e-05 ***
+FALSE Tissue2         -11.70783    1.71550  -6.825 3.83e-10 ***
+FALSE Tissue3          -1.66098    1.61391  -1.029  0.30547    
+FALSE Tissue4           2.04434    1.43660   1.423  0.15732    
+FALSE Tissue5           3.79196    1.53182   2.475  0.01470 *  
+FALSE Tissue6          -2.78226    1.53061  -1.818  0.07160 .  
+FALSE Tissue7           6.15603    1.48814   4.137 6.57e-05 ***
+FALSE Tissue8          -4.05509    1.40208  -2.892  0.00454 ** 
+FALSE Tissue9           4.08572    1.45458   2.809  0.00581 ** 
+FALSE Status1          -2.02400    0.49963  -4.051 9.08e-05 ***
+FALSE Tissue1:Status1  -0.35006    1.39826  -0.250  0.80274    
+FALSE Tissue2:Status1  -3.00894    1.70070  -1.769  0.07939 .  
+FALSE Tissue3:Status1   1.13493    1.59801   0.710  0.47895    
+FALSE Tissue4:Status1   1.49768    1.43154   1.046  0.29757    
+FALSE Tissue5:Status1  -1.45699    1.53157  -0.951  0.34336    
+FALSE Tissue6:Status1  -0.47389    1.52775  -0.310  0.75696    
+FALSE Tissue7:Status1   0.03882    1.49006   0.026  0.97926    
+FALSE Tissue8:Status1  -0.41286    1.39826  -0.295  0.76830    
+FALSE Tissue9:Status1   2.73693    1.45605   1.880  0.06257 .  
+FALSE ---
+FALSE Signif. codes:  0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1 &#39; &#39; 1
+FALSE 
+FALSE Residual standard error: 5.797 on 120 degrees of freedom
+FALSE Multiple R-squared:  0.6287,  Adjusted R-squared:  0.5637 
+FALSE F-statistic: 9.676 on 21 and 120 DF,  p-value: &lt; 2.2e-16</code></pre>
+<p><img src="02_1_Checks_PCA_files/figure-html/wholebrain%20pc5-1.png" width="1152" style="display: block; margin: auto;" /></p>
+<div class="sourceCode" id="cb16"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" tabindex="-1"></a>loadings<span class="ot">&lt;-</span> p<span class="sc">$</span>loadings</span>
+<span id="cb16-2"><a href="#cb16-2" tabindex="-1"></a>loadings<span class="sc">$</span>gene<span class="ot">&lt;-</span> <span class="fu">rownames</span>(loadings)</span>
+<span id="cb16-3"><a href="#cb16-3" tabindex="-1"></a>loadings<span class="ot">&lt;-</span> <span class="fu">merge</span>(loadings, genes_key, <span class="at">by=</span><span class="st">&quot;gene&quot;</span>)</span>
+<span id="cb16-4"><a href="#cb16-4" tabindex="-1"></a></span>
+<span id="cb16-5"><a href="#cb16-5" tabindex="-1"></a></span>
+<span id="cb16-6"><a href="#cb16-6" tabindex="-1"></a>plots<span class="ot">&lt;-</span> <span class="fu">list</span>()</span>
+<span id="cb16-7"><a href="#cb16-7" tabindex="-1"></a>pcs<span class="ot">&lt;-</span> <span class="fu">paste0</span>(<span class="st">&quot;PC&quot;</span>,<span class="dv">1</span><span class="sc">:</span><span class="dv">10</span>)</span>
+<span id="cb16-8"><a href="#cb16-8" tabindex="-1"></a><span class="cf">for</span>(i <span class="cf">in</span> pcs){</span>
+<span id="cb16-9"><a href="#cb16-9" tabindex="-1"></a>  <span class="co">#i=&quot;PC2&quot;</span></span>
+<span id="cb16-10"><a href="#cb16-10" tabindex="-1"></a>  sub<span class="ot">&lt;-</span> loadings[,<span class="fu">c</span>(i, <span class="st">&quot;display_gene_ID&quot;</span>,<span class="st">&quot;gene&quot;</span>)]</span>
+<span id="cb16-11"><a href="#cb16-11" tabindex="-1"></a>  sub<span class="ot">&lt;-</span> sub[<span class="fu">order</span>(sub[,i]),]</span>
+<span id="cb16-12"><a href="#cb16-12" tabindex="-1"></a>  top30<span class="ot">&lt;-</span> <span class="fu">rbind</span>(<span class="fu">head</span>(sub,<span class="dv">15</span>), <span class="fu">tail</span>(sub,<span class="dv">15</span>))</span>
+<span id="cb16-13"><a href="#cb16-13" tabindex="-1"></a>  top30<span class="sc">$</span>best_anno2<span class="ot">&lt;-</span> <span class="fu">factor</span>(top30<span class="sc">$</span>display_gene_ID, <span class="at">levels=</span><span class="fu">unique</span>(top30<span class="sc">$</span>display_gene_ID[<span class="fu">order</span>(top30[,i],top30<span class="sc">$</span>display_gene_ID)]), <span class="at">ordered=</span><span class="cn">TRUE</span>)</span>
+<span id="cb16-14"><a href="#cb16-14" tabindex="-1"></a>  top30<span class="sc">$</span>pos<span class="ot">&lt;-</span> <span class="fu">ifelse</span>(top30[,i]<span class="sc">&lt;</span><span class="dv">0</span>, <span class="st">&quot;neg&quot;</span>, <span class="st">&quot;pos&quot;</span>)</span>
+<span id="cb16-15"><a href="#cb16-15" tabindex="-1"></a>  plots[[i]]<span class="ot">&lt;-</span><span class="fu">ggplot</span>(top30, <span class="fu">aes</span>(<span class="at">x=</span>best_anno2, <span class="at">y=</span>top30[,i], <span class="at">fill=</span>pos)) <span class="sc">+</span> <span class="fu">geom_bar</span>(<span class="at">stat=</span><span class="st">&quot;identity&quot;</span>)<span class="sc">+</span>  peri_theme <span class="sc">+</span> <span class="fu">coord_flip</span>() <span class="sc">+</span> <span class="fu">labs</span>(<span class="at">x=</span><span class="st">&quot;gene&quot;</span>, <span class="at">y=</span><span class="fu">paste</span>(i,<span class="st">&quot;loading&quot;</span>)) <span class="sc">+</span> <span class="fu">scale_fill_manual</span>(<span class="at">values=</span><span class="fu">c</span>(<span class="st">&quot;#0D8CFF&quot;</span>,<span class="st">&quot;#FF3300&quot;</span>)) <span class="sc">+</span> <span class="fu">theme</span>(<span class="at">legend.position=</span><span class="st">&quot;none&quot;</span>)</span>
+<span id="cb16-16"><a href="#cb16-16" tabindex="-1"></a>} </span>
+<span id="cb16-17"><a href="#cb16-17" tabindex="-1"></a><span class="fu">ggarrange</span>(<span class="at">plotlist=</span>plots, <span class="at">ncol=</span><span class="dv">5</span>, <span class="at">nrow=</span><span class="dv">2</span>)</span></code></pre></div>
+<p><img src="02_1_Checks_PCA_files/figure-html/loadings%20brain%20tissues-1.png" width="1920" style="display: block; margin: auto;" /></p>
+<div class="sourceCode" id="cb17"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="st">&quot;../DE_results/figure_brain_loadings.pdf&quot;</span>, <span class="at">device=</span><span class="st">&quot;pdf&quot;</span>,<span class="at">height =</span><span class="fl">8.5</span> ,<span class="at">width=</span><span class="dv">16</span>, <span class="at">units=</span><span class="st">&quot;in&quot;</span>, <span class="at">bg=</span><span class="st">&quot;white&quot;</span>)</span>
+<span id="cb17-2"><a href="#cb17-2" tabindex="-1"></a><span class="fu">ggsave</span>(<span class="at">filename=</span><span class="st">&quot;../DE_results/figure_brain_loadings.png&quot;</span>, <span class="at">device=</span><span class="st">&quot;png&quot;</span>,<span class="at">height =</span><span class="fl">8.5</span> ,<span class="at">width=</span><span class="dv">16</span>, <span class="at">units=</span><span class="st">&quot;in&quot;</span>, <span class="at">bg=</span><span class="st">&quot;white&quot;</span>)</span></code></pre></div>
+<div id="pc5-gene-ontology" class="section level2" number="3.1">
+<h2><span class="header-section-number">3.1</span> PC5 Gene
+Ontology</h2>
+<p>What are the gene ontology categories enriched in PC5?</p>
+<div class="sourceCode" id="cb18"><pre class="sourceCode r"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" tabindex="-1"></a>res_go<span class="ot">&lt;-</span> loadings[<span class="fu">c</span>(<span class="st">&quot;gene&quot;</span>,<span class="st">&quot;PC5&quot;</span>,<span class="st">&quot;best_anno&quot;</span>)]</span>
+<span id="cb18-2"><a href="#cb18-2" tabindex="-1"></a><span class="co">#res_go$logP&lt;- -log(abs(res_go$PC5), 10)</span></span>
+<span id="cb18-3"><a href="#cb18-3" tabindex="-1"></a><span class="co">#res_go$logP&lt;- ifelse(res_go$PC5&lt;0, -(res_go$logP), res_go$logP)</span></span>
+<span id="cb18-4"><a href="#cb18-4" tabindex="-1"></a>res_go<span class="ot">&lt;-</span> res_go[<span class="fu">order</span>(res_go<span class="sc">$</span>PC5, <span class="at">decreasing=</span><span class="cn">TRUE</span>),]</span>
+<span id="cb18-5"><a href="#cb18-5" tabindex="-1"></a></span>
+<span id="cb18-6"><a href="#cb18-6" tabindex="-1"></a></span>
+<span id="cb18-7"><a href="#cb18-7" tabindex="-1"></a>geneList<span class="ot">&lt;-</span> res_go<span class="sc">$</span>PC5</span>
+<span id="cb18-8"><a href="#cb18-8" tabindex="-1"></a><span class="fu">names</span>(geneList)<span class="ot">&lt;-</span> res_go<span class="sc">$</span>gene</span>
+<span id="cb18-9"><a href="#cb18-9" tabindex="-1"></a></span>
+<span id="cb18-10"><a href="#cb18-10" tabindex="-1"></a></span>
+<span id="cb18-11"><a href="#cb18-11" tabindex="-1"></a></span>
+<span id="cb18-12"><a href="#cb18-12" tabindex="-1"></a></span>
+<span id="cb18-13"><a href="#cb18-13" tabindex="-1"></a>y<span class="ot">&lt;-</span> <span class="fu">GSEA</span>(geneList, <span class="at">TERM2GENE =</span> go2gene_bp, <span class="at">TERM2NAME =</span> go2name_bp)</span>
+<span id="cb18-14"><a href="#cb18-14" tabindex="-1"></a><span class="fu">ridgeplot</span>(y) <span class="sc">+</span> <span class="fu">scale_fill_viridis</span>(<span class="at">direction=</span><span class="sc">-</span><span class="dv">1</span>) <span class="sc">+</span> peri_theme</span></code></pre></div>
+<p><img src="02_1_Checks_PCA_files/figure-html/PC5%20enrichment-1.png" width="1728" style="display: block; margin: auto;" /></p>
+<p><img src="02_1_Checks_PCA_files/figure-html/unnamed-chunk-8-1.png" width="672" style="display: block; margin: auto;" /><img src="02_1_Checks_PCA_files/figure-html/unnamed-chunk-8-2.png" width="672" style="display: block; margin: auto;" /></p>
+</div>
+<div id="batch-effects" class="section level2" number="3.2">
+<h2><span class="header-section-number">3.2</span> Batch Effects</h2>
+<p>What happens if I use batch effect exclusion on the whole brain? This
+way I wouldn’t have to use single tissue</p>
+<p><img src="02_1_Checks_PCA_files/figure-html/unnamed-chunk-10-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre><code>FALSE [1] &quot;Batch&quot;
+FALSE [1] &quot;Tissue&quot;
+FALSE [1] &quot;Status&quot;
+FALSE [1] &quot;Year&quot;</code></pre>
+<p><img src="02_1_Checks_PCA_files/figure-html/unnamed-chunk-10-2.png" width="672" style="display: block; margin: auto;" /></p>
+<p>The PCA plot shows that this makes the differences between batches
+worse apparently stronger, even though the eigencorplot (correlation
+between PC axis and variable) doesn’t show it. This is probably due to
+linear combinations of the batch and tissue variables.</p>
+</div>
+</div>
+
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1,h2,h3,h4",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

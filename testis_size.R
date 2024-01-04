@@ -5,7 +5,7 @@ library(ggplot2)
 library(ggpubr)
 library(readxl)
 library(stringr)
-setwd("C:/Users/perif/OneDrive - East Carolina University/Manakins/Pipra Brain/Data")
+library(car)
 
 peri_theme <- theme(panel.background = element_rect(fill="white"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(), 
                     axis.title.x = element_text(size = 12), axis.text.x = element_text(size = 10, 
@@ -15,10 +15,10 @@ peri_theme <- theme(panel.background = element_rect(fill="white"),panel.grid.maj
                     axis.line.y = element_line(colour = "black"), axis.line.x = element_line(colour = "black"),
                     plot.title = element_text(hjust = 0.5, size=12))  + theme(legend.key=element_blank())
 
-harvests<- read.csv("Samples and sequencing/Harvestsamples.csv", fileEncoding="UTF-8-BOM")
+harvests<- read.csv("../data_unfiltered/Harvestsamples.csv", fileEncoding="UTF-8-BOM")
 harvests$Color_ID<- sub("/", "", harvests$Color_ID)
-behav<- read.csv("Samples and sequencing/PIPFIL_T_and_behav_data_for_Peri.csv")
-behav<- rename(behav, c("colorID"="Color_ID"))
+behav<- read.csv("../data_unfiltered/PIPFIL_T_and_behav_data.csv")
+behav<- plyr::rename(behav, c("colorID"="Color_ID"))
 
 
 
@@ -54,10 +54,13 @@ R<- ggplot(harvests, aes(x=Status, y=R_size)) + geom_boxplot(fill=NA, color="gre
 t.test(harvests$L_size,harvests$R_size)
 
 
-summary(aov(testis_avg ~ Status, data=harvests))
-summary(aov(L_size ~ Status, data=harvests))
-summary(aov(R_size ~ Status, data=harvests))
-
+#summary(aov(testis_avg ~ Status, data=harvests))
+t.test(harvests$testis_avg[harvests$Status=="Floater"], harvests$testis_avg[harvests$Status=="Territorial"])
+#summary(aov(L_size ~ Status, data=harvests))
+t.test(harvests$L_size[harvests$Status=="Floater"], harvests$L_size[harvests$Status=="Territorial"])
+#summary(aov(R_size ~ Status, data=harvests))
+#type I and II anova doesn't change the results here because the difference in sample size between groups is simple. 
+t.test(harvests$R_size[harvests$Status=="Floater"], harvests$R_size[harvests$Status=="Territorial"])
 
 
 ## Status and mean T effects and testis size
@@ -72,5 +75,5 @@ anova(lm(L_size ~ Status*mean_T, data=harvests_behav))
 summary(lm(R_size ~ Status*mean_T, data=harvests_behav))
 anova(lm(R_size ~ Status*mean_T, data=harvests_behav))
 
-summary(lm(testis_avg ~ status*mean_T, data=harvests_behav))
+summary(lm(testis_avg ~ Status*mean_T, data=harvests_behav))
 anova(lm(testis_avg ~ Status*mean_T, data=harvests_behav))

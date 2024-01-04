@@ -12,6 +12,15 @@ This website contains supplements to the word document-based supplementary mater
 
 Please note that the GO annotation methods are not in Rmarkdown. The code used can be found [here](https://github.com/periperipatus/PIFI_brain_transcriptome/tree/main/GO_annotation).
 
+# Citation
+
+* Preprint: https://www.biorxiv.org/content/10.1101/2022.10.05.510848
+
+* Publication: Bolton, P.E., Ryder, T.B., Dakin, R., Houtz, J.L., Moore, I.T., Balakrishnan, C.N.†, Horton, B.M.† (2024) Neurogenomic landscape associated with status-dependent cooperative behavior 
+† contributed equally
+
+* Data Archive: Bolton, Peri (2023). Results Visualizations HTML. National Museum of Natural History. Online resource. https://doi.org/10.25573/data.22186516
+
 
 
 

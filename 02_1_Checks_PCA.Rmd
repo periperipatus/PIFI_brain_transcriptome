@@ -1,0 +1,931 @@
+---
+title: "Checks and PCA"
+subtitle: "For manuscript: Neurogenomic landscape of male cooperative behavior in a wild bird "
+date: Last Knit "`r Sys.Date()`"
+author: "Last Substantive change December 2023"
+output:
+  html_document:
+    toc: true
+    toc_float: true
+    toc_depth: 4
+    number_sections: true
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = FALSE, message=FALSE, warning=FALSE, fig.align="center", comment=FALSE)
+```
+
+```{r libraries used, echo=FALSE}
+library(plyr)
+library(reshape2)
+library(ggplot2)
+library(gridExtra)
+library(ggpubr)
+library(PCAtools)
+library(fdrtool)
+library(stringr)
+library(lubridate)
+library(DESeq2)
+library(kableExtra)
+library(VennDiagram)
+library(wesanderson)
+library(WGCNA)
+library(clusterProfiler)
+library(org.Hs.eg.db)
+library(flashClust)
+library(limma)
+library(UpSetR)
+library(rrvgo)
+library(viridis)
+library(car)
+library(effectsize)
+  
+source("config.R")
+
+```
+
+
+ 
+Here, I take the filtered dataset from the QC process, and run a whole brain analysis, as well as individual tissue analysis in the next markdown. Here, I also explore the relationships between our explanatory variables.  
+
+```{r reading & splitting data, echo=TRUE}
+
+key<- read.csv("../data_filtered/data_key_Parsed_ReplicatesRemoved.csv")
+behav<- read.csv("../data_unfiltered/PIPFIL_T_and_behav_data.csv")
+rownames(key)<- key$X
+
+key$Color_ID<- sub("/","", key$Color_ID)
+key<- plyr::rename(key, replace=c("Color_ID"="colorID"))
+behav$status<- plyr::revalue(behav$status, c("floa"="floater", "terr"="territorial"))
+key_behav<- merge(key, behav, by="colorID")
+key_behav<- key_behav[!is.na(key_behav$last_behav),]
+
+
+#create a data.frame with all of the observations. 
+not_in_behav<- key[!key$X %in% key_behav$X,]
+cols_not_key<- colnames(key_behav)[!colnames(key_behav) %in% colnames(key)]
+cols_not_key_df<- data.frame(matrix(NA, nrow = nrow(not_in_behav), ncol = length(cols_not_key)))
+colnames(cols_not_key_df)<- cols_not_key
+not_in_behav<- cbind(not_in_behav, cols_not_key_df)
+
+key_behav<- rbind(key_behav, not_in_behav)
+
+rownames(key_behav)<- key_behav$X
+
+
+key_behav$Tissue<- factor(key_behav$Tissue, levels=c("GON","PIT","VMH","AH","PVN","POM","ICO","GCT","AI","TNA","LS", "BSTm"))
+key_behav<- key_behav[order(rownames(key_behav)),]
+key_behav$Class<- as.factor(key_behav$Class)
+key_behav$Class<- revalue(key_behav$Class, replace=c("SCB floater"="Predefinitive floater", "DCB floater "="Definitive floater", "DCB territorial"="Territorial"))
+key_behav$Class<- factor(key_behav$Class, levels=c("Predefinitive floater", "Definitive floater", "Territorial"))
+rownames(key_behav)<- key_behav$sampleID
+key_behav<- key_behav[order(key_behav$sampleID),]
+key_behav$Year<- as.factor(key_behav$Year)
+key_behav$Batch<- as.factor(key_behav$Batch)
+key_behav$Status<- as.factor(key_behav$Status)
+
+key_behav_unique<- key_behav[!duplicated(key_behav$colorID),]
+
+
+
+#read the raw count data
+data<- read.csv("../data_filtered/data_RawCounts_all_ReplicatesRemoved_antisense_V2.csv")
+
+rownames(data)<- data$X
+data$X<- NULL
+
+### Gene Ontology
+
+go_key<- read.csv("../GO_annotations/Maggies_annotations_modifiedR.csv")
+go_key<- plyr::rename(go_key, replace=c("GeneID"="gene"))
+
+go_terms<- read.csv("../GO_annotations/pfil_GO_key_raw.csv")
+go_terms<- plyr::rename(go_terms, replace=c("GeneID"="gene"))
+go2gene_bp<- go_terms[which(go_terms$Aspect=="P"),c("GO_ID", "gene")]
+go2gene_mf<- go_terms[which(go_terms$Aspect=="F"),c("GO_ID", "gene")]
+go_obo<- read.csv("../GO_annotations/ontology_obo_out.csv")
+go_obo<- plyr::rename(go_obo, replace=c("id"="GO_ID"))
+go2name_bp<- go_obo[which(go_obo$namespace=="biological_process"),c("GO_ID", "name")]
+go2name_mf<- go_obo[which(go_obo$namespace=="molecular_function"),c("GO_ID", "name")]
+
+
+genes_key<- read.csv("../GO_annotations/Maggies_annotations_modifiedR.csv")
+genes_key<- plyr::rename(genes_key, replace=c("GeneID"="gene"))
+genes_key$gene[genes_key$gene=="LOC113993669"] <- "CYP19A1"
+genes_key$gene[genes_key$gene=="LOC113983511"] <- "OXT"
+genes_key$gene[genes_key$gene=="LOC113983498"] <- "AVP"
+genes_key$gene[genes_key$gene=="LOC113982601"] <- "AVPR2"
+data_genes<- data.frame(gene=rownames(data))
+genes_key<- merge(data_genes, genes_key, by="gene", all.x=TRUE)
+#genes_key<- genes_key[which(grepl("LOC[0-9]+",genes_key$gene)),]
+
+genes_key$display_gene_ID<- ifelse(grepl("LOC[0-9]+", genes_key$gene) & !grepl("LOC[0-9]+",genes_key$best_anno) & !is.na(genes_key$best_anno), paste0(genes_key$gene," (",genes_key$best_anno,")"), as.character(genes_key$gene))
+genes_key<- genes_key[,c("gene","best_anno","display_gene_ID")]
+
+```
+
+<br><br>
+
+# Exploration of the behavioural data
+
+
+We were concerned about the signal from the last few days outweighing the gene-expression signal from their overall phenotype, so we will explore how different these measures are from eachother.
+
+```{r variable correlations, fig.width=5, fig.height=10}
+dj_col<- c("#00A08A", "#F2AD00")
+status_cols<- c("#86AD44","#E54849","#414042")
+#status_cols<- c("#cfc451","#E54849","#414042")
+
+
+s1<- ggplot(behav, aes(x=strength.all_study, y=strength.sac_year)) + geom_point(color="#00A08A", size=4) + labs(y="Strength: sacrifice year", x="Strength: all study") + peri_theme
+s2<- ggplot(behav, aes(x=strength.all_study, y=strength.last_day)) + geom_point(color="#00A08A", size=4) + labs(y="Strength: last day before sacrifice", x="Strength: all study") + peri_theme
+
+
+g<- ggarrange(s1, s2, ncol=1, nrow=2)
+g<- annotate_figure(g, top = textGrob("Social Network Strength over measurement periods",gp=gpar(fontsize=14)))
+g
+
+
+```
+
+
+
+## Associations between variables
+
+
+```{r}
+library(GGally)
+ 
+
+ggpairs(key_behav_unique[,c("mean_T","effort.all_study","degree.all_study", "strength.all_study")], aes(alpha = 0.4)) + theme_bw() 
+
+```
+
+Given the significant relationship between degree and strength, I will only keep one of these variables - the strength. This was the most repeatable of the two sociality variables in Ryder et al. (2020).
+
+```{r}
+ggpairs(key_behav_unique[,c("Status","mean_T","strength.all_study")], aes(colour = Status, alpha = 0.4)) + theme_bw()
+
+```
+
+
+
+```{r cor status, fig.height=5, fig.width=15}
+mean_t_wtest<- wilcox.test(key_behav_unique$mean_T ~ key_behav_unique$Status, alternative="less")
+a<- ggplot(key_behav_unique, aes(x=Status, y=mean_T, color=Class)) + geom_point(size=4) + labs(title=paste0("Status and mean T, W=", mean_t_wtest$statistic, " p=", signif(mean_t_wtest$p.value,3)), y="mean Testosterone") + peri_theme + scale_color_manual(values=status_cols)
+
+
+strength_wtest<- wilcox.test(key_behav_unique$strength.all_study ~ key_behav_unique$status, alternative="less")
+d<- ggplot(key_behav_unique, aes(x=status, y=strength.all_study, color=Class)) + geom_point(size=4, position=dodge) + labs(title=paste0("Status and Strength, W=", strength_wtest$statistic, " p=", signif(strength_wtest$p.value,3)), y="social network strength") + peri_theme + scale_color_manual(values=status_cols)
+
+#tests<- ggarrange(a,d, ncol=2, common.legend=TRUE)
+#tests<- annotate_figure(tests, top = textGrob("Testing relationships between Status and endocrine and behavioral traits",gp=gpar(fontsize=14)))
+#tests
+
+
+blah<- key[!duplicated(key$Harvest_ID),]
+blah<- as.data.frame(table(key_behav_unique$Class))
+blah$Status<- c("floater","floater", "territorial")
+e<- ggplot(blah, aes(x=Status,y=Freq, fill=Var1)) + geom_bar(stat="identity", position="stack") + scale_fill_manual(values=status_cols) + scale_y_continuous(expand=c(0,0), breaks=c(0,2,4,6,8)) + peri_theme
+tests<- ggarrange(e, a, d, ncol=3, common.legend=TRUE)
+tests
+
+
+```
+
+All significance tests cited in the figure above are based on just territorial and floater, but colour-coded according to plumage*status.
+
+
+```{r mean T and behav, fig.height=5,fig.width=5}
+
+
+#summary(lm(key_behav_unique$strength.all_study ~ key_behav_unique$mean_T))
+b<- ggplot(key_behav_unique, aes(x=mean_T, y=strength.all_study, color=Class)) + geom_point(size=4) + labs(title="lm slope=11.45,p=0.12", x="mean Testosterone", y="social network strength") + peri_theme + scale_color_manual(values=status_cols) + geom_text(aes(label=colorID), hjust=1.1)
+b
+
+```
+
+
+## Nuisance variables 
+
+In the previous QC exploration I found substantial DEGs according to collection Year and Sequencing Batch. Here we explore how the continuous variables are distributed across sampling years. The tests find there is a difference in the medians between years for both our interest traits. 
+
+
+
+```{r variables according to Year, fig.height=5, fig.width=10, echo=FALSE}
+key_behav2<- droplevels(key_behav[key_behav$Year!="2015",])
+
+mean_t_wtest<- wilcox.test(key_behav2$mean_T ~ key_behav2$Year, alternative="two.sided")
+a<- ggplot(droplevels(key_behav2), aes(x=Year, y=mean_T))  + geom_point(size=4, color=dj_col[1]) + labs(title=paste0("Mean Testosterone, W=", mean_t_wtest$statistic, " p=", signif(mean_t_wtest$p.value,3)), y="mean Testosterone") + peri_theme
+
+
+strength_wtestb<- wilcox.test(key_behav2$strength.all_study ~ key_behav2$Year, alternative="two.sided")
+d<- ggplot(key_behav2, aes(x=Year, y=strength.all_study)) + geom_point(size=4, color=dj_col[1]) + labs(title=paste0("Social Network Strength, W=", strength_wtestb$statistic, " p=", signif(strength_wtestb$p.value,3)), y="social network strength") + peri_theme
+
+mean_t_wtestb<- wilcox.test(key_behav2$mean_T ~ key_behav2$Batch, alternative="two.sided")
+e<- ggplot(droplevels(key_behav2), aes(x=Batch, y=mean_T))  + geom_point(size=4, color=dj_col[1]) + labs(title=paste0("Mean Testosterone, W=", mean_t_wtestb$statistic, " p=", signif(mean_t_wtestb$p.value,3)), y="mean Testosterone") + peri_theme
+
+
+strength_wtestb<- wilcox.test(key_behav2$strength.all_study ~ key_behav2$Batch, alternative="two.sided")
+f<- ggplot(key_behav2, aes(x=Batch, y=strength.all_study)) + geom_point(size=4, color=dj_col[1]) + labs(title=paste0("Social Network Strength, W=", strength_wtestb$statistic, " p=", signif(strength_wtestb$p.value,3)), y="social network strength") + peri_theme
+
+g<- ggarrange(a,d,e,f,ncol=2, nrow=2, common.legend = TRUE)
+g<- annotate_figure(g,top = textGrob("How interest variables are distributed across nuisance variables",gp=gpar(fontsize=14,font=3)))
+g
+
+
+```
+
+<br><br>
+
+# All tissues PCA
+
+Plotting all the tissues
+
+```{r all filtering, echo=TRUE} 
+all_data<- data
+
+start<- nrow(all_data)
+#remove genes with avg read counts <20
+all_data$avg_count<- apply(all_data, 1, mean)
+all_data<- all_data[all_data$avg_count>20,]
+all_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+all_data$percent_0<- apply(all_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(all_data)/2
+all_data<- all_data[all_data$percent_0<=thresh,]
+all_data$percent_0<-NULL
+nrow(all_data)
+#14414 genes.
+```
+
+
+
+```{r,  fig.height=7,fig.width=7}
+dd<- DESeqDataSetFromMatrix(countData=all_data, colData=key_behav, design= ~ Tissue)
+dd<- DESeq(dd)
+dd<- dd[which(mcols(dd)$betaConv),] #remove any genes that didn't converge. 
+
+#plotDispEsts(dd)
+
+#plot a PCA of our samples to look for suspicious samples and any obvious patterning with respect to our interest variables
+vsd_data<- getVarianceStabilizedData(dd)
+#vsd_data<- assay(vsd)
+p <- pca(vsd_data, metadata = key_behav)
+
+tissue_cols<- c("GON"="#2A9D8F","PIT"="#2A9D8F","VMH"="#E76F51","AH"="#E76F51","PVN"="#E76F51", "POM"="#E76F51", "ICO"="#E76F51","GCT"="#E76F51", "TNA"="#E76F51", "AI"="#f0d497", "LS"="#F4A261", "BSTm"="#F4A261")
+
+biplot(p, lab=NULL, colby="Tissue", shape="Tissue", legendPosition="none", title="", colkey=tissue_cols, pointSize = 4.5) + theme(panel.background = element_rect(fill="white"),panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + scale_shape_manual(values=c(16,17,rep(15,10)))
+```
+```{r,  fig.height=7,fig.width=10}
+eigencorplot(p, metavars = c("Tissue","time_kill","Batch","Year","mean_T", "strength.all_study","Status"), col=blueWhiteRed(50))
+
+```
+
+Based on these results it seems like PC7 is associated with social Status. Let's explore this PC further.
+
+```{r}
+a<- biplot(p, lab=NULL, colby="Tissue", shape="Batch", legendPosition="right", title="") + theme(panel.background = element_rect(fill="white"),panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(plot.margin = unit(c(0,1,0,1), "lines"))
+
+
+b<-biplot(p, x="PC1",y="PC3", lab=NULL, colby="Tissue", shape="Batch", legendPosition="right", title="") + theme(panel.background = element_rect(fill="white"),panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(plot.margin = unit(c(0,1,0,1), "lines"))
+
+c<- eigencorplot(p, metavars = c("Tissue","time_kill","Batch","Year","mean_T", "strength.all_study","Status"), col=blueWhiteRed(50))
+
+
+multiplot<- ggarrange(ggarrange(a,b,ncol=2, labels=c("A","B"), common.legend = TRUE, legend="right")           
+          ,c,
+          nrow=2, 
+          labels = c("","C")) 
+multiplot
+#ggsave(filename="figure_alltissues_PCA.pdf", device="pdf",width =8.5 ,height=8, units="in")
+#ggsave(filename="figure_alltissues_PCA.png", device="png",width =8.5 ,height=8, units="in")
+```
+
+```{r all tissues pc7, echo=TRUE,fig.height=10, fig.width=12}
+#library(nlme)
+
+
+
+test<- data.frame(PC7=p$rotated$PC7)
+test<- cbind(test, key_behav)
+
+
+
+m0<- lm(PC7 ~ 1, data=test)
+
+m01<- lm(PC7 ~ Year, data=test)
+m01.aov<- Anova(m01, type=2)
+
+m02<- lm(PC7 ~ Year + Tissue, data=test)
+m02.aov<- Anova(m02, type=2)
+m2.aov
+m02.vif<- sum(vif(m02)[,1])
+m1<- lm(PC7~ Year + Tissue + Status,data=test)
+m1.aov<- Anova(m1, type=2)
+m1.aov
+m1.vif<- sum(vif(m1)[,1])
+m2<- lm(PC7~ Year + Tissue * Status,data=test,contrasts=list(Tissue=contr.sum, Status=contr.sum))
+m2.aov<- Anova(m2, type=3)
+m2.aov
+m2.vif<- sum(vif(m2)[,1])
+Anova(m2, type=2) # this does not substantially change the interpretation
+
+m3<- lm(PC7~ Tissue + Status + Tissue:Status,data=test,contrasts=list(Tissue=contr.sum, Status=contr.sum))
+m3.aov<- Anova(m3, type=3)
+m3.aov
+m3.vif<- sum(vif(m3)[,1])
+Anova(m3, type=2) # this does not substantially change the interpretation
+
+m4<- lm(PC7~ Tissue + Status,data=test)
+m4.aov<- Anova(m4, type=2)
+m4.vif<- sum(vif(m4)[,1])
+
+
+models<- c("~ 1", "~ Year", "~ Year + Tissue","~ Year + Tissue + Status" , "~ Year + Tissue + Status + Tissue:Status","~ Tissue + Status + Tissue:Status", "~ Tissue + Status")
+aic=signif(c(AIC(m0),AIC(m01),AIC(m02),AIC(m1),AIC(m2),AIC(m3),AIC(m4)),4)
+deltaAIC<- signif(c(NA,aic[1]-aic[2],aic[1]-aic[3], aic[1]-aic[4],aic[1]-aic[5],aic[1]-aic[6],aic[1]-aic[7]),3) 
+
+batch_p<- signif(c(NA, m01.aov$'Pr(>F)'[1],m02.aov$'Pr(>F)'[1],m1.aov$'Pr(>F)'[1],m2.aov$'Pr(>F)'[2],NA,NA),2)
+
+e_p<- signif(c(NA, NA,NA,m1.aov$'Pr(>F)'[3],m2.aov$
+'Pr(>F)'[3],m3.aov$
+'Pr(>F)'[2],m4.aov$'Pr(>F)'[2]),2) 
+sumVIF<- round(c(NA,NA,m02.vif, m1.vif,m2.vif, m3.vif, m4.vif),0)
+
+ms<- data.frame(models,aic, deltaAIC,batch_p,e_p, sumVIF)
+ms<- ggtexttable(ms,theme = ttheme(base_size = 6,padding=unit(c(4,10),"pt")),rows=NULL)
+
+
+
+pc7test<- cbind(m1.aov, c(eta_squared(m1.aov)$Eta2_partial,NA))
+colnames(pc7test)[5]<- "eta^2" 
+summary(m1)
+
+
+
+#pc5test<- summary(aov(test$PC5 ~ test$Year + test$Status))
+pc5test_anova <- ggtexttable(signif(pc7test,2),theme = ttheme(base_size = 6,padding=unit(c(4,10),"pt")),rows=rownames(pc7test)) %>% tab_add_title(text = "PC7 ~ Year + Tissue + Status ", size=6, padding = unit(0.1, "line"))
+
+
+
+e<-biplot(p, x="PC1",y="PC7", lab=NULL, colby="Tissue", shape="Status", legendPosition="right", title="") + peri_theme
+f<-ggplot(test, aes(x=Tissue, y=PC7, colour=Status)) + geom_boxplot(outlier.colour = NA) + geom_point(position=dodge) + peri_theme  + theme(legend.position="none") + scale_colour_manual(values=status_cols[2:3])  + theme(axis.text.x=element_text(angle=90))
+
+g<- ggarrange(ggarrange(f,ggarrange(ms,pc5test_anova, nrow=2, labels=c("B","C")), ncol=2, labels=c("A")),c, ncol=1, nrow=2,labels=c("","D"))
+g
+ggsave(filename="../PCA_results/figure_alltissues_PC7.pdf",plot=g, device="pdf",height =6 ,width=7.5, units="in",bg="white")
+ggsave(filename="../PCA_results/figure_alltissues_PC7.png", plot=g,device="png",height =6 ,width=7.5, units="in", bg="white")
+```
+
+Let's see what genes are associated with each principal component. See GitHub repository for larger version.
+
+```{r loadings all tissues, echo=TRUE, fig.height=10, fig.width=20}
+
+loadings<- p$loadings
+loadings$gene<- rownames(loadings)
+loadings<- merge(loadings, genes_key, by="gene")
+
+
+plots<- list()
+pcs<- paste0("PC",1:10)
+for(i in pcs){
+  #i="PC2"
+  sub<- loadings[,c(i, "display_gene_ID","gene")]
+  sub<- sub[order(sub[,i]),]
+  top30<- rbind(head(sub,15), tail(sub,15))
+  top30$best_anno2<- factor(top30$display_gene_ID, levels=unique(top30$display_gene_ID[order(top30[,i],top30$display_gene_ID)]), ordered=TRUE)
+  top30$pos<- ifelse(top30[,i]<0, "neg", "pos")
+  plots[[i]]<-ggplot(top30, aes(x=best_anno2, y=top30[,i], fill=pos)) + geom_bar(stat="identity")+  peri_figure_supp + coord_flip() + labs(x="gene", y=paste(i,"loading")) + scale_fill_manual(values=c("#0D8CFF","#FF3300")) + theme(legend.position="none")
+} 
+p<- ggarrange(plotlist=plots, ncol=5, nrow=2)
+ggsave(filename="../PCA_results/figure_alltissue_loadings.pdf",p, device="pdf",height =8.5 ,width=16, units="in", bg="white")
+ggsave(filename="../PCA_results/figure_alltissue_loadings.png",p, device="png",height =8.5 ,width=16, units="in", bg="white")
+```
+
+
+```{r candidates sex, eval=FALSE}
+a<- plotCounts(dd, gene="AR", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+ap<- ggplot(a, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="AR",x="", y="Normalised Counts") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+gh<- plotCounts(dd, gene="CALCR", intgroup=c("Class","Status", "Tissue","time_kill","Plumage_Age","strength.all_study"), returnData=TRUE)
+ghp1<- ggplot(gh, aes(x=Status, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="GH1",x="", y="Normalised Counts") + peri_theme + facet_wrap(~ Tissue, scales="free")
+
+ghp2<- ggplot(gh, aes(x=time_kill, y=count))  + geom_point(aes(color=time_kill)) + labs(title="GH1",x="", y="Normalised Counts") + peri_theme + facet_wrap(~ Tissue, scales="free")
+ghp3<- ggplot(gh, aes(x=strength.all_study, y=count))  + geom_point(aes(color=strength.all_study)) + labs(title="GH1",x="", y="Normalised Counts") + peri_theme + facet_wrap(~ Tissue, scales="free")
+
+#+ scale_color_manual(values=status_cols[2:3])
+
+
+b<- plotCounts(dd, gene="SRD5A2", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+bp<- ggplot(b, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="SRD5A2",x="", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+
+c<- plotCounts(dd, gene="LOC113993669", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+cp<- ggplot(c, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="CYP19A1",x="", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+d<- plotCounts(dd, gene="ESR1", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+dp<- ggplot(d, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="ESR1",x="", y="Normalised Counts") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+e<- plotCounts(dd, gene="ESR2", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+ep<- ggplot(e, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="ESR2",x="", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+f<- plotCounts(dd, gene="PGR", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+fp<- ggplot(f, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="PGR",x="", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+
+g<- plotCounts(dd, gene="GNRH1", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+gp<- ggplot(g, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="GNRH1",x="Tissue", y="Normalised Counts") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+h<- plotCounts(dd, gene="PRL", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+hp<- ggplot(h, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="PRL",x="Tissue", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+i<- plotCounts(dd, gene="PRLR", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+ip<- ggplot(i, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="PRLR",x="Tissue", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+ggarrange(ap,bp,cp, dp, ep, fp, gp,hp, ip, ncol=3, nrow=3, labels=LETTERS[seq(from=1,to=9)], common.legend=TRUE)
+
+```
+
+```{r candidates neuropep, eval=FALSE}
+a<- plotCounts(dd, gene="VIP", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+ap<- ggplot(a, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="VIP",x="", y="Normalised Counts") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+b<- plotCounts(dd, gene="VIPR1", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+bp<- ggplot(b, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="VIPR1",x="", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+
+c<- plotCounts(dd, gene="VIPR2", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+cp<- ggplot(c, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="VIPR2",x="", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+d<- plotCounts(dd, gene="LOC113983511", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+dp<- ggplot(d, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="OXT",x="", y="Normalised Counts") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+e<- plotCounts(dd, gene="OXTR", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+ep<- ggplot(e, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="OXTR",x="", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+f<- plotCounts(dd, gene="LOC113983498", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+fp<- ggplot(f, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="AVP",x="", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+
+g<- plotCounts(dd, gene="AVPR1A", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+gp<- ggplot(g, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="AVPR1A",x="Tissue", y="Normalised Counts") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+h<- plotCounts(dd, gene="AVPR1B", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+hp<- ggplot(h, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="AVPR1B",x="Tissue", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+i<- plotCounts(dd, gene="LOC113982601", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+ip<- ggplot(i, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point(aes(color=Status)) + labs(title="AVPR2",x="Tissue", y="") + peri_theme + scale_color_manual(values=status_cols[2:3])
+
+ggarrange(ap,bp,cp, dp, ep, fp, gp,hp, ip, ncol=3, nrow=3, labels=LETTERS[seq(from=1,to=9)], common.legend=TRUE)
+```
+
+## PC7 Gene Ontology
+
+What are the gene ontology categories enriched in PC7?
+
+```{r PC7 enrichment, echo=TRUE, fig.height=7, fig.width=18}
+
+res_go<- loadings[c("gene","PC7","best_anno")]
+#res_go$logP<- -log(abs(res_go$PC5), 10)
+#res_go$logP<- ifelse(res_go$PC5<0, -(res_go$logP), res_go$logP)
+res_go<- res_go[order(res_go$PC7, decreasing=TRUE),]
+
+
+geneList<- res_go$PC7
+names(geneList)<- res_go$gene
+
+
+
+
+y<- GSEA(geneList, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+ y@result$Description<- ifelse(str_count(y@result$Description, '\\w+') >= 10,
+                                gsub("(^[^\\s]+\\s[^\\s]+\\s[^\\s]+\\s[^\\s]+\\s[^\\s]+\\s[^\\s]+)\\s","\\1\n",y@result$Description, perl=TRUE),
+                                ifelse(str_count(y@result$Description, '\\w+') >= 6,
+                                gsub("(^[^\\s]+\\s[^\\s]+\\s[^\\s]+\\s[^\\s]+)\\s","\\1\n",y@result$Description, perl=TRUE),
+                                as.character(y@result$Description)))
+
+ridgeplot(y, fill="pvalue", showCategory=20) + peri_figure_supp + labs(title=paste0("Top 20 GO BP terms from GSEA\n in PC7 according"), x="direction scaled log10(p-value)") + scale_fill_viridis(option="G") + theme(legend.key.size=unit(3,"mm"))
+
+```
+
+```{r}
+write.csv(y@result, file="../PCA_results/GSEA_BP_all_tissues_PC7.csv", row.names=FALSE)
+ego2<- as.data.frame(y@result$ID)
+colnames(ego2)<- "ID"
+ego2$p.adjust<- y@result$p.adjust
+
+simMatrix <- calculateSimMatrix(ego2$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="BP",
+                                method="Rel")
+scores <- setNames(-log10(ego2$p.adjust), ego2$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+scatterPlot(simMatrix, reducedTerms)
+p<-scatterPlot(simMatrix, reducedTerms)
+```
+
+```{r}
+### top 200
+top200<- rbind(head(res_go,100), tail(res_go,100))
+
+
+go_results<- enricher(top200$gene, universe=res_go$gene, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+    
+
+      ego2<- go_results@result
+      ego2$n_annotated<- word(ego2$GeneRatio, 2,2, sep="/")
+      ego2$n_annotated<- as.numeric(ego2$n_annotated)
+      ego2$Description<- ifelse(str_count(ego2$Description, '\\w+') >= 10,
+                                gsub("(^[^\\s]+\\s[^\\s]+\\s[^\\s]+\\s[^\\s]+\\s[^\\s]+\\s[^\\s]+)\\s","\\1\n",ego2$Description, perl=TRUE),
+                                ifelse(str_count(ego2$Description, '\\w+') >= 6,
+                                       gsub("(^[^\\s]+\\s[^\\s]+\\s[^\\s]+\\s[^\\s]+)\\s","\\1\n",ego2$Description, perl=TRUE),
+                                       as.character(ego2$Description)))
+      
+go_plot_result<- ggplot(ego2[1:10,], aes(x=Description, y=Count, fill=pvalue)) + geom_bar(stat="identity", colour="black", lwd=0.25) + theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1)) + coord_flip() + peri_figure_supp + scale_y_continuous(expand=c(0,0)) + labs(x="", y="No. genes enriched", title="Top 10 GO BP terms from 300 foreground in PC7", subtitle=paste0("foreground is",ego2$n_annotated[1]," GO annotated genes of ",length(res_go$gene[which(res_go$pvalue<0.05)])," genes with p<0.05")) + scale_fill_viridis(option="G") + theme(legend.key.size=unit(3,"mm"))
+
+      
+go_table<- ego2[1:10,c("ID","Description","GeneRatio","pvalue","p.adjust")]
+go_table<- go_table[!is.na(go_table$ID),]
+go_table$pvalue<- signif(go_table$pvalue,2)
+go_table$p.adjust<- signif(go_table$p.adjust,2)
+
+go_table<- ggtexttable(as.data.frame(go_table),theme = ttheme(base_size = 6,padding=unit(c(4,10),"pt")),rows=NULL) %>% tab_add_title(text = "Top 10 GO BP terms from 300 foreground in PC7", size=6, padding = unit(0.1, "line"))
+
+
+write.csv(ego2, file=paste0("../PCA_results/GO_BP_alltissue_PC7.csv"), row.names=FALSE)
+
+
+
+g<- ggarrange(ggarrange(plots[[1]],plots[[2]],plots[[3]],plots[[7]], ncol=4,labels=LETTERS[1:4]),go_table, labels=c("","E"), nrow=2)
+
+ggsave(filename="../PCA_results/figure_alltissue_loadings_GO.pdf",g, device="pdf",height =7 ,width=8, units="in", bg="white")
+ggsave(filename="../PCA_results/figure_alltissue_loadings_GO.png",g, device="png",height =7 ,width=8, units="in", bg="white")
+```
+
+
+<br><br>
+
+# Wholebrain PCA
+
+
+```{r Wholebrain filtering, echo=TRUE} 
+
+outliers=c("PFT2_POM_run1")
+
+brain_behav<- subset(key_behav, Tissue!="GON")
+brain_behav<- subset(brain_behav, Tissue!="PIT")
+brain_behav<- brain_behav[!rownames(brain_behav) %in% outliers,]
+brain_behav<- droplevels(brain_behav)
+
+
+brain_data<- data[,colnames(data) %in% rownames(brain_behav)]
+
+start<- nrow(brain_data)
+#remove genes with avg read counts <20
+brain_data$avg_count<- apply(brain_data, 1, mean)
+brain_data<- brain_data[brain_data$avg_count>20,]
+brain_data$avg_count<-NULL
+
+
+#remove genes where >50% of samples have 0 gene expression
+brain_data$percent_0<- apply(brain_data, 1, function(x)length(x[x==0]))
+thresh<- ncol(brain_data)/2
+brain_data<- brain_data[brain_data$percent_0<=thresh,]
+brain_data$percent_0<-NULL
+#13652 genes.
+```
+
+
+Looking for cohesive signatures across the whole brain. Overall, before this round of filtering for the brain dataset we have `r start` genes. After filtering we have `r nrow(brain_data)` genes.
+This final document is the result of lots of work in single tissues to determine outlier status that were identified in the QC process. We are excluding `r outliers` because the analyses below indicated that it was an outlier within POM, other potentials identified in the QC process were not deemed outliers. 
+
+```{r, fig.width=15, fig.height=25}
+dd<- DESeqDataSetFromMatrix(countData=brain_data, colData=brain_behav, design= ~ Tissue +  Status)
+dd<- DESeq(dd)
+dd<- dd[which(mcols(dd)$betaConv),] #remove any genes that didn't converge. 
+
+#plotDispEsts(dd)
+
+#plot a PCA of our samples to look for suspicious samples and any obvious patterning with respect to our interest variables
+vsd_data<- getVarianceStabilizedData(dd)
+#vsd_data<- assay(vsd)
+
+p <- pca(vsd_data, metadata=brain_behav)
+
+a<-biplot(p, lab=NULL, colby="Tissue", shape="Batch", legendPosition="right", title="") + theme(panel.background = element_rect(fill="white"),panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(plot.margin = unit(c(0,1,0,1), "lines"))
+
+## check to see how our interest and nuisance variables are correlated to the PC axes. This will help decide on model form for DESeq.
+
+b<- eigencorplot(p, metavars = c("Tissue","time_kill","Batch","Year","mean_T", "strength.all_study","Status"), col=blueWhiteRed(50)) 
+
+horn <- parallelPCA(vsd_data)
+elbow <- findElbowPoint(p$variance)
+c<- screeplot(p,
+    components = getComponents(p, 1:20),
+    vline = c(horn$n, elbow)) +
+
+    geom_label(aes(x = horn$n + 1, y = 50,
+      label = 'Horn\'s', vjust = -1, size = 8)) +
+    geom_label(aes(x = elbow + 1, y = 50,
+      label = 'Elbow method', vjust = -1, size = 8)) + labs(title="") + theme(plot.margin = unit(c(0,2,0,1), "lines")) + theme(panel.background = element_rect(fill="white"),panel.grid.major = element_blank(), panel.grid.minor = element_blank()) 
+
+
+
+
+d<-biplot(p, x="PC1",y="PC3", lab=NULL, colby="Tissue", shape="Batch", legendPosition="right", title="") + theme(panel.background = element_rect(fill="white"),panel.grid.major = element_blank(), panel.grid.minor = element_blank()) + theme(plot.margin = unit(c(0,1,0,1), "lines"))
+
+
+
+multiplot<- ggarrange(ggarrange(a,d,ncol=2, labels=c("A","B"), common.legend = TRUE, legend="right")           
+          ,b,c,
+          nrow=3, 
+          labels = c("","C","D")) 
+multiplot
+#ggsave(filename="figure_wholebrain_PCA.pdf", device="pdf",width =8.5 ,height=11, units="in")
+#ggsave(filename="figure_wholebrain_PCA.png", device="png",width =8.5 ,height=11, units="in")
+```
+
+PC5 seems to be associated with our interest variables. 
+
+```{r wholebrain pc5, fig.height=18, fig.width=12}
+#library(nlme)
+
+
+
+test<- data.frame(PC5=p$rotated$PC5, PC10=p$rotated$PC10)
+test<- cbind(test, brain_behav)
+
+
+m0<- lm(PC5 ~ 1, data=test)
+
+m01<- lm(PC5 ~ Year, data=test)
+m01.aov<- Anova(m01, type=2)
+m02<- lm(PC5 ~ Year + Tissue, data=test)
+m02.aov<- Anova(m02, type=2)
+m02.vif<- sum(vif(m02)[,1])
+m02.aov
+m1<- lm(PC5~ Year + Tissue + Status,data=test)
+m1.aov<- Anova(m1, type=2)
+m1.vif<- sum(vif(m1)[,1])
+m1.aov
+m2<- lm(PC5~ Year + Tissue * Status,data=test,contrasts=list(Tissue=contr.sum, Status=contr.sum))
+m2.aov<- Anova(m2, type=3)
+m2.vif<- sum(vif(m2)[,1])
+m2.aov
+
+m3<- lm(PC5~ Tissue + Status + Tissue:Status,data=test,contrasts=list(Tissue=contr.sum, Status=contr.sum))
+m3.aov<- Anova(m3, type=3)
+m3.vif<- sum(vif(m3)[,1])
+m3.aov
+Anova(m3,type=2)
+
+m4<- lm(PC5~ Tissue + Status,data=test)
+m4.aov<- Anova(m4, type=2)
+m4.vif<- sum(vif(m4)[,1])
+m4.aov
+
+models<- c("~ 1", "~ Year", "~ Year + Tissue","~ Year + Tissue + Status" , "~ Year + Tissue + Status + Tissue:Status","~ Tissue + Status + Tissue:Status", "~ Tissue + Status")
+aic=signif(c(AIC(m0),AIC(m01),AIC(m02),AIC(m1),AIC(m2),AIC(m3),AIC(m4)),4)
+deltaAIC<- signif(c(NA,aic[1]-aic[2],aic[1]-aic[3], aic[1]-aic[4],aic[1]-aic[5],aic[1]-aic[6],aic[1]-aic[7]),3) 
+
+batch_p<- signif(c(NA, m01.aov$'Pr(>F)'[1],m02.aov$'Pr(>F)'[1],m1.aov$'Pr(>F)'[1],m2.aov$'Pr(>F)'[2],NA,NA),2)
+
+e_p<- signif(c(NA, NA,NA,m1.aov$'Pr(>F)'[3],m2.aov$
+'Pr(>F)'[3],m3.aov$
+'Pr(>F)'[2],m4.aov$'Pr(>F)'[2]),2) 
+sumVIF<- round(c(NA,NA,m02.vif, m1.vif,m2.vif, m3.vif, m4.vif),0)
+
+ms<- data.frame(models,aic, deltaAIC,batch_p,e_p, sumVIF)
+ms<- ggtexttable(ms,theme = ttheme(base_size = 6,padding=unit(c(4,10),"pt")),rows=NULL)
+
+
+
+pc5test<- cbind(m1.aov, c(eta_squared(m1.aov)$Eta2_partial,NA))
+colnames(pc5test)[5]<- "eta^2"
+summary(m1)
+
+
+
+#pc5test<- summary(aov(test$PC5 ~ test$Year + test$Status))
+pc5test_anova <- ggtexttable(signif(pc5test,2),theme = ttheme(base_size = 6,padding=unit(c(4,10),"pt")),rows=rownames(pc5test)) %>% tab_add_title(text = "PC5 ~ Year + Tissue + Status", size=6, padding = unit(0.1, "line"))
+
+
+
+
+
+e<-biplot(p, x="PC1",y="PC5", lab=NULL, colby="Tissue", shape="Status", legendPosition="right", title="") + peri_theme
+f<-ggplot(test, aes(x=Tissue, y=PC5, colour=Status)) + geom_boxplot(outlier.colour = NA) + geom_point(position=dodge) + peri_theme  + theme(legend.position="none") + scale_colour_manual(values=status_cols[2:3]) + theme(axis.text.x=element_text(angle=90))
+
+gene<- plotCounts(dd, gene="PDYN", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+ap<- ggplot(gene, aes(x=Status, y=count, color=Status)) + geom_boxplot(outlier.color = NA) + geom_point() + labs(title="PDYN",x="", y="Normalised Counts") + peri_theme + facet_wrap(~Tissue,scales="free") + scale_colour_manual(values=status_cols[2:3]) + theme(legend.position = "none")
+
+
+g<- ggarrange(ggarrange(f,ggarrange(ms,pc5test_anova, nrow=2, labels=c("B","C")), ncol=2, labels=c("A")),c, ncol=1, nrow=2,labels=c("","D"))
+g
+ggsave(filename="../PCA_results/figure_wholebrain_PC5.pdf",plot=g, device="pdf",height =6 ,width=7.5, units="in",bg="white")
+ggsave(filename="../PCA_results/figure_wholebrain_PC5.png",plot=g, device="png",height =6,width=7.5, units="in", bg="white")
+#m1<- lme(PC10 ~ Year + Tissue*strength.all_study, random=~1|Harvest_ID, data=test[!is.na(test$strength.all_study),])
+#pc10test<- anova(m1)
+
+
+#pc5test<- summary(aov(test$PC5 ~ test$Year + test$Status))
+#pc10test_anova <- ggtexttable(signif(pc10test,2))
+
+
+##strength
+#g<-biplot(p, x="PC1",y="PC10", lab=NULL, colby="strength.all_study", shape="Status", legendPosition="right", title="") + peri_theme
+#h<-ggplot(test, aes(x=strength.all_study, y=PC10, color=Tissue)) + geom_point() + peri_theme  + theme(legend.position="none") 
+
+#ggarrange(e,ggarrange(pc5test_anova,f, nrow=2),g,ggarrange(pc10test_anova,h, nrow=2),ncol=2, nrow=2,labels=c(LETTERS[1:4]))
+#ggsave(g,filename="figure_wholebrain_PC5_10.png", device="png",height =8.5 ,width=11, units="in")
+
+
+```
+
+```{r ai indicator genes, eval=FALSE}
+a<- plotCounts(dd, gene="C1QL3", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+ap<- ggplot(a, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point() + labs(title="C1QL3",x="", y="Normalised Counts") + peri_theme
+
+b<- plotCounts(dd, gene="ETV1", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+bp<- ggplot(b, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point() + labs(title="ETV1",x="", y="") + peri_theme 
+
+
+c<- plotCounts(dd, gene="KCTD12", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+cp<- ggplot(c, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point() + labs(title="KCTD12",x="", y="") + peri_theme
+
+d<- plotCounts(dd, gene="MGP", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+dp<- ggplot(d, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point() + labs(title="MGP",x="", y="Normalised Counts") + peri_theme
+
+e<- plotCounts(dd, gene="HTR1D", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+ep<- ggplot(e, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point() + labs(title="HTR1D",x="", y="") + peri_theme
+
+f<- plotCounts(dd, gene="HTR2A", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+fp<- ggplot(f, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point() + labs(title="HTR2A",x="", y="") + peri_theme
+
+
+g<- plotCounts(dd, gene="PCP4", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+gp<- ggplot(g, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point() + labs(title="PCP4",x="Tissue", y="Normalised Counts") + peri_theme
+
+h<- plotCounts(dd, gene="PVALB", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+hp<- ggplot(h, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point() + labs(title="PVALB",x="Tissue", y="") + peri_theme
+
+i<- plotCounts(dd, gene="SCUBE1", intgroup=c("Class","Status", "Tissue"), returnData=TRUE)
+ip<- ggplot(i, aes(x=Tissue, y=count)) + geom_boxplot(outlier.color = NA) + geom_point() + labs(title="SCUBE1",x="Tissue", y="") + peri_theme
+
+ggarrange(ap,bp,cp, dp, ep, fp, gp,hp, ip, ncol=3, nrow=3, labels=LETTERS[seq(from=1,to=9)])
+
+```
+
+
+```{r loadings brain tissues, echo=TRUE, fig.height=10, fig.width=20}
+
+loadings<- p$loadings
+loadings$gene<- rownames(loadings)
+loadings<- merge(loadings, genes_key, by="gene")
+
+
+plots<- list()
+pcs<- paste0("PC",1:10)
+for(i in pcs){
+  #i="PC2"
+  sub<- loadings[,c(i, "display_gene_ID","gene")]
+  sub<- sub[order(sub[,i]),]
+  top30<- rbind(head(sub,15), tail(sub,15))
+  top30$best_anno2<- factor(top30$display_gene_ID, levels=unique(top30$display_gene_ID[order(top30[,i],top30$display_gene_ID)]), ordered=TRUE)
+  top30$pos<- ifelse(top30[,i]<0, "neg", "pos")
+  plots[[i]]<-ggplot(top30, aes(x=best_anno2, y=top30[,i], fill=pos)) + geom_bar(stat="identity")+  peri_figure_supp + coord_flip() + labs(x="gene", y=paste(i,"loading")) + scale_fill_manual(values=c("#0D8CFF","#FF3300")) + theme(legend.position="none")
+} 
+ggarrange(plotlist=plots, ncol=5, nrow=2)
+ggsave(filename="../PCA_results/figure_brain_loadings.pdf", device="pdf",height =8.5 ,width=16, units="in", bg="white")
+ggsave(filename="../PCA_results/figure_brain_loadings.png", device="png",height =8.5 ,width=16, units="in", bg="white")
+```
+
+
+## PC5 Gene Ontology
+
+What are the gene ontology categories enriched in PC5?
+
+```{r PC5 enrichment, echo=TRUE, fig.height=7, fig.width=18}
+
+res_go<- loadings[c("gene","PC5","best_anno")]
+#res_go$logP<- -log(abs(res_go$PC5), 10)
+#res_go$logP<- ifelse(res_go$PC5<0, -(res_go$logP), res_go$logP)
+res_go<- res_go[order(res_go$PC5, decreasing=TRUE),]
+
+
+geneList<- res_go$PC5
+names(geneList)<- res_go$gene
+
+
+
+
+y<- GSEA(geneList, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+ridgeplot(y) + scale_fill_viridis(direction=-1) + peri_theme
+
+```
+
+```{r}
+write.csv(y@result, file="../PCA_results/GSEA_BP_whole_brain_PC5.csv", row.names=FALSE)
+ego2<- as.data.frame(y@result$ID)
+colnames(ego2)<- "ID"
+ego2$p.adjust<- y@result$p.adjust
+
+simMatrix <- calculateSimMatrix(ego2$ID,
+                                orgdb="org.Hs.eg.db",
+                                ont="BP",
+                                method="Rel")
+scores <- setNames(-log10(ego2$p.adjust), ego2$ID)
+reducedTerms <- reduceSimMatrix(simMatrix,
+                                scores,
+                                threshold=0.7,
+                                orgdb="org.Hs.eg.db")
+treemapPlot(reducedTerms)
+scatterPlot(simMatrix, reducedTerms)
+p<-scatterPlot(simMatrix, reducedTerms)
+```
+
+```{r, eval=FALSE}
+i="PC5"
+  sub<- loadings[,c(i, "best_anno","gene")]
+  sub<- sub[order(sub[,i]),]
+  top30<- rbind(head(sub,20), tail(sub,20))
+  top30$best_anno2<- factor(top30$best_anno, levels=unique(top30$best_anno[order(top30[,i],top30$best_anno)]), ordered=TRUE)
+  top30$pos<- ifelse(top30[,i]<0, "neg", "pos")
+  pc5loadings<-ggplot(top30, aes(x=best_anno2, y=top30[,i], fill=pos)) + geom_bar(stat="identity")+  peri_theme + coord_flip() + labs(x="gene", y=paste(i,"loading")) + scale_fill_manual(values=c("#0D8CFF","#FF3300")) + theme(legend.position="none")
+  
+  
+ggarrange(ggarrange(f,pc5test_anova, nrow=2), pc5loadings, p, ncol=3, nrow=1)
+  
+```
+```{r}
+### top 200
+top200<- rbind(head(res_go,100), tail(res_go,100))
+
+
+go_results<- enricher(top200$gene, universe=res_go$gene, TERM2GENE = go2gene_bp, TERM2NAME = go2name_bp)
+    
+
+      ego2<- go_results@result
+      ego2$n_annotated<- word(ego2$GeneRatio, 2,2, sep="/")
+      ego2$n_annotated<- as.numeric(ego2$n_annotated)
+      ego2$Description<- ifelse(str_count(ego2$Description, '\\w+') >= 10,
+                                gsub("(^[^\\s]+\\s[^\\s]+\\s[^\\s]+\\s[^\\s]+\\s[^\\s]+\\s[^\\s]+)\\s","\\1\n",ego2$Description, perl=TRUE),
+                                ifelse(str_count(ego2$Description, '\\w+') >= 6,
+                                       gsub("(^[^\\s]+\\s[^\\s]+\\s[^\\s]+\\s[^\\s]+)\\s","\\1\n",ego2$Description, perl=TRUE),
+                                       as.character(ego2$Description)))
+      
+go_plot_result<- ggplot(ego2[1:10,], aes(x=Description, y=Count, fill=pvalue)) + geom_bar(stat="identity", colour="black", lwd=0.25) + theme(axis.text.x=element_text(angle=90, vjust=0.5, hjust=1)) + coord_flip() + peri_figure_supp + scale_y_continuous(expand=c(0,0)) + labs(x="", y="No. genes enriched", title="Top 10 GO BP terms from 300 foreground in PC7", subtitle=paste0("foreground is",ego2$n_annotated[1]," GO annotated genes of ",length(res_go$gene[which(res_go$pvalue<0.05)])," genes with p<0.05")) + scale_fill_viridis(option="G") + theme(legend.key.size=unit(3,"mm"))
+
+      
+go_table<- ego2[1:10,c("ID","Description","GeneRatio","pvalue","p.adjust")]
+go_table<- go_table[!is.na(go_table$ID),]
+go_table$pvalue<- signif(go_table$pvalue,2)
+go_table$p.adjust<- signif(go_table$p.adjust,2)
+
+go_table<- ggtexttable(as.data.frame(go_table),theme = ttheme(base_size = 6,padding=unit(c(4,10),"pt")),rows=NULL) %>% tab_add_title(text = "Top 10 GO BP terms from 200 foreground in PC5", size=6, padding = unit(0.1, "line"))
+
+
+write.csv(ego2, file=paste0("../PCA_results/GO_BP_brain_PC5.csv"), row.names=FALSE)
+
+
+
+g<- ggarrange(ggarrange(plots[[1]],plots[[2]],plots[[3]],plots[[5]], ncol=4,labels=LETTERS[1:4]),go_table, labels=c("","E"), nrow=2)
+
+ggsave(filename="../PCA_results/figure_wholebrain_loadings_GO.pdf",g, device="pdf",height =7 ,width=8, units="in", bg="white")
+ggsave(filename="../PCA_results/figure_wholebrain_loadings_GO.png",g, device="png",height =7 ,width=8, units="in", bg="white")
+```
+
+
+
+```{r whole-brain pca figure, eval=FALSE}
+tissue_cols<- c("VMH"="#E76F51","AH"="#E76F51","PVN"="#E76F51", "POM"="#E76F51", "ICO"="#E76F51","GCT"="#E76F51", "TNA"="#E76F51", "AI"="#f0d497", "LS"="#F4A261", "BSTm"="#F4A261")
+#shape_key<- c("VMH"="0","AH"="1","PVN"="2", "POM"="3", "ICO"="4","GCT"="5", "TNA"="8", "AI"="7", "LS"="10", "BSTm"="14")
+
+biplot(p, lab=NULL, colby="Tissue", shape="Tissue", legendPosition="right", colkey = tissue_cols, pointSize = 6) + scale_shape_manual(values=c(0,1,2,3,4,5,8,15,17,19)) + theme(panel.background = element_rect(fill="white"),panel.grid.major = element_blank(), panel.grid.minor = element_blank(),legend.position="none")
+
+```
+ 
+
+## Batch Effects
+
+What happens if I use batch effect exclusion on the whole brain? This way I wouldn't have to use single tissue 
+ 
+```{r}  
+mat<- limma::removeBatchEffect(vsd_data, brain_behav$Batch)
+p <- pca(mat, metadata = brain_behav)
+biplot(p, lab=NULL, colby="Tissue", shape="Batch", legendPosition="right", title="PCA Gonads removeBatchEffect(Batch)")
+
+#use this if Batch and Year are both pinged in the previous section. 
+eigencorplot(p, metavars = c("Tissue","Batch","Year","time_kill" ,"Status"))
+
+```
+
+The PCA plot shows that this makes the differences between batches worse apparently stronger, even though the eigencorplot (correlation between PC axis and variable) doesn't show it. This is probably due to linear combinations of the batch and tissue variables. 
+

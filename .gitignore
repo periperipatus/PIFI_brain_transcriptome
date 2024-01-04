@@ -3,3 +3,6 @@
 .PIFI_brain_trainscriptome.Rproj
 .RData
 .RDataTmp
+02_3_Interaction_models.Rmd
+03_WGCNA_wholebrain_test.Rmd
+03_WGCNA_module_pres.Rmd

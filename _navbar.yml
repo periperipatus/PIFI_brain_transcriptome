@@ -2,19 +2,24 @@ name: "PIFI neurogenomics"
 title: "PIFI neurogenomics"
 type: inverse
 left:
+
   - text: "Analyses"
     menu:
-       - text: "Data QC and filtering"
+       - text: "Supp 1: Data QC and filtering"
          href: ./01_reading_QC.html
-       - text: "Differential Expression"
-         href: ./02_DESeq2.html
-       - text: "Whole brain co-expression"
-         href: ./03_WGCNA_wholebrain.html
-       - text: "Co-expression in each tissue"
-         href: ./04_WGCNA_single_tissue.html
-       - text: "Candidate Genes"
-         href: ./05_candidate_gene_analysis.html
-       - text: "Summaries and overlap analyses"
+       - text: "Supp 1 & 2: Checks and System-wide PCA"
+         href: ./02_1_Checks_PCA.html
+       - text: "Supp 2: Whole-brain WGCNA"
+         href: ./02_2_WGCNA_wholebrain.html
+       - text: "Supp 2: HPG WGCNA"
+         href: ./02_3_WGCNA_HPG.html         
+       - text: "Supp 3: Per Tissue Differential Expression"
+         href: ./03_DESeq2.html
+       - text: "Supp 4: Candidate Gene Analysis"
+         href: ./04_candidate_gene_analysis.html
+       - text: "Supp 5: Within Tissue WGCNA "
+         href: ./05_WGCNA_single_tissue.html
+       - text: "Supp 6: Summaries and overlap analyses"
          href: ./06_tissue_summary_similarity.html
   - text: "Contact"
     href: ./contact.html
