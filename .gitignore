@@ -1,6 +1,7 @@
 #the analysis folder is for the website and so this is held in a separate branch called "analysis_code"
 analysis/
-
+*_randomized.csv
+*_dropxval.csv
 #Results
 docs_temp/
 #Candidate_gene_results/
