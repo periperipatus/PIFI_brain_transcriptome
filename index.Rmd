@@ -1,5 +1,5 @@
 ---
-title: "PIFI Neurogenomics"
+title: "Pipra Filicauda Neurogenomics"
 output: 
   html_document:
     toc: FALSE
@@ -10,16 +10,18 @@ output:
 
 This website contains supplements to the word document-based supplementary material. It includes the markdown documents of the code I used to do the analyses, and the full figures and code can be accessed on the github repository itself.
 
-Please note that the GO annotation methods are not in Rmarkdown. The code used can be found [here](https://github.com/periperipatus/PIFI_brain_transcriptome/tree/main/GO_annotation).
+Please note that the GO annotation methods are not in Rmarkdown. The code used can be found [here](https://github.com/periperipatus/PIFI_brain_transcriptome/tree/main/GO_annotations).
 
-# Citation
+The markdowns are named according to the Supplementary Material section to which they belong (e.g. Differential Expression Analysis is in Supplement 3)
+
+## Citation
 
 * Preprint: https://www.biorxiv.org/content/10.1101/2022.10.05.510848
 
 * Publication: Bolton, P.E., Ryder, T.B., Dakin, R., Houtz, J.L., Moore, I.T., Balakrishnan, C.N.†, Horton, B.M.† (2024) Neurogenomic landscape associated with status-dependent cooperative behavior 
 † contributed equally
 
-* Data Archive: Bolton, Peri (2023). Results Visualizations HTML. National Museum of Natural History. Online resource. https://doi.org/10.25573/data.22186516
+* Data Archive: Bolton, Peri; Dakin, Roslyn; Ryder, T. Brandt; Houtz, Jennifer L.; Moore, Ignacio T.; Balakrishnan, Christopher N; et al. (2023). Count Data, Phenotype Data, R Code and Results Visualizations HTML. National Museum of Natural History. Online resource. https://doi.org/10.25573/data.22186516
 
 
 

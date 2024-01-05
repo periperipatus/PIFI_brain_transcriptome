@@ -321,7 +321,7 @@ m01.aov<- Anova(m01, type=2)
 
 m02<- lm(PC7 ~ Year + Tissue, data=test)
 m02.aov<- Anova(m02, type=2)
-m2.aov
+m02.aov
 m02.vif<- sum(vif(m02)[,1])
 m1<- lm(PC7~ Year + Tissue + Status,data=test)
 m1.aov<- Anova(m1, type=2)

@@ -2,7 +2,7 @@
 title: "Volcano Plots and Overlap Analyses"
 subtitle: "For manuscript: Neurogenomic landscape of male cooperative behavior in a wild bird "
 date: Last Knit "`r Sys.Date()`"
-author: "Last Substantive Change April 2021"
+author: "Last Substantive Change December 2023"
 output:
   html_document:
     toc: true
